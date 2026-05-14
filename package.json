@@ -1,0 +1,54 @@
+{
+  "name": "permissionless.money",
+  "version": "1.0.0",
+  "description": "Permissionless Money Website",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "lint": "eslint lib/ api/ eslint.config.js",
+    "typecheck": "echo 'Static JS; add JSDoc or Flow for types'",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "wasm-build": "cd passkey-wasm && wasm-pack build --target web --release --out-dir ../pkg",
+    "serve": "npx http-server . -p 8001 -c-1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.5",
+    "html-minifier-terser": "^7.2.0",
+    "@eslint/js": "^10.0.0",
+    "eslint": "^10.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/permissionlessweb/website.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/permissionlessweb/website/issues"
+  },
+  "homepage": "https://github.com/permissionlessweb/website#readme",
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "@simplewebauthn/server": "^11.0.0",
+    "acorn": "^8.16.0",
+    "buffer-from": "^1.1.2",
+    "camel-case": "^4.1.2",
+    "clean-css": "^5.3.3",
+    "commander": "^10.0.1",
+    "dot-case": "^3.0.4",
+    "entities": "^4.5.0",
+    "lower-case": "^2.0.2",
+    "no-case": "^3.0.4",
+    "param-case": "^3.0.4",
+    "pascal-case": "^3.1.2",
+    "relateurl": "^0.2.7",
+    "source-map": "^0.6.1",
+    "source-map-support": "^0.5.21",
+    "terser": "^5.46.0",
+    "tslib": "^2.8.1"
+  }
+}

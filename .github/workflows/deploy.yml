@@ -1,0 +1,71 @@
+name: Deploy to IPFS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build
+      run: npm run build
+
+    - name: Install IPFS CLI
+      run: |
+        wget https://dist.ipfs.tech/kubo/v0.24.0/kubo_v0.24.0_linux-amd64.tar.gz
+        tar -xzf kubo_v0.24.0_linux-amd64.tar.gz
+        sudo mv kubo/ipfs /usr/local/bin/
+
+    - name: Add to IPFS
+      id: ipfs
+      run: |
+        CID=$(ipfs add -r -Q dist/)
+        echo "CID=$CID" >> $GITHUB_OUTPUT
+        echo "IPFS Hash: $CID"
+
+    - name: Pin to Pinata (if configured)
+      if: env.PINATA_JWT != ''
+      run: |
+        curl -X POST https://api.pinata.cloud/pinning/pinHashToIPFS \
+          -H "Authorization: Bearer ${{ secrets.PINATA_JWT }}" \
+          -d "{\"hashToPin\": \"${{ steps.ipfs.outputs.CID }}\"}"
+      env:
+        PINATA_JWT: ${{ secrets.PINATA_JWT }}
+
+    - name: Update README with CID
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          let readme = fs.readFileSync('README.md', 'utf8');
+          const cid = '${{ steps.ipfs.outputs.CID }}';
+          readme = readme.replace(/IPFS CID: [a-zA-Z0-9]+/, `IPFS CID: ${cid}`);
+          readme += `\n\nLatest IPFS CID: ${cid} (https://ipfs.io/ipfs/${cid})`;
+          fs.writeFileSync('README.md', readme);
+          github.rest.repos.createOrUpdateFileContents({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            path: 'README.md',
+            message: `Update IPFS CID: ${cid}`,
+            content: Buffer.from(readme).toString('base64'),
+            sha: '${{ github.sha }}'
+          });
+
+    - name: Commit updated README
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add README.md
+        git commit -m "Update README with new IPFS CID" || exit 0
+        git push

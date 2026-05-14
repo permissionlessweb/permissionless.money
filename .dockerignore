@@ -1,0 +1,17 @@
+# Git files
+.git
+.gitignore
+
+# Documentation
+README.md
+
+# Other HTML files not used in production
+explore-fractal 2.html
+glow-pattern.html
+my-website.html
+original.html
+
+# Docker files
+Dockerfile
+.dockerignore
+.DS_Store

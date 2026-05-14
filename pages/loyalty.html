@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HashMerchant — Loyalty Rewards That Protect Customer Privacy</title>
+<meta name="description" content="Run reward programs where customer data never leaves your servers. Eligibility verified on-chain using cryptographic proofs.">
+
+<!-- Favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="/public/favicons/p-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/public/favicons/p-32x32.png">
+<link rel="icon" type="image/png" sizes="128x128" href="/public/favicons/p-128x128.png">
+<link rel="shortcut icon" type="image/png" href="/public/favicons/p-32x32.png">
+<link rel="manifest" href="/public/favicons/site.webmanifest">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.cdnfonts.com/css/satoshi">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.cdnfonts.com/css/satoshi" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+    --bg: #08090d;
+    --surface: rgba(33, 34, 44, 0.7);
+    --surface-solid: #21222c;
+    --border: #44475a;
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --text: #f8f8f2;
+    --text-muted: #6272a4;
+    --text-dim: #44475a;
+    --accent: #bd93f9;
+    --accent-teal: #b1ebeb;
+    --accent-green: #50fa7b;
+    --accent-orange: #ffb86c;
+    --gold: #f0c674;
+    --cyan: #00d7ff;
+    --mono: 'Satoshi', sans-serif;
+}
+
+html{scroll-behavior:smooth}
+body{
+    font-family:var(--mono);
+    background-color:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    overflow-x:hidden;
+}
+
+/* ── Fractal Canvas ──────────────────────────────────── */
+#fractal-canvas{
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    z-index:0;
+    opacity:0.25;
+    pointer-events:none;
+}
+
+/* ── Header ─────────────────────────────────────────── */
+nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:100;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0.75rem 1.5rem;
+    background:rgba(8, 9, 13, 0.85);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(189, 147, 249, 0.08);
+}
+.logo-wrap{display:flex;flex-direction:column;gap:0.15rem}
+.logo{
+    color:var(--accent-teal);
+    font-size:1.15rem;
+    font-weight:600;
+    letter-spacing:0.02em;
+    text-decoration:none;
+}
+.tagline-small{
+    font-size:0.65rem;
+    color:var(--text-muted);
+    letter-spacing:0.5px;
+}
+.nav-links{display:flex;gap:1.5rem;list-style:none;align-items:center}
+.nav-links a{
+    color:var(--text-muted);
+    text-decoration:none;
+    font-size:0.85rem;
+    font-weight:500;
+    transition:color .2s;
+}
+.nav-links a:hover{color:var(--accent)}
+.nav-links a[href="/mint"]{color:var(--accent)}
+
+/* ── Hero ──────────────────────────────────────────── */
+.hero{
+    position:relative;
+    z-index:1;
+    text-align:center;
+    padding:8rem 2rem 5rem;
+    max-width:800px;
+    margin:0 auto;
+}
+.hero h1{
+    font-size:clamp(2rem,5vw,3.2rem);
+    font-weight:600;
+    color:var(--accent-teal);
+    text-shadow:0 0 30px rgba(189, 147, 249, 0.3);
+    line-height:1.2;
+}
+.hero > p{
+    margin-top:1.5rem;
+    font-size:1.05rem;
+    color:#b9c1b8;
+    text-shadow:0 0 3px rgba(71, 50, 102, 0.9);
+    max-width:600px;
+    margin-left:auto;
+    margin-right:auto;
+    line-height:1.7;
+}
+.hero-cta{
+    display:flex;
+    gap:1rem;
+    justify-content:center;
+    margin-top:2.5rem;
+    flex-wrap:wrap;
+}
+.btn{
+    padding:0.7rem 1.8rem;
+    font-family:var(--mono);
+    font-size:0.9rem;
+    font-weight:600;
+    border-radius:6px;
+    cursor:pointer;
+    transition:all .2s ease;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:0.5rem;
+}
+.btn-primary{
+    background:linear-gradient(135deg, #bd93f9 0%, #50fa7b 100%);
+    color:#08090d;
+    border:none;
+}
+.btn-primary:hover{opacity:0.9;transform:translateY(-1px)}
+.btn-outline{
+    background:rgba(189, 147, 249, 0.08);
+    color:var(--accent);
+    border:1px solid rgba(189, 147, 249, 0.3);
+}
+.btn-outline:hover{
+    background:rgba(189, 147, 249, 0.15);
+    border-color:var(--accent);
+}
+
+/* ── Section Shared ───────────────────────────────── */
+section{
+    position:relative;
+    z-index:1;
+    padding:5rem 1.5rem;
+}
+.section-title{
+    text-align:center;
+    font-size:1.4rem;
+    font-weight:600;
+    color:var(--accent-teal);
+    margin-bottom:2.5rem;
+    text-shadow:0 0 20px rgba(177, 235, 235, 0.15);
+}
+.container{max-width:1060px;margin:0 auto}
+
+/* ── How It Works ─────────────────────────────────── */
+#how-it-works{padding-top:3rem}
+.pipeline{
+    display:flex;
+    align-items:flex-start;
+    gap:0;
+    overflow-x:auto;
+    padding-bottom:1rem;
+}
+.step{
+    flex:1;
+    min-width:180px;
+    background:var(--surface);
+    border:1px solid var(--border-subtle);
+    border-radius:8px;
+    padding:1.5rem 1.25rem;
+    transition:border-color .3s,box-shadow .3s;
+    position:relative;
+}
+.step:hover{
+    border-color:rgba(189, 147, 249, 0.25);
+    box-shadow:0 0 20px rgba(189, 147, 249, 0.06);
+}
+.step-num{
+    font-size:1.6rem;
+    font-weight:700;
+    color:var(--accent);
+    margin-bottom:.4rem;
+}
+.step-label{
+    color:var(--accent-teal);
+    font-size:.95rem;
+    font-weight:600;
+    margin-bottom:.5rem;
+}
+.step-desc{
+    color:var(--text-muted);
+    font-size:.82rem;
+    line-height:1.6;
+}
+.arrow{
+    display:flex;
+    align-items:center;
+    padding:0 .25rem;
+    color:var(--border);
+    font-size:1.4rem;
+    flex-shrink:0;
+    align-self:center;
+}
+
+/* ── Features ───────────────────────────────────────── */
+.features-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    gap:1.25rem;
+}
+.feature-card{
+    background:var(--surface);
+    border:1px solid var(--border-subtle);
+    border-radius:8px;
+    padding:1.5rem;
+    transition:border-color .3s,box-shadow .3s;
+}
+.feature-card:hover{
+    border-color:rgba(189, 147, 249, 0.25);
+    box-shadow:0 0 20px rgba(189, 147, 249, 0.06);
+}
+.feature-card h3{
+    color:var(--accent-teal);
+    font-size:.95rem;
+    font-weight:600;
+    margin-bottom:.5rem;
+}
+.feature-card p{
+    color:var(--text-muted);
+    font-size:.82rem;
+    line-height:1.6;
+}
+
+/* ── Architecture ─────────────────────────────────── */
+#architecture p{color:var(--text-muted);font-size:.82rem}
+
+.arch-flow{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.5rem;
+    flex-wrap:wrap;
+    margin-bottom:1rem;
+}
+.flow-node{
+    background:var(--surface);
+    border:1px solid var(--border-subtle);
+    border-radius:8px;
+    padding:1rem 1.25rem;
+    text-align:center;
+    min-width:120px;
+    transition:border-color .3s;
+}
+.flow-node:hover{border-color:rgba(189, 147, 249, 0.25)}
+.flow-node.wide{
+    min-width:280px;
+    padding:1.25rem 2rem;
+}
+.flow-node.compact{padding:0.75rem 1rem}
+.node-header{
+    color:var(--accent);
+    font-size:0.85rem;
+    font-weight:600;
+    margin-bottom:0.25rem;
+}
+.node-body{
+    color:var(--text-muted);
+    font-size:0.75rem;
+    line-height:1.4;
+}
+.flow-connector{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:0 0.25rem;
+}
+.flow-connector.down{
+    width:100%;
+    padding:0.5rem 0;
+}
+.conn-arrow{
+    color:var(--accent);
+    font-size:1.2rem;
+    line-height:1;
+}
+.conn-label{
+    color:var(--text-dim);
+    font-size:0.65rem;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-top:0.15rem;
+}
+.arch-branch{
+    display:flex;
+    justify-content:center;
+    margin:0.5rem 0;
+}
+
+/* ── Code Snippet ─────────────────────────────────── */
+.code-section{padding-top:3rem}
+.code-section .container{max-width:620px}
+.code-block{
+    background:var(--surface-solid);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:1.5rem 2rem;
+    overflow-x:auto;
+}
+.code-block pre{
+    margin:0;
+    font-size:.82rem;
+    line-height:1.6;
+    white-space:pre;
+    font-family:'JetBrains Mono', monospace;
+}
+.ck{color:var(--accent)}      /* keys */
+.cs{color:var(--accent-green)} /* strings */
+.cn{color:var(--cyan)}        /* numbers / booleans */
+.cp{color:var(--text)}       /* punctuation */
+
+/* ── Open By Design ───────────────────────────────── */
+.open-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:1.25rem;
+}
+.open-card{
+    background:var(--surface);
+    border:1px solid var(--border-subtle);
+    border-radius:8px;
+    padding:1.5rem;
+    transition:border-color .3s,box-shadow .3s;
+}
+.open-card:hover{
+    border-color:rgba(189, 147, 249, 0.25);
+    box-shadow:0 0 20px rgba(189, 147, 249, 0.06);
+}
+.open-card h3{
+    color:var(--gold);
+    font-size:.95rem;
+    font-weight:600;
+    margin-bottom:.5rem;
+}
+.open-card p{
+    color:var(--text-muted);
+    font-size:.82rem;
+    line-height:1.6;
+}
+
+/* ── Footer ───────────────────────────────────────── */
+footer{
+    position:relative;
+    z-index:1;
+    text-align:center;
+    padding:2rem;
+    border-top:1px solid var(--border-subtle);
+    color:var(--text-muted);
+    font-size:.78rem;
+}
+
+/* ── FAB Nav ─────────────────────────────────────── */
+#fab-nav{
+    position:fixed;
+    bottom:1.5rem; right:1.5rem;
+    z-index:9999;
+}
+#fab-menu{
+    position:absolute;
+    bottom:58px; right:0;
+    display:none;
+    flex-direction:column;
+    gap:2px;
+    padding:0.5rem;
+    background:rgba(10, 10, 15, 0.95);
+    border:1px solid rgba(177, 235, 235, 0.2);
+    border-radius:12px;
+    min-width:160px;
+    box-shadow:0 8px 40px rgba(0,0,0,0.7);
+    backdrop-filter:blur(20px);
+}
+#fab-menu .fab-label{
+    font-size:0.55rem;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:rgba(177, 235, 235, 0.4);
+    padding:0.25rem 0.75rem 0.1rem;
+}
+#fab-menu a{
+    display:block;
+    padding:0.5rem 0.75rem;
+    border-radius:6px;
+    color:#d2d3d8;
+    font-size:0.8rem;
+    font-weight:400;
+    text-decoration:none;
+    transition:background 0.15s, color 0.15s;
+}
+#fab-menu a:hover{background:rgba(177,235,235,0.08);color:var(--accent-teal)}
+.fab-divider{height:1px;background:rgba(177,235,235,0.1);margin:0.15rem 0.5rem}
+#fab-btn{
+    width:48px; height:48px;
+    border-radius:50%;
+    border:none;
+    background:var(--accent-teal);
+    color:#08090d;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    font-weight:300;
+    box-shadow:0 4px 20px rgba(177, 235, 235, 0.3);
+    transition:transform 0.15s;
+}
+#fab-btn:hover{transform:scale(1.05)}
+
+/* ── Fade-In ─────────────────────────────────────── */
+.reveal{
+    opacity:0;
+    transform:translateY(18px);
+    transition:opacity .5s,transform .5s;
+}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ── Mobile ─────────────────────────────────────── */
+@media(max-width:680px){
+    nav{padding:0.5rem 1rem}
+    .nav-links{gap:0.8rem}
+    .nav-links a{font-size:.78rem}
+    .hero{padding:6rem 1.25rem 3rem}
+    section{padding:3rem 1.25rem}
+    .pipeline{flex-direction:column;gap:.75rem}
+    .arrow{transform:rotate(90deg);padding:0.25rem 0;align-self:center}
+    .features-grid{grid-template-columns:1fr}
+    .open-grid{grid-template-columns:1fr}
+    .arch-flow{flex-direction:column;gap:0.25rem}
+    .flow-connector{flex-direction:row;gap:0.5rem;padding:0.25rem 0}
+    .flow-connector.down{width:auto}
+    .conn-arrow{transform:rotate(90deg)}
+    .flow-node,.flow-node.wide{width:200px;min-width:200px}
+    .code-block{padding:1rem}
+}
+</style>
+</head>
+<body>
+
+<canvas id="fractal-canvas"></canvas>
+
+<!-- ════ NAV ════ -->
+<nav>
+    <div class="logo-wrap">
+        <a href="/" class="logo">HashMerchant</a>
+        <span class="tagline-small">A Permissionless.Money Project</span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="/mint">Mint</a></li>
+    </ul>
+</nav>
+
+<!-- ════ HERO ════ -->
+<section class="hero">
+    <h1>Loyalty Rewards That Protect Customer Privacy</h1>
+    <p>Run reward programs where customer data never leaves your servers. Eligibility is verified on the blockchain using cryptographic proofs — so no personal information is ever exposed.</p>
+    <div class="hero-cta">
+        <a href="#how-it-works" class="btn btn-primary">Get Started</a>
+        <a href="#architecture" class="btn btn-outline">View Architecture</a>
+    </div>
+</section>
+
+<!-- ════ HOW IT WORKS ════ -->
+<section id="how-it-works">
+    <h2 class="section-title">How It Works</h2>
+    <div class="container">
+        <div class="pipeline">
+            <div class="step reveal">
+                <div class="step-num">01</div>
+                <div class="step-label">Keep Your Data</div>
+                <div class="step-desc">Your loyalty database &mdash; purchases, points, tiers &mdash; stays on your own servers. Nothing sensitive is uploaded.</div>
+            </div>
+            <span class="arrow">&rarr;</span>
+            <div class="step reveal">
+                <div class="step-num">02</div>
+                <div class="step-label">Publish a Fingerprint</div>
+                <div class="step-desc">A compact cryptographic fingerprint (Merkle root) of your data is confirmed on the blockchain by network validators &mdash; every block.</div>
+            </div>
+            <span class="arrow">&rarr;</span>
+            <div class="step reveal">
+                <div class="step-num">03</div>
+                <div class="step-label">Customers Prove Eligibility</div>
+                <div class="step-desc">Customers present a small piece of math (a Merkle proof) that shows they qualify &mdash; without revealing any personal details.</div>
+            </div>
+            <span class="arrow">&rarr;</span>
+            <div class="step reveal">
+                <div class="step-num">04</div>
+                <div class="step-label">Unlock Rewards</div>
+                <div class="step-desc">Digital collectibles, tokens, or discounts are released automatically. Rewards are portable &mdash; usable across apps and blockchains.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════ FEATURES ════ -->
+<section id="features">
+    <h2 class="section-title">Features</h2>
+    <div class="container">
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <h3>Customer Data Stays Private</h3>
+                <p>The blockchain only ever sees cryptographic fingerprints and proofs &mdash; never names, emails, or account balances. Your customers' data remains under your control.</p>
+            </div>
+            <div class="feature-card reveal">
+                <h3>Rewards That Travel</h3>
+                <p>Offer digital collectibles, tokens, or discount codes. Because rewards live on-chain, customers can carry them across apps, wallets, and platforms.</p>
+            </div>
+            <div class="feature-card reveal">
+                <h3>Always Up to Date</h3>
+                <p>Network validators confirm a fresh snapshot of your data every block &mdash; so customers can claim rewards in real time, not after batch processing.</p>
+            </div>
+            <div class="feature-card reveal">
+                <h3>No Middleman Required</h3>
+                <p>A smart contract checks every claim automatically. No one decides who qualifies &mdash; the math verifies it, so the process is transparent and tamper-proof.</p>
+            </div>
+            <div class="feature-card reveal">
+                <h3>Grows With Your Data</h3>
+                <p>When your loyalty data changes &mdash; new purchases, updated tiers &mdash; a fresh fingerprint is published. Customers can claim against any confirmed snapshot, past or present.</p>
+            </div>
+            <div class="feature-card reveal">
+                <h3>Works With Any Database</h3>
+                <p>PostgreSQL, MySQL, or any schema you already use. HashMerchant connects to your existing data &mdash; no migration required.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════ ARCHITECTURE ════ -->
+<section id="architecture">
+    <h2 class="section-title">Under the Hood</h2>
+    <p style="text-align:center;max-width:560px;margin:-.75rem auto 2rem">Data flows from your database through a cryptographic pipeline to the blockchain. Here is how the pieces connect.</p>
+  
+    <div class="container">
+        <div class="arch-flow reveal">
+            <div class="flow-node">
+                <div class="node-header">Your Database</div>
+                <div class="node-body">PostgreSQL, MySQL, etc.</div>
+            </div>
+            <div class="flow-connector">
+                <div class="conn-arrow">→</div>
+                <div class="conn-label">hash</div>
+            </div>
+            <div class="flow-node compact">
+                <div class="node-header">Fingerprint</div>
+                <div class="node-body">Merkle root</div>
+            </div>
+            <div class="flow-connector">
+                <div class="conn-arrow">→</div>
+                <div class="conn-label">publish</div>
+            </div>
+            <div class="flow-node">
+                <div class="node-header">Terp Chain</div>
+                <div class="node-body">hashmerchant<br>module</div>
+            </div>
+        </div>
+        
+        <div class="arch-flow reveal" style="justify-content:center;">
+            <div class="flow-connector down">
+                <div class="conn-arrow">↓</div>
+                <div class="conn-label">route</div>
+            </div>
+        </div>
+        
+        <div class="arch-branch reveal">
+            <div class="flow-node wide">
+                <div class="node-header">Smart Contract</div>
+                <div class="node-body">Verifier — checks Merkle proofs automatically</div>
+            </div>
+        </div>
+        
+        <div class="arch-flow reveal" style="justify-content:center;">
+            <div class="flow-connector down">
+                <div class="conn-arrow">↓</div>
+                <div class="conn-label">check</div>
+            </div>
+        </div>
+        
+        <div class="arch-flow reveal" style="justify-content:center;">
+            <div class="flow-node">
+                <div class="node-header">Customer Claims</div>
+                <div class="node-body">Rewards unlocked</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════ CODE SNIPPET ════ -->
+<section class="code-section">
+    <h2 class="section-title">What a Claim Looks Like</h2>
+    <p style="text-align:center;max-width:560px;margin:-.75rem auto 2rem">When a customer claims a reward, this is the message sent to the blockchain. The proof shows eligibility without revealing any personal data.</p>
+    <div class="container">
+        <div class="code-block reveal">
+<pre><span class="cp">{</span>
+  <span class="ck">"claim_rewards"</span><span class="cp">: {</span>
+    <span class="ck">"leaf_hash"</span><span class="cp">:</span> <span class="cs">"a1b2c3..."</span><span class="cp">,</span>
+    <span class="ck">"proof"</span><span class="cp">: [</span>
+      <span class="cp">{</span> <span class="ck">"sibling"</span><span class="cp">:</span> <span class="cs">"d4e5f6..."</span><span class="cp">,</span> <span class="ck">"is_right"</span><span class="cp">:</span> <span class="cn">true</span> <span class="cp">}</span>
+    <span class="cp">],</span>
+    <span class="ck">"root_index"</span><span class="cp">:</span> <span class="cn">0</span>
+  <span class="cp">}</span>
+<span class="cp">}</span></pre>
+        </div>
+    </div>
+</section>
+
+<!-- ════ OPEN BY DESIGN ════ -->
+<section id="open-design">
+    <h2 class="section-title">Open by Design</h2>
+    <div class="container" style="max-width:760px">
+        <div class="open-grid">
+            <div class="open-card reveal">
+                <h3>No Permission Needed</h3>
+                <p>Anyone can publish a Merkle root and create a reward program. There is no approval process, no gatekeeping, no platform fee to get started. If you have a database and customers, you can launch a loyalty system today.</p>
+            </div>
+            <div class="open-card reveal">
+                <h3>No Trust Required</h3>
+                <p>Customers don't have to trust the company &mdash; and companies don't have to trust each other. The blockchain and the smart contract are the only arbiters. Every claim is verified by math, not by a middleman's decision.</p>
+            </div>
+            <div class="open-card reveal">
+                <h3>Rewards That Stack</h3>
+                <p>A local coffee roaster, a neighborhood co-op, and a national brand can each run their own program &mdash; and a customer who shops at all three can qualify for rewards across every one of them. Programs overlap naturally because they share the same verification layer, not because anyone signed a partnership deal.</p>
+            </div>
+            <div class="open-card reveal">
+                <h3>Communities Curate, Customers Benefit</h3>
+                <p>Vendors, brands, and communities each decide what to reward and how. A surf shop can offer collectibles to loyal locals. A DAO can unlock perks for active members. Because every program lives on the same chain, customers carry one identity across all of them &mdash; and new reward combinations emerge that no single company could design alone.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══─ FOOTER ════ -->
+<footer>
+    <div>No Permission Required &middot; Built on Terp Network</div>
+    <div style="margin-top:0.5rem;font-size:0.75rem;color:var(--text-muted)">Powered by HashMerchant</div>
+</footer>
+
+<!-- ════ FAB Nav ════ -->
+<div id="fab-nav">
+    <div id="fab-menu" role="menu" aria-hidden="true">
+        <div class="fab-label">Navigate</div>
+        <a href="#how-it-works" role="menuitem">How It Works</a>
+        <a href="#features" role="menuitem">Features</a>
+        <a href="#architecture" role="menuitem">Architecture</a>
+        <div class="fab-divider" role="separator"></div>
+        <a href="/" role="menuitem">Home</a>
+        <a href="/mint" role="menuitem">Mint Fractals</a>
+    </div>
+    <button id="fab-btn" aria-label="Menu" aria-expanded="false" aria-controls="fab-menu">+</button>
+</div>
+
+<!-- ════ JS ════ -->
+<script>
+// ── Hopalong Fractal ─────────────────────────────────────────
+const canvas = document.getElementById('fractal-canvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+const pixelSize = 5;
+let width, height, cols, rows;
+let hitBuffer = null;
+let maxHit = 0;
+let fractalX = 0, fractalY = 0;
+let currentIteration = 0;
+
+function resizeCanvas() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    cols = Math.floor(width / pixelSize);
+    rows = Math.floor(height / pixelSize);
+    resetFractal();
+}
+
+function resetFractal() {
+    hitBuffer = new Uint32Array(cols * rows);
+    maxHit = 0;
+    currentIteration = 0;
+    fractalX = 0;
+    fractalY = 0;
+}
+
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const fractalSequences = [
+    {
+        name: 'Classic',
+        params: { a: -2.0, b: -0.33, c: 0.01, d: -1, s: -1, f: 1, g: 0, h: 0 },
+        baseRange: 35,
+        zooms: [
+            { cx: 0, cy: 0, scale: 1.0 },
+            { cx: 0, cy: 0, scale: 1.5 },
+            { cx: 2, cy: -3, scale: 2.5 },
+            { cx: 2, cy: -3, scale: 4.0 },
+            { cx: 0, cy: 0, scale: 1.0 },
+        ]
+    },
+    {
+        name: 'Spiral',
+        params: { a: 0.4, b: 1.1, c: 0.0, d: -1, s: -1, f: 1, g: 0, h: 0 },
+        baseRange: 14,
+        zooms: [
+            { cx: 0, cy: 0, scale: 1.0 },
+            { cx: 1, cy: 1, scale: 2.0 },
+            { cx: 1, cy: 1, scale: 3.5 },
+            { cx: 0, cy: 0, scale: 1.0 },
+        ]
+    },
+    {
+        name: 'Cosmic Web',
+        params: { a: -3.14, b: 0.2, c: 0.3, d: -1, s: -1, f: 1, g: 0, h: 0 },
+        baseRange: 80,
+        zooms: [
+            { cx: 0, cy: 0, scale: 1.0 },
+            { cx: 0, cy: 0, scale: 1.8 },
+            { cx: 5, cy: 5, scale: 3.0 },
+            { cx: 5, cy: 5, scale: 5.0 },
+            { cx: 0, cy: 0, scale: 1.0 },
+        ]
+    },
+];
+
+let currentSequenceIndex = 0;
+let currentZoomIndex = 0;
+let zoomProgress = 0;
+const transitionDuration = 6000;
+const iterationsPerFrame = 60000;
+const maxIterations = 2500000;
+let lastTimestamp = 0;
+let colorOffset = 0;
+
+function getCurrentView() {
+    const seq = fractalSequences[currentSequenceIndex];
+    const zoom1 = seq.zooms[currentZoomIndex];
+    const zoom2 = seq.zooms[(currentZoomIndex + 1) % seq.zooms.length];
+
+    const cx = interpolate(zoom1.cx, zoom2.cx, zoomProgress);
+    const cy = interpolate(zoom1.cy, zoom2.cy, zoomProgress);
+    const scale = interpolateZoom(zoom1.scale, zoom2.scale, zoomProgress);
+
+    const range = seq.baseRange / scale;
+    return {
+        xMin: cx - range / 2, xMax: cx + range / 2,
+        yMin: cy - range / 2, yMax: cy + range / 2,
+        scale
+    };
+}
+
+function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function interpolateZoom(start, end, progress) {
+    const ep = easeInOutCubic(progress);
+    return Math.exp(Math.log(start) + (Math.log(end) - Math.log(start)) * ep);
+}
+
+function interpolate(start, end, progress) {
+    return start + (end - start) * easeInOutCubic(progress);
+}
+
+const colorPalette = new Array(120);
+for (let i = 0; i < 120; i++) {
+    const hue = (i * 10) % 360;
+    const h = hue / 60;
+    const c = 0.7;
+    const x = c * (1 - Math.abs(h % 2 - 1));
+    const m = 0.5 - c / 2;
+    let rr, gg, bb;
+    if (h < 1) { rr = c; gg = x; bb = 0; }
+    else if (h < 2) { rr = x; gg = c; bb = 0; }
+    else if (h < 3) { rr = 0; gg = c; bb = x; }
+    else if (h < 4) { rr = 0; gg = x; bb = c; }
+    else if (h < 5) { rr = x; gg = 0; bb = c; }
+    else { rr = c; gg = 0; bb = x; }
+    colorPalette[i] = [
+        Math.floor((rr + m) * 255),
+        Math.floor((gg + m) * 255),
+        Math.floor((bb + m) * 255)
+    ];
+}
+
+function hopalongIterate(params) {
+    const { a, b, c, d, s, f, g, h } = params;
+    const bxc = b * fractalX - c;
+    const absBxc = Math.abs(bxc);
+    const signFactor = fractalX < 0 ? s : 1;
+    const term = f * Math.sqrt(absBxc) + g * Math.sin(bxc) + h * absBxc;
+    const xNew = fractalY + d * signFactor * term;
+    const yNew = a - fractalX;
+    fractalX = xNew;
+    fractalY = yNew;
+}
+
+function worldToGrid(wx, wy, view) {
+    const { xMin, xMax, yMin, yMax } = view;
+    const xRange = xMax - xMin;
+    const yRange = yMax - yMin;
+    const sc = Math.min(cols / xRange, rows / yRange);
+    const oX = (cols - xRange * sc) / 2;
+    const oY = (rows - yRange * sc) / 2;
+    return {
+        gx: Math.floor((wx - xMin) * sc + oX),
+        gy: Math.floor((wy - yMin) * sc + oY)
+    };
+}
+
+function renderHitBuffer() {
+    const imageData = ctx.createImageData(width, height);
+    const data = imageData.data;
+    const data32 = new Uint32Array(data.buffer);
+
+    if (maxHit === 0) { ctx.putImageData(imageData, 0, 0); return; }
+
+    const logMax = Math.log(maxHit + 1);
+
+    for (let gy = 0; gy < rows; gy++) {
+        for (let gx = 0; gx < cols; gx++) {
+            const hitIdx = gy * cols + gx;
+            if (hitBuffer[hitIdx] > 0) {
+                const logVal = Math.log(hitBuffer[hitIdx] + 1) / logMax;
+                const iter = logVal * 119;
+                const shiftedIter = (iter + colorOffset) % 120;
+                const colorIndex1 = Math.floor(shiftedIter) % 120;
+                const colorIndex2 = (colorIndex1 + 1) % 120;
+                const blend = shiftedIter - Math.floor(shiftedIter);
+                const [r1, g1, b1] = colorPalette[colorIndex1];
+                const [r2, g2, b2] = colorPalette[colorIndex2];
+                const r = Math.floor(r1 + (r2 - r1) * blend);
+                const g = Math.floor(g1 + (g2 - g1) * blend);
+                const b = Math.floor(b1 + (b2 - b1) * blend);
+                const color32 = (255 << 24) | (b << 16) | (g << 8) | r;
+                const basePixelX = gx * pixelSize;
+                const basePixelY = gy * pixelSize;
+                for (let py = 0; py < pixelSize; py++) {
+                    const pixelY = basePixelY + py;
+                    if (pixelY >= height) break;
+                    for (let px = 0; px < pixelSize; px++) {
+                        const pixelX = basePixelX + px;
+                        if (pixelX >= width) break;
+                        data32[pixelY * width + pixelX] = color32;
+                    }
+                }
+            }
+        }
+    }
+    ctx.putImageData(imageData, 0, 0);
+}
+
+function drawFractal(timestamp) {
+    if (lastTimestamp === 0) lastTimestamp = timestamp;
+    const deltaTime = timestamp - lastTimestamp;
+    lastTimestamp = timestamp;
+
+    const seq = fractalSequences[currentSequenceIndex];
+    const view = getCurrentView();
+
+    colorOffset = (colorOffset + deltaTime / 150) % 120;
+    zoomProgress += deltaTime / transitionDuration;
+
+    if (currentIteration < maxIterations) {
+        for (let i = 0; i < iterationsPerFrame && currentIteration < maxIterations; i++, currentIteration++) {
+            hopalongIterate(seq.params);
+            const { gx, gy } = worldToGrid(fractalX, fractalY, view);
+            if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) {
+                const idx = gy * cols + gx;
+                hitBuffer[idx]++;
+                if (hitBuffer[idx] > maxHit) maxHit = hitBuffer[idx];
+            }
+        }
+    }
+
+    renderHitBuffer();
+
+    if (zoomProgress >= 1) {
+        zoomProgress = 0;
+        currentZoomIndex = (currentZoomIndex + 1) % seq.zooms.length;
+        if (currentZoomIndex === 0) {
+            currentSequenceIndex = (currentSequenceIndex + 1) % fractalSequences.length;
+            resetFractal();
+        }
+    }
+
+    requestAnimationFrame(drawFractal);
+}
+requestAnimationFrame(drawFractal);
+
+// ── FAB Toggle ────────────────────────────────────────────────
+var fabBtn = document.getElementById('fab-btn');
+var fabMenu = document.getElementById('fab-menu');
+
+function toggleFab(open) {
+    var isOpen = open !== undefined ? open : (fabMenu.style.display === 'flex');
+    fabMenu.style.display = isOpen ? 'none' : 'flex';
+    fabMenu.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
+    fabBtn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    fabBtn.textContent = isOpen ? '+' : '×';
+}
+
+fabBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    toggleFab();
+});
+
+document.addEventListener('click', function(e) {
+    var f = document.getElementById('fab-nav');
+    if (f && !f.contains(e.target)) {
+        toggleFab(true);
+    }
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        var fabNav = document.getElementById('fab-nav');
+        if (fabNav && fabNav.contains(document.activeElement) || fabMenu.style.display === 'flex') {
+            toggleFab(true);
+            fabBtn.focus();
+        }
+    }
+});
+
+// ── Scroll Reveal ─────────────────────────────────────────────
+const revealIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            revealIO.unobserve(e.target);
+        }
+    });
+}, { threshold: 0.15 });
+document.querySelectorAll('.reveal').forEach(el => revealIO.observe(el));
+</script>
+</body>
+</html>
