@@ -1,0 +1,20 @@
+{
+  "brand": "PERMISSIONLESS.MONEY",
+  "nav": {
+    "loyalty": "Loyalty",
+    "zk": "ZK",
+    "contact": "お問い合わせ",
+    "github": "GitHub"
+  },
+  "footer": {
+    "copy": "Built on Terp Network · オープンソース · 許可不要"
+  },
+  "lang": {
+    "label": "言語",
+    "en": "English",
+    "es": "Español",
+    "zh": "中文",
+    "ja": "日本語",
+    "pt": "Português"
+  }
+}

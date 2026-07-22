@@ -1,0 +1,2941 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Early i18n: set <html lang> before paint. Do NOT hide body (S3/module lag → black page). -->
+    <script>
+        (function () {
+            try {
+                var q = new URLSearchParams(location.search).get('lang');
+                var s = null;
+                try { s = localStorage.getItem('pm_lang'); } catch (e) { }
+                var raw = q || s || '';
+                var lang = String(raw || '').toLowerCase().split('-')[0];
+                var avail = ['en', 'es', 'zh', 'ja', 'pt'];
+                if (lang && avail.indexOf(lang) >= 0) {
+                    document.documentElement.lang = lang;
+                    document.documentElement.dataset.lang = lang;
+                }
+            } catch (e) { }
+        })();
+    </script>
+    <title>ZK-CosmWasm | Zcash Community Grants · Permissionless.Money</title>
+    <meta name="description" data-i18n-content="meta.description"
+        content="Zcash Community Grants residual: selective-disclosure smart contract VM at the edge of the Zcash ecosystem — native proof verify, light-client interop, composition demos, community audit + design-space hackathon. $240,000 ask.">
+
+    <link rel="icon" type="image/png" sizes="16x16" href="/public/favicons/p-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/public/favicons/p-32x32.png">
+    <link rel="icon" type="image/png" sizes="128x128" href="/public/favicons/p-128x128.png">
+    <link rel="shortcut icon" type="image/png" href="/public/favicons/p-32x32.png">
+    <link rel="manifest" href="/public/favicons/site.webmanifest">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="ZK-CosmWasm · Zcash Community Grants">
+    <meta property="twitter:description"
+        content="ZCG residual $240k: selective-disclosure CosmWasm VM, native Zcash interop for DAOs, composition demos, community audit and design-space hackathon.">
+    <meta property="og:title" content="ZK-CosmWasm · Zcash Community Grants">
+    <meta property="og:description"
+        content="Selective-disclosure VM and smart-contract path for extending the edge of the Zcash ecosystem with native interop. Residual ZCG application.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://permissionless.money/zk">
+
+    <link rel="preconnect" href="https://fonts.cdnfonts.com/css/satoshi">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.cdnfonts.com/css/satoshi" rel="stylesheet">
+
+    <style>
+        /* Locale state only — never hide the page (visibility:hidden caused black screen on S3) */
+        html.i18n-ready {
+            /* hook for optional styling */
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        :root {
+            --bg: #08090d;
+            --surface: rgba(33, 34, 44, 0.82);
+            --surface-solid: #1a1b24;
+            --border: #44475a;
+            --border-subtle: rgba(255, 255, 255, 0.07);
+            --text: #f8f8f2;
+            --text-muted: #b0bad8;
+            /* warmer, less thin-looking than slate */
+            --text-dim: #8b96b8;
+            --accent: #bd93f9;
+            --accent-teal: #b1ebeb;
+            --accent-green: #50fa7b;
+            --accent-orange: #ffb86c;
+            --mono: 'Satoshi', system-ui, sans-serif;
+            --desk-h: min(78vh, 820px);
+            --fw-body: 500;
+            --fw-strong: 650;
+            --fw-title: 700;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-text-size-adjust: 100%
+        }
+
+        body {
+            font-family: var(--mono);
+            background-color: var(--bg);
+            color: var(--text);
+            font-size: 1.18rem;
+            font-weight: var(--fw-body);
+            line-height: 1.65;
+            /* subpixel keeps strokes fuller than antialiased (which looks skinny) */
+            -webkit-font-smoothing: subpixel-antialiased;
+            -moz-osx-font-smoothing: auto;
+            text-rendering: optimizeLegibility;
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        #fractal-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.17;
+            pointer-events: none;
+        }
+
+        /* ── Header ─────────────────────────────────────────── */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1rem 1.75rem;
+            padding-top: max(1rem, env(safe-area-inset-top));
+            padding-left: max(1rem, env(safe-area-inset-left));
+            padding-right: max(1rem, env(safe-area-inset-right));
+            background: rgba(8, 9, 13, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(189, 147, 249, 0.1);
+        }
+
+        .header-brand {
+            color: var(--accent-teal);
+            font-weight: var(--fw-title);
+            font-size: 1.2rem;
+            text-decoration: none;
+            letter-spacing: 0.01em;
+            flex-shrink: 0;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            min-width: 0;
+        }
+
+        .header-nav a,
+        .header-nav .nav-link-btn {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 1.08rem;
+            font-weight: var(--fw-strong);
+            transition: color .2s;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            padding: 0.45rem 0.15rem;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .header-nav a:hover,
+        .header-nav a.active,
+        .header-nav .nav-link-btn:hover,
+        .header-nav .nav-link-btn.active {
+            color: var(--accent)
+        }
+
+        .lang-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.88rem;
+            color: var(--text-dim);
+            font-weight: var(--fw-strong);
+        }
+
+        .lang-switch-label {
+            display: none
+        }
+
+        .lang-switch select {
+            font-family: inherit;
+            font-size: 0.92rem;
+            font-weight: var(--fw-strong);
+            color: var(--text);
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 0.35rem 0.45rem;
+            min-height: 40px;
+            cursor: pointer;
+        }
+
+        @media (min-width:720px) {
+            .lang-switch-label {
+                display: inline
+            }
+        }
+
+        /* ── Hero (tight essence) ───────────────────────────── */
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 6.5rem 1.5rem 1.5rem;
+            max-width: 1120px;
+            margin: 0 auto;
+        }
+
+        .hero-eyebrow {
+            font-size: 0.95rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 0.75rem;
+            font-weight: var(--fw-title);
+        }
+
+        .hero h1 {
+            font-size: clamp(1.85rem, 5.5vw, 3.35rem);
+            font-weight: var(--fw-title);
+            color: var(--accent-teal);
+            line-height: 1.18;
+            text-shadow: 0 0 28px rgba(189, 147, 249, 0.25);
+            max-width: min(22ch, 100%);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+
+        .hero-essence {
+            margin-top: 1.15rem;
+            max-width: 42rem;
+            font-size: clamp(1.08rem, 2.4vw, 1.4rem);
+            font-weight: var(--fw-body);
+            color: #d4d8d4;
+            line-height: 1.6;
+        }
+
+        .hero-essence strong {
+            color: #f2f3ef;
+            font-weight: var(--fw-title)
+        }
+
+        /* Inline links match tablet body — not title weight/color */
+        .hero-essence a {
+            color: var(--accent);
+            font-weight: inherit;
+            font-size: inherit;
+            text-decoration: none;
+            text-shadow: none;
+        }
+
+        .hero-essence a:hover {
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.9rem 1.65rem;
+            font-family: var(--mono);
+            font-size: 1.1rem;
+            font-weight: var(--fw-title);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            border: none;
+            min-height: 48px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #bd93f9 0%, #50fa7b 100%);
+            color: #08090d;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.92;
+            transform: translateY(-1px)
+        }
+
+        .btn-outline {
+            background: rgba(189, 147, 249, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(189, 147, 249, 0.35);
+        }
+
+        .btn-outline:hover {
+            background: rgba(189, 147, 249, 0.18)
+        }
+
+        .btn-sm {
+            padding: 0.65rem 1.1rem;
+            font-size: 1.02rem
+        }
+
+        /* ── Desk: tablet + side ────────────────────────────── */
+        .desk {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0.5rem 1.25rem 2.5rem;
+            display: grid;
+            grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+            gap: 1.15rem;
+            align-items: stretch;
+            min-height: var(--desk-h);
+        }
+
+        /* Side column */
+        .side {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .side-nav {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 0.55rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .side-nav button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            font-family: var(--mono);
+            font-size: 1.05rem;
+            font-weight: var(--fw-strong);
+            padding: 0.7rem 0.85rem;
+            margin: 0.15rem 0;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-muted);
+            transition: background .15s, color .15s;
+        }
+
+        .side-nav button:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.04)
+        }
+
+        .side-nav button.active {
+            background: rgba(189, 147, 249, 0.14);
+            color: var(--accent-teal);
+            box-shadow: inset 3px 0 0 var(--accent);
+        }
+
+        .side-nav .nav-num {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            margin-right: 0.45rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .side-nav button.active .nav-num {
+            color: var(--accent)
+        }
+
+        .side-card {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 1.1rem 1.15rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .side-card .kicker {
+            font-size: 0.82rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 0.4rem;
+            font-weight: var(--fw-title);
+        }
+
+        .side-card h3 {
+            font-size: 1.15rem;
+            color: var(--accent-teal);
+            font-weight: var(--fw-title);
+            margin-bottom: 0.45rem;
+        }
+
+        .side-card p {
+            font-size: 1.05rem;
+            font-weight: var(--fw-body);
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
+
+        .side-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .side-metrics div {
+            background: rgba(0, 0, 0, 0.28);
+            border-radius: 8px;
+            padding: 0.55rem 0.6rem;
+        }
+
+        .side-metrics strong {
+            display: block;
+            font-size: 1.05rem;
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .side-metrics span {
+            font-size: 0.88rem;
+            color: var(--text-dim);
+            line-height: 1.3
+        }
+
+        .side-card .actions {
+            margin-top: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem
+        }
+
+        .side-card .actions .btn {
+            width: 100%;
+            justify-content: center
+        }
+
+        /* Grant overview sidecard */
+        .side-card-grant {
+            border-color: rgba(189, 147, 249, 0.18);
+        }
+
+        .grant-ask {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            margin: 0.55rem 0 0.85rem;
+            padding: 0.7rem 0.8rem;
+            border-radius: 10px;
+            background: rgba(189, 147, 249, 0.08);
+            border: 1px solid rgba(189, 147, 249, 0.16);
+        }
+
+        .grant-ask-amt {
+            font-size: 1.55rem;
+            font-weight: 600;
+            color: var(--accent-teal);
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .grant-ask-note {
+            font-size: 0.92rem;
+            color: var(--text-dim);
+            line-height: 1.35;
+        }
+
+        .grant-ms {
+            list-style: none;
+            margin: 0 0 0.15rem;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .grant-ms li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-size: 0.98rem;
+            font-weight: var(--fw-body);
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        .grant-ms .ms-dot {
+            flex-shrink: 0;
+            width: 0.55rem;
+            height: 0.55rem;
+            border-radius: 50%;
+            margin-top: 0.35rem;
+            border: 2px solid var(--accent);
+            background: transparent;
+        }
+
+        .grant-ms li.done {
+            color: #c8d0c8
+        }
+
+        .grant-ms li.done .ms-dot {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .grant-ms li.next .ms-dot {
+            border-color: rgba(189, 147, 249, 0.55);
+        }
+
+        /* Main tablet */
+        .tablet {
+            background: linear-gradient(165deg, rgba(26, 27, 36, 0.95), rgba(12, 13, 18, 0.97));
+            border: 1px solid rgba(189, 147, 249, 0.16);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            display: flex;
+            flex-direction: column;
+            min-height: var(--desk-h);
+            max-height: var(--desk-h);
+            overflow: hidden;
+        }
+
+        .tablet-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid var(--border-subtle);
+            background: rgba(0, 0, 0, 0.25);
+        }
+
+        .tablet-bar .title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--accent-teal);
+        }
+
+        .tablet-bar .pills {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap
+        }
+
+        .pill {
+            font-size: 0.82rem;
+            letter-spacing: 0.04em;
+            padding: 0.3rem 0.7rem;
+            border-radius: 999px;
+            border: 1px solid;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .pill.live {
+            color: var(--accent-green);
+            border-color: rgba(80, 250, 123, 0.4);
+            background: rgba(80, 250, 123, 0.1);
+        }
+
+        .pill.grant {
+            color: var(--accent);
+            border-color: rgba(189, 147, 249, 0.4);
+            background: rgba(189, 147, 249, 0.1);
+        }
+
+        .pill.partial {
+            color: var(--accent-orange);
+            border-color: rgba(255, 184, 108, 0.4);
+            background: rgba(255, 184, 108, 0.1);
+        }
+
+        .tablet-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.35rem 1.45rem 1.75rem;
+            scrollbar-width: thin;
+        }
+
+        .panel {
+            display: none;
+            animation: fadeIn .25s ease
+        }
+
+        .panel.active {
+            display: block
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        .panel h2 {
+            font-size: clamp(1.45rem, 2.5vw, 1.75rem);
+            font-weight: var(--fw-title);
+            color: var(--accent-teal);
+            margin-bottom: 0.5rem;
+        }
+
+        .panel .lede {
+            font-size: 1.2rem;
+            font-weight: var(--fw-body);
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.35rem;
+            max-width: 48rem;
+        }
+
+        /* Block grid (curated grant description) */
+        .blocks {
+            display: grid;
+            gap: 0.85rem;
+        }
+
+        .blocks.cols-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr))
+        }
+
+        .blocks.cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr))
+        }
+
+        /* Inline cols-2 grids used in panels */
+        .blocks[style*="grid-template-columns:1fr 1fr"] {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .block {
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.15rem 1.2rem;
+            transition: border-color .2s;
+            min-width: 0;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .block a,
+        .block button.text-panel-link {
+            word-break: break-word;
+        }
+
+        .block:hover {
+            border-color: rgba(189, 147, 249, 0.22)
+        }
+
+        .block .label {
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-weight: var(--fw-title);
+            margin-bottom: 0.4rem;
+        }
+
+        .block h3 {
+            font-size: 1.22rem;
+            color: #eceeea;
+            font-weight: var(--fw-title);
+            margin-bottom: 0.45rem;
+            line-height: 1.3;
+        }
+
+        .block p,
+        .block li {
+            font-size: 1.1rem;
+            font-weight: var(--fw-body);
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .block strong {
+            font-weight: var(--fw-title);
+            color: #e8eae6
+        }
+
+        .block ul {
+            margin: 0.35rem 0 0 1.1rem
+        }
+
+        .block li {
+            margin-bottom: 0.3rem
+        }
+
+        .block .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .block a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .block a:hover {
+            text-decoration: underline
+        }
+
+        .block.accent-edge {
+            border-left: 3px solid var(--accent);
+        }
+
+        .block.green-edge {
+            border-left: 3px solid var(--accent-green)
+        }
+
+        .block.orange-edge {
+            border-left: 3px solid var(--accent-orange)
+        }
+
+        .block .status-row h3 {
+            margin-bottom: 0
+        }
+
+        /* Stack inventory · filterable containers */
+        .stack-filters {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 0.4rem;
+            margin: 0 0 1.1rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 0.2rem;
+        }
+
+        .stack-filters::-webkit-scrollbar {
+            display: none
+        }
+
+        .stack-filters button {
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 0.55rem 0.9rem;
+            border-radius: 999px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.28);
+            color: var(--text-muted);
+            transition: background .15s, color .15s, border-color .15s;
+            flex: 0 0 auto;
+            min-height: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .stack-filters button:hover {
+            color: var(--text);
+            border-color: rgba(189, 147, 249, 0.3)
+        }
+
+        .stack-filters button.active {
+            background: rgba(189, 147, 249, 0.16);
+            color: var(--accent-teal);
+            border-color: rgba(189, 147, 249, 0.4);
+        }
+
+        .stack-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.85rem;
+        }
+
+        .stack-item .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.65rem;
+        }
+
+        .stack-item .tag {
+            font-size: 0.75rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-dim);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .stack-item .tag.tag-verify {
+            color: #98e8c1;
+            border-color: rgba(80, 250, 123, 0.25)
+        }
+
+        .stack-item .tag.tag-clients {
+            color: #8be9fd;
+            border-color: rgba(139, 233, 253, 0.25)
+        }
+
+        .stack-item .tag.tag-vote {
+            color: #ffb86c;
+            border-color: rgba(255, 184, 108, 0.3)
+        }
+
+        .stack-item .tag.tag-accounts {
+            color: #bd93f9;
+            border-color: rgba(189, 147, 249, 0.3)
+        }
+
+        .stack-item .tag.tag-mesh {
+            color: #b1ebeb;
+            border-color: rgba(177, 235, 235, 0.3)
+        }
+
+        .stack-item .tag.tag-ops {
+            color: #f1fa8c;
+            border-color: rgba(241, 250, 140, 0.25)
+        }
+
+        .stack-item.is-hidden {
+            display: none
+        }
+
+        .stack-empty {
+            display: none;
+            grid-column: 1/-1;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 1.05rem;
+            padding: 1.5rem;
+        }
+
+        .stack-grid.filter-empty .stack-empty {
+            display: block
+        }
+
+        .inline-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+            margin-top: 1rem;
+        }
+
+        .inline-links a {
+            font-size: 1rem;
+            padding: 0.45rem 0.85rem;
+            border-radius: 8px;
+            background: rgba(189, 147, 249, 0.08);
+            border: 1px solid rgba(189, 147, 249, 0.22);
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .inline-links a:hover,
+        .inline-links .inline-link-btn:hover {
+            background: rgba(189, 147, 249, 0.15)
+        }
+
+        .inline-links .inline-link-btn {
+            font-size: 1rem;
+            padding: 0.45rem 0.85rem;
+            border-radius: 8px;
+            background: rgba(189, 147, 249, 0.08);
+            border: 1px solid rgba(189, 147, 249, 0.22);
+            color: var(--accent);
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .text-panel-link {
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+            font: inherit;
+            font-size: 1.22rem;
+            font-weight: 600;
+            color: var(--accent-teal);
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .text-panel-link:hover {
+            color: var(--accent);
+            text-decoration: underline
+        }
+
+
+        /* Walk path steps */
+        .path-steps {
+            list-style: none;
+            margin: 1rem 0 0;
+            padding: 0;
+            display: grid;
+            gap: 0.55rem;
+        }
+
+        .path-steps li {
+            display: grid;
+            grid-template-columns: 2.1rem 1fr;
+            gap: 0.65rem;
+            align-items: start;
+            padding: 0.7rem 0.85rem;
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+        }
+
+        .path-steps .step-n {
+            font-size: 0.85rem;
+            font-weight: var(--fw-title);
+            color: var(--accent);
+            letter-spacing: 0.04em;
+        }
+
+        .path-steps strong {
+            color: var(--accent-teal);
+            font-weight: var(--fw-title)
+        }
+
+        .path-steps span.step-body {
+            color: var(--text-muted);
+            font-size: 1.02rem;
+            line-height: 1.5
+        }
+
+        .path-steps .step-plain {
+            display: block;
+            color: var(--text);
+            margin-bottom: 0.15rem;
+        }
+
+        .path-steps .step-tech {
+            display: block;
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            margin-top: 0.2rem;
+        }
+
+        /* Progressive disclosure helpers */
+        .usecase-list {
+            list-style: none;
+            display: grid;
+            gap: 0.65rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        .usecase-list li {
+            padding: 0.75rem 0.9rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-subtle);
+            background: rgba(0, 0, 0, 0.22);
+        }
+
+        .usecase-list strong {
+            display: block;
+            color: var(--accent-teal, #8be9fd);
+            margin-bottom: 0.25rem;
+            font-size: 1.02rem;
+        }
+
+        details.tech-fold {
+            margin-top: 0.75rem;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        details.tech-fold>summary {
+            cursor: pointer;
+            list-style: none;
+            padding: 0.7rem 0.95rem;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.98rem;
+            user-select: none;
+        }
+
+        details.tech-fold>summary::-webkit-details-marker {
+            display: none;
+        }
+
+        details.tech-fold>summary::before {
+            content: '▸ ';
+            color: var(--text-dim);
+        }
+
+        details.tech-fold[open]>summary::before {
+            content: '▾ ';
+        }
+
+        details.tech-fold .fold-body {
+            padding: 0 0.95rem 0.9rem;
+            color: var(--text-muted);
+            font-size: 1.02rem;
+        }
+
+        details.tech-fold .fold-body p+p {
+            margin-top: 0.5rem;
+        }
+
+        .residual-callout {
+            margin-top: 0.35rem;
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(80, 250, 123, 0.25);
+            background: rgba(80, 250, 123, 0.06);
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            line-height: 1.55;
+        }
+
+        .residual-callout strong {
+            color: var(--text);
+        }
+
+        /* Demo launch list */
+        .demo-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+            margin-top: 0.35rem
+        }
+
+        .demo-list button {
+            text-align: left;
+            width: 100%;
+            font-family: var(--mono);
+            cursor: pointer;
+            padding: 0.75rem 0.9rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-subtle);
+            background: rgba(0, 0, 0, 0.28);
+            color: var(--text);
+            transition: border-color .15s, background .15s;
+        }
+
+        .demo-list button:hover {
+            border-color: rgba(189, 147, 249, 0.4);
+            background: rgba(189, 147, 249, 0.08)
+        }
+
+        .demo-list .d-title {
+            display: block;
+            font-weight: var(--fw-title);
+            color: var(--accent-teal);
+            font-size: 1.05rem
+        }
+
+        .demo-list .d-desc {
+            display: block;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            line-height: 1.45
+        }
+
+        /* Pending demo host: blur launch list, ship desk now, wire later */
+        .demo-pending-wrap {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            min-height: 8rem;
+        }
+        .demo-pending-wrap .demo-pending-blur {
+            filter: blur(5px);
+            opacity: 0.42;
+            pointer-events: none;
+            user-select: none;
+            transform: scale(1.01);
+        }
+        .demo-pending-wrap .demo-pending-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 0.45rem;
+            padding: 1.25rem 1rem;
+            background: rgba(8, 9, 13, 0.55);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            border: 1px solid rgba(189, 147, 249, 0.22);
+            border-radius: 12px;
+        }
+        .demo-pending-wrap .demo-pending-badge {
+            font-size: 0.78rem;
+            font-weight: var(--fw-title);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent-orange);
+            border: 1px solid rgba(255, 184, 108, 0.45);
+            background: rgba(255, 184, 108, 0.1);
+            border-radius: 999px;
+            padding: 0.28rem 0.75rem;
+        }
+        .demo-pending-wrap .demo-pending-title {
+            font-size: 1.12rem;
+            font-weight: var(--fw-title);
+            color: #eceeea;
+            margin: 0;
+        }
+        .demo-pending-wrap .demo-pending-note {
+            font-size: 0.98rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            max-width: 28rem;
+            margin: 0;
+        }
+        /* Local iterate: ?demos=1 or body.demos-live removes gate */
+        body.demos-live .demo-pending-wrap .demo-pending-blur {
+            filter: none;
+            opacity: 1;
+            pointer-events: auto;
+            user-select: auto;
+            transform: none;
+        }
+        body.demos-live .demo-pending-wrap .demo-pending-overlay {
+            display: none;
+        }
+
+        /* hide component form-labels when empty / reduced */
+        .block>.label.muted-skip {
+            display: none
+        }
+
+        /* Grant timeline */
+        .timeline {
+            list-style: none;
+            margin: 1.25rem 0 0;
+            padding: 0 0 0 0.35rem;
+            border-left: 2px solid rgba(189, 147, 249, 0.22);
+        }
+
+        .tl-item {
+            position: relative;
+            padding: 0 0 1.15rem 1.35rem;
+        }
+
+        .tl-item:last-child {
+            padding-bottom: 0.25rem
+        }
+
+        .tl-mark {
+            position: absolute;
+            left: -0.45rem;
+            top: 0.35rem;
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            background: var(--surface-solid);
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 0 3px rgba(189, 147, 249, 0.12);
+        }
+
+        .tl-item.done .tl-mark {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 3px rgba(80, 250, 123, 0.15);
+        }
+
+        .tl-item.next .tl-mark {
+            background: transparent;
+            border-color: var(--accent);
+        }
+
+        .tl-card {
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1rem 1.15rem;
+        }
+
+        .tl-item.done .tl-card {
+            border-color: rgba(80, 250, 123, 0.18)
+        }
+
+        .tl-item.next .tl-card {
+            border-color: rgba(189, 147, 249, 0.2)
+        }
+
+        .tl-phase {
+            font-size: 0.82rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+
+        .tl-item.done .tl-phase {
+            color: var(--accent-green)
+        }
+
+        .tl-item.next .tl-phase {
+            color: var(--accent)
+        }
+
+        .tl-card h3 {
+            font-size: 1.18rem;
+            color: #eceeea;
+            font-weight: var(--fw-title);
+            margin-bottom: 0.4rem;
+            line-height: 1.3;
+        }
+
+        .tl-card p {
+            font-size: 1.08rem;
+            font-weight: var(--fw-body);
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 0.45rem;
+        }
+
+        .tl-card a {
+            color: var(--accent);
+            font-size: 1.02rem;
+            font-weight: var(--fw-strong);
+            text-decoration: none
+        }
+
+        .tl-card a:hover {
+            text-decoration: underline
+        }
+
+        /* Panel-nav buttons in timeline cards match card links */
+        .tl-card .inline-link-btn {
+            display: inline;
+            margin: 0;
+            padding: 0;
+            border: none;
+            background: none;
+            color: var(--accent);
+            font-family: inherit;
+            font-size: 1.02rem;
+            font-weight: var(--fw-strong);
+            cursor: pointer;
+            text-align: left;
+            text-decoration: none;
+        }
+
+        .tl-card .inline-link-btn:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer slim */
+        .footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 1.5rem 1.25rem 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .footer-copy {
+            font-size: 1rem;
+            color: var(--text-dim)
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.25rem;
+            margin-bottom: 0.65rem
+        }
+
+        .footer svg {
+            width: 28px;
+            height: 28px;
+            fill: #fff;
+            opacity: 0.45;
+            transition: opacity .2s, fill .2s
+        }
+
+        .footer a:hover svg {
+            fill: var(--accent);
+            opacity: 1
+        }
+
+        /* ── Responsive: tablet + mobile ─────────────────────── */
+        @media (max-width:1100px) {
+            .desk {
+                grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
+                gap: 0.9rem;
+            }
+
+            body {
+                font-size: 1.12rem
+            }
+        }
+
+        @media (max-width:960px) {
+            :root {
+                --desk-h: auto
+            }
+
+            .desk {
+                grid-template-columns: 1fr;
+                min-height: auto;
+                gap: 0.85rem;
+                display: flex;
+                flex-direction: column;
+            }
+
+            /* Nav first, sticky under header; content second; cards third */
+            .side {
+                order: 0;
+                display: contents;
+            }
+
+            .side-nav {
+                order: 0;
+                position: sticky;
+                top: calc(3.5rem + env(safe-area-inset-top, 0px));
+                z-index: 90;
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 0.35rem;
+                padding: 0.5rem 0.55rem;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                background: rgba(18, 19, 28, 0.94);
+                backdrop-filter: blur(14px);
+                -webkit-backdrop-filter: blur(14px);
+                border: 1px solid var(--border-subtle);
+                border-radius: 12px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            }
+
+            .side-nav::-webkit-scrollbar {
+                display: none
+            }
+
+            .side-nav button {
+                width: auto;
+                flex: 0 0 auto;
+                margin: 0;
+                font-size: 0.95rem;
+                padding: 0.6rem 0.85rem;
+                min-height: 44px;
+                white-space: nowrap;
+                border-radius: 8px;
+            }
+
+            .side-nav button.active {
+                box-shadow: none;
+                background: rgba(189, 147, 249, 0.2);
+            }
+
+            .tablet {
+                order: 1;
+                min-height: auto;
+                max-height: none;
+                border-radius: 14px;
+                overflow: visible;
+            }
+
+            .tablet-body {
+                overflow: visible;
+                max-height: none;
+                padding: 1.15rem 1.15rem 1.5rem;
+            }
+
+            .side-card {
+                order: 2;
+            }
+
+            .side-card-grant {
+                order: 2
+            }
+
+            .blocks.cols-2,
+            .blocks.cols-3,
+            .stack-grid,
+            .blocks[style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+            }
+
+            .status-row {
+                flex-wrap: wrap;
+                gap: 0.45rem;
+                align-items: flex-start;
+            }
+
+            .inline-links {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.55rem 0.85rem;
+            }
+
+            .tl-card h3 {
+                font-size: 1.1rem
+            }
+
+            .panel .lede {
+                font-size: 1.08rem
+            }
+        }
+
+        @media (max-width:720px) {
+            .header-nav {
+                gap: 0.65rem 1rem
+            }
+
+            .header-nav a,
+            .header-nav .nav-link-btn {
+                font-size: 0.98rem
+            }
+
+            .hero-cta .btn {
+                flex: 1 1 calc(50% - 0.5rem);
+                min-width: min(100%, 9.5rem);
+            }
+
+            .hero-cta .btn:last-child:nth-child(odd) {
+                flex: 1 1 100%
+            }
+
+            .path-steps li {
+                grid-template-columns: 1.75rem 1fr;
+                padding: 0.65rem 0.7rem;
+            }
+
+            .path-steps .step-n {
+                font-size: 0.78rem
+            }
+
+            .path-steps span.step-body {
+                font-size: 0.98rem
+            }
+
+            .demo-list button {
+                padding: 0.85rem 0.95rem;
+                min-height: 52px
+            }
+        }
+
+        @media (max-width:520px) {
+            body {
+                font-size: 1.05rem
+            }
+
+            .header {
+                padding: 0.65rem 0.85rem;
+                padding-top: max(0.65rem, env(safe-area-inset-top));
+            }
+
+            .header-brand {
+                font-size: 1.02rem;
+                letter-spacing: 0
+            }
+
+            .header-nav {
+                gap: 0.35rem 0.75rem
+            }
+
+            .header-nav a,
+            .header-nav .nav-link-btn {
+                font-size: 0.92rem;
+                min-height: 40px;
+                padding: 0.35rem 0.1rem;
+            }
+
+            .hero {
+                padding: 5.25rem 1rem 1rem;
+                padding-left: max(1rem, env(safe-area-inset-left));
+                padding-right: max(1rem, env(safe-area-inset-right));
+            }
+
+            .hero-eyebrow {
+                font-size: 0.82rem;
+                letter-spacing: 0.08em
+            }
+
+            .hero h1 {
+                font-size: clamp(1.65rem, 7.5vw, 2.15rem);
+                max-width: 100%;
+                line-height: 1.2;
+            }
+
+            .hero-essence {
+                font-size: 1.05rem;
+                line-height: 1.55;
+                margin-top: 0.9rem;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                gap: 0.55rem;
+                margin-top: 1.15rem;
+            }
+
+            .hero-cta .btn {
+                width: 100%;
+                flex: 1 1 auto;
+                min-width: 0;
+                font-size: 1.02rem;
+                padding: 0.85rem 1.1rem;
+            }
+
+            .desk {
+                padding: 0.35rem 0.75rem 2.25rem;
+                padding-left: max(0.75rem, env(safe-area-inset-left));
+                padding-right: max(0.75rem, env(safe-area-inset-right));
+                padding-bottom: max(2.25rem, calc(1.25rem + env(safe-area-inset-bottom)));
+            }
+
+            .side-nav {
+                top: calc(3.15rem + env(safe-area-inset-top, 0px));
+                border-radius: 10px;
+                padding: 0.4rem 0.4rem;
+                gap: 0.3rem;
+            }
+
+            .side-nav button {
+                font-size: 0.88rem;
+                padding: 0.55rem 0.7rem;
+                min-height: 42px;
+            }
+
+            .tablet {
+                border-radius: 12px;
+            }
+
+            .tablet-bar {
+                padding: 0.7rem 0.9rem;
+                gap: 0.5rem;
+            }
+
+            .tablet-bar .title {
+                font-size: 0.98rem
+            }
+
+            .pill {
+                font-size: 0.75rem;
+                padding: 0.28rem 0.55rem
+            }
+
+            .tablet-body {
+                padding: 1rem 0.95rem 1.35rem
+            }
+
+            .panel h2 {
+                font-size: 1.35rem;
+                margin-bottom: 0.4rem
+            }
+
+            .panel .lede {
+                font-size: 1.02rem;
+                margin-bottom: 1rem;
+                line-height: 1.55;
+            }
+
+            .block {
+                padding: 0.95rem 1rem;
+                border-radius: 10px
+            }
+
+            .block h3 {
+                font-size: 1.08rem
+            }
+
+            .block p,
+            .block li {
+                font-size: 1rem
+            }
+
+            .side-card {
+                padding: 0.95rem 1rem
+            }
+
+            .side-card h3 {
+                font-size: 1.08rem
+            }
+
+            .grant-ask-amt {
+                font-size: 1.85rem
+            }
+
+            .grant-ask-note {
+                font-size: 0.92rem
+            }
+
+            .side-metrics {
+                grid-template-columns: 1fr
+            }
+
+            .timeline {
+                padding-left: 0.15rem
+            }
+
+            .tl-item {
+                padding-left: 1.15rem
+            }
+
+            .tl-card {
+                padding: 0.85rem 0.95rem
+            }
+
+            .tl-card h3 {
+                font-size: 1.05rem
+            }
+
+            .tl-card p {
+                font-size: 0.98rem
+            }
+
+            .inline-links a,
+            .inline-links .inline-link-btn {
+                font-size: 0.95rem;
+                padding: 0.35rem 0;
+                min-height: 40px;
+                display: inline-flex;
+                align-items: center;
+            }
+
+            .footer {
+                padding: 1.25rem 1rem 1.75rem
+            }
+
+            .footer-copy {
+                font-size: 0.92rem
+            }
+
+            .path-fig {
+                margin-top: 0.75rem !important
+            }
+
+            .path-fig figcaption {
+                font-size: 0.85rem !important;
+                padding: 0.45rem 0.6rem !important
+            }
+        }
+
+        /* Prefer reduced motion */
+        @media (prefers-reduced-motion:reduce) {
+            html {
+                scroll-behavior: auto
+            }
+
+            .panel {
+                animation: none
+            }
+
+            .btn {
+                transition: none
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="fractal-canvas"></canvas>
+    <span id="variantName" style="display:none"></span>
+    <span id="zoomLevel" style="display:none"></span>
+
+    <header class="header">
+        <a href="/" class="header-brand" data-i18n="brand">PERMISSIONLESS.MONEY</a>
+        <nav class="header-nav">
+            <a href="/loyalty" data-i18n="nav.loyalty">Loyalty</a>
+            <a href="/zk" class="active" data-i18n="nav.zk">ZK</a>
+            <button type="button" class="nav-link-btn" data-panel="contact" data-i18n="nav.contact">Contact</button>
+            <a href="https://github.com/permissionlessweb" target="_blank" rel="noopener"
+                data-i18n="nav.github">GitHub</a>
+            <label class="lang-switch">
+                <span class="lang-switch-label" data-i18n="lang.label">Language</span>
+                <select data-i18n-switcher aria-label="Language">
+                    <option value="en">EN</option>
+                    <option value="es">ES</option>
+                    <option value="zh">中文</option>
+                    <option value="ja">JA</option>
+                    <option value="pt">PT</option>
+                </select>
+            </label>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="hero-eyebrow" data-i18n="hero.eyebrow">Zcash Community Grants · residual R&amp;D</div>
+        <h1 data-i18n="hero.title">More places Zcash-grade proofs and curves can settle.</h1>
+        <p class="hero-essence" data-i18n-html="hero.essence">
+            A selective-disclosure VM and smart-contract path for extending the edge of the Zcash ecosystem
+            with native interop — proofs, curves, and consensus state that existing and new DAOs can verify,
+            bridge, and compose with
+            (<a href="https://cosmwasm.com/" target="_blank" rel="noopener">CosmWasm</a>).
+        </p>
+        <div class="hero-cta">
+            <button type="button" class="btn btn-primary" data-panel="essence" data-i18n="hero.openDesk">Open grant desk</button>
+            <button type="button" class="btn btn-outline" data-panel="problem" data-i18n="hero.pathCta">Problem → path</button>
+            <a class="btn btn-outline"
+                href="https://forum.zcashcommunity.com/t/grant-application-zk-cosmwasm-a-programmable-selective-disclosure-webassembly-smart-contract-virtual-machine/54211/10"
+                target="_blank" rel="noopener" data-i18n="hero.forum">Forum</a>
+        </div>
+    </section>
+
+    <div class="desk" id="desk">
+        <!-- Side: nav + living components -->
+        <aside class="side">
+            <nav class="side-nav" role="tablist" aria-label="Grant desk">
+                <button type="button" class="active" role="tab" aria-selected="true"
+                    data-panel="essence" data-i18n="desk.essence">Overview</button>
+                <button type="button" role="tab" aria-selected="false" data-panel="problem" data-i18n="desk.problem">Problem → path</button>
+                <button type="button" role="tab" aria-selected="false" data-panel="stack" data-i18n="desk.stack">Stack</button>
+                <button type="button" role="tab" aria-selected="false" data-panel="auth" data-i18n="desk.auth">Auth &amp; access</button>
+                <button type="button" role="tab" aria-selected="false" data-panel="demos" data-i18n="desk.demos">Demos</button>
+                <button type="button" role="tab" aria-selected="false" data-panel="progress" data-i18n="desk.progress">Progress</button>
+                <button type="button" role="tab" aria-selected="false" data-panel="grant" data-i18n="desk.grant">Timeline</button>
+                <button type="button" role="tab" aria-selected="false" data-panel="events" data-i18n="desk.events">Community event</button>
+                <button type="button" role="tab" aria-selected="false" data-panel="resources" data-i18n="desk.resources">Sources</button>
+                <button type="button" role="tab" aria-selected="false" data-panel="contact" data-i18n="desk.contact">Contact</button>
+            </nav>
+
+            <div class="side-card side-card-grant">
+                <div class="grant-ask">
+                    <span class="grant-ask-amt">$240k</span>
+                    <span class="grant-ask-note" data-i18n="side.residualNote">Residual ask · full service, compensation, compute &amp; hackathon
+                        sponsorship</span>
+                </div>
+                <p style="font-size:0.95rem;color:var(--text-muted);margin:0.55rem 0 0.75rem;line-height:1.45" data-i18n="side.residualBody">
+                    Core pieces already work on testnet. This residual finishes last-mile public loops, demos, and the community audit + hackathon.
+                </p>
+                <div class="actions">
+                    <button type="button" class="btn btn-sm btn-primary" data-panel="grant"
+                        style="width:100%;justify-content:center" data-i18n="side.openTimeline">Open timeline</button>
+                </div>
+            </div>
+
+            <div class="side-card">
+                <div class="kicker" data-i18n="side.demosKicker">Demos</div>
+                <h3 data-i18n="side.demosTitle">Demo surfaces</h3>
+                <p style="font-size:1.02rem;margin-bottom:0.65rem" data-i18n="side.demosBody">Preview list live; interactive launch pending testnet wiring.</p>
+                <div class="actions">
+                    <button type="button" class="btn btn-sm btn-primary" data-panel="demos"
+                        style="width:100%;justify-content:center" data-i18n="side.browseDemos">Browse demos</button>
+                </div>
+            </div>
+            <div class="side-card">
+                <div class="kicker" data-i18n="side.talkKicker">Talk to us</div>
+                <p style="font-size:1.05rem;margin-bottom:0.65rem" data-i18n="side.talkBody">Reviewer questions, collab, security notes</p>
+                <div class="actions">
+                    <button type="button" class="btn btn-sm btn-outline" data-panel="contact"
+                        style="width:100%;justify-content:center" data-i18n="side.openContact">Open contact</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main tablet -->
+        <main class="tablet" id="tablet">
+            <div class="tablet-bar">
+                <div class="title" id="tablet-title" data-i18n="desk.essence">Overview</div>
+                <div class="pills" id="tablet-pills">
+                    <span class="pill live" data-i18n="pills.residual">ZCG residual</span>
+                </div>
+            </div>
+            <div class="tablet-body">
+
+                <!-- 01 OVERVIEW (was Essence) -->
+                <div class="panel active" id="panel-essence" role="tabpanel">
+                    <h2 data-i18n="overview.h2">What this is</h2>
+                    <p class="lede" data-i18n="overview.lede">A selective-disclosure VM and smart-contract surface for extending the edge of the
+                        Zcash ecosystem with native interop. It verifies Zcash-grade proofs, curves, and consensus state
+                        so existing and new DAOs can bridge and compose privately with native Zcash.</p>
+                    <div class="blocks">
+                        <div class="block accent-edge">
+                            <h3 data-i18n="overview.productsTitle">Core product surfaces</h3>
+                            <ul class="usecase-list">
+                                <li>
+                                    <strong data-i18n="overview.product1Title">Selective-disclosure proof VM</strong>
+                                    <span data-i18n="overview.product1Body">Contract-side verify of Zcash-grade proofs and curves — prove a claim, settle it
+                                    on-chain under the policy’s disclosure rules.</span>
+                                </li>
+                                <li>
+                                    <strong data-i18n="overview.product2Title">Native cross-chain bridging for Zcash state</strong>
+                                    <span data-i18n="overview.product2Body">Light clients that carry Zcash headers and finality into the same contract
+                                    environment DAOs already use for composition.</span>
+                                </li>
+                                <li>
+                                    <strong data-i18n="overview.product3Title">DAO privacy composition</strong>
+                                    <span data-i18n="overview.product3Body">Membership, voting, and access gates built from those verifies — for DAOs that
+                                    already run, and for new ones that want Zcash-native privacy by default.</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="block">
+                            <h3 data-i18n="overview.deskTitle">This desk</h3>
+                            <p data-i18n="overview.deskBody">ZCG residual surface: product inventory, what is live, what the $240k finishes, demos,
+                                sources, and the community event path.</p>
+                        </div>
+                        <div class="block accent-edge">
+                            <h3>How to read this desk</h3>
+                            <ol style="margin:0.35rem 0 0 1.1rem;color:var(--text-muted);line-height:1.55;font-size:1.05rem">
+                                <li><strong style="color:var(--text)">Overview</strong> — product surface + residual framing (start here).</li>
+                                <li><strong style="color:var(--text)">Problem → path</strong> — Verify → Update → Bind → Gate in plain language.</li>
+                                <li><strong style="color:var(--text)">Stack / Progress / Timeline</strong> — what is live vs what $240k finishes.</li>
+                                <li><strong style="color:var(--text)">Community event · Sources · Contact</strong> — audit/hackathon plane and review links.</li>
+                            </ol>
+                            <p style="margin-top:0.65rem;font-size:0.98rem;color:var(--text-dim)">Forum thread (ZCG #54211) is the on-the-record discussion surface; this desk is the living param pack.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 02 PROBLEM → PATH -->
+                <div class="panel" id="panel-problem" role="tabpanel">
+                    <h2 data-i18n="problem.h2">Problem → path</h2>
+                    <p class="lede" data-i18n="problem.lede">A selective-disclosure VM and smart-contract path for extending the edge of the
+                        Zcash ecosystem with native interop — so DAOs can verify, bridge, and compose with native Zcash
+                        material.</p>
+                    <div class="blocks cols-2">
+                        <div class="block">
+                            <h3 data-i18n="problem.sitsTitle">Where this sits</h3>
+                            <p data-i18n="problem.sitsBody">Privacy and consensus live in core Zcash. This residual extends the ecosystem at the
+                                edge: a contract VM and light-client surface that speak Zcash-grade proofs, curves, and
+                                headers so existing and new DAOs can act on them through native interop.</p>
+                        </div>
+                        <div class="block">
+                            <h3 data-i18n="problem.deliversTitle">What the path delivers</h3>
+                            <p data-i18n="problem.deliversBody">In-contract proof verification, header and finality updates into light clients, claim
+                                binding on smart accounts, and DAO gates for membership, voting, and access — privacy
+                                composability with native Zcash across the bridge path.</p>
+                        </div>
+                    </div>
+                    <div class="blocks" style="margin-top:0.85rem">
+                        <div class="block accent-edge">
+                            <h3 data-i18n="problem.pathTitle">The path · Verify → Update → Bind → Gate</h3>
+                            <p style="margin-bottom:0.55rem;color:var(--text-muted)" data-i18n="problem.pathIntro">Four steps from proof verify to DAO
+                                action along that edge interop path:</p>
+                            <ol class="path-steps">
+                                <li><span class="step-n">01</span><span class="step-body"><span
+                                            class="step-plain" data-i18n-html="problem.step1Plain"><strong>Verify</strong> — settle Zcash-grade proofs in
+                                            the selective-disclosure contract VM.</span>
+                                        <span class="step-tech" data-i18n="problem.step1Tech">Param files, circuit footer, tiered cache on the proof
+                                            VM.</span></span></li>
+                                <li><span class="step-n">02</span><span class="step-body"><span
+                                            class="step-plain" data-i18n-html="problem.step2Plain"><strong>Update</strong> — carry Zcash headers and
+                                            finality into light clients contracts can read.</span>
+                                        <span class="step-tech" data-i18n="problem.step2Tech">Header / Crosslink finality ingress on the IBC light
+                                            client path.</span></span></li>
+                                <li><span class="step-n">03</span><span class="step-body"><span
+                                            class="step-plain" data-i18n-html="problem.step3Plain"><strong>Bind</strong> — attach verified claims to smart
+                                            accounts and authenticators.</span>
+                                        <span class="step-tech" data-i18n="problem.step3Tech">Curve-aware authenticators (terp-rs suite).</span></span>
+                                </li>
+                                <li><span class="step-n">04</span><span class="step-body"><span
+                                            class="step-plain" data-i18n-html="problem.step4Plain"><strong>Gate</strong> — DAO membership, voting, and
+                                            access from those claims.</span>
+                                        <span class="step-tech" data-i18n="problem.step4Tech">DAO plugin actions and wallet-derived session
+                                            material.</span></span></li>
+                            </ol>
+                            <figure class="path-fig"
+                                style="margin:1rem 0 0;border-radius:12px;overflow:hidden;border:1px solid var(--border-subtle)">
+                                <img src="/public/grant/walk-the-path.jpg"
+                                    alt="Walk the path: Verify → Update LC → Bind auth → Gate access"
+                                    style="display:block;width:100%;height:auto" width="1600" height="900"
+                                    loading="lazy">
+                                <figcaption
+                                    style="font-size:0.95rem;color:var(--text-dim);padding:0.55rem 0.75rem;background:rgba(0,0,0,0.35)"
+                                    data-i18n="problem.pathCaption">
+                                    Verify → Update → Bind → Gate · extending the edge of the Zcash ecosystem</figcaption>
+                            </figure>
+                            <details class="tech-fold">
+                                <summary>For reviewers · design alignment</summary>
+                                <div class="fold-body">
+                                    <p>Each step reuses Zcash-aligned crypto (selective disclosure, coinholder-voting
+                                        style commitments, Crosslink finality) on the contract and light-client edge so
+                                        DAOs gain native interop and composition without reimplementing the core chain.
+                                    </p>
+                                    <p>Builds alongside existing ZIPs and community tooling for those same surfaces.</p>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 03 STACK -->
+                <div class="panel" id="panel-stack" role="tabpanel">
+                    <h2>Stack inventory</h2>
+                    <p class="lede">Here’s what already exists on testnet and what the residual funding completes.</p>
+                    <div class="stack-filters" role="toolbar" aria-label="Filter stack by relevance">
+                        <button type="button" class="active" data-stack-filter="all">All</button>
+                        <button type="button" data-stack-filter="verify">Verify</button>
+                        <button type="button" data-stack-filter="clients">Clients</button>
+                        <button type="button" data-stack-filter="vote">DAO plugin</button>
+                        <button type="button" data-stack-filter="accounts">Auth</button>
+                        <button type="button" data-stack-filter="ops">Ops &amp; community</button>
+                    </div>
+                    <div class="stack-grid" id="stack-grid">
+                        <div class="block stack-item" data-stacks="verify">
+                            <div class="status-row">
+                                <h3>CosmWasm proof VM</h3>
+                                <span class="pill live">Live · testnet</span>
+                            </div>
+                            <p>Wasmer-based CosmWasm engine with modular verification-key / param storage and a unified
+                                verify API for Zcash-native curves and hashes (e.g. BLAKE2b-256, BLAKE3).</p>
+                            <div class="tag-row"><span class="tag tag-verify">verify</span></div>
+                        </div>
+                        <div class="block stack-item" data-stacks="clients">
+                            <div class="status-row">
+                                <h3>IBC light clients (shipped demos)</h3>
+                                <span class="pill live">Compiled</span>
+                            </div>
+                            <p>Crosslink 08-wasm and related native/PoW client demos already exercise IBC entry points,
+                                authenticators, and extension toward cash/app settlement. <strong>Not framed as grant
+                                    “format invention”</strong> — residual hardens public e2e with real headers and
+                                formal review of the surface stack. <a
+                                    href="https://github.com/permissionlessweb/zebra-crosslink" target="_blank"
+                                    rel="noopener">zebra-crosslink</a> · <a
+                                    href="https://github.com/terpnetwork/terp-core/tree/main/crates/terp-rs/contracts/light-clients"
+                                    target="_blank" rel="noopener">terp-rs light-clients</a></p>
+                            <div class="tag-row"><span class="tag tag-clients">clients</span></div>
+                        </div>
+                        <div class="block stack-item" data-stacks="vote verify accounts">
+                            <div class="status-row">
+                                <h3>Vote-SDK powered DAO plugin</h3>
+                                <span class="pill partial">In progress</span>
+                            </div>
+                            <p>One surface: a <strong>DAO plugin</strong> powered by vote-sdk design choices —
+                                eligibility and ballot <strong>commitments</strong>, circuit-facing crypto, and contract
+                                verify hooks so private preference can settle without doxing voters. Aligns with <a
+                                    href="https://github.com/zcash/zips/pull/1200" target="_blank"
+                                    rel="noopener">coinholder / shielded voting</a> direction. Residual: named demos +
+                                public acceptance. <a
+                                    href="https://github.com/terpnetwork/terp-core/tree/main/crates/vote-sdk"
+                                    target="_blank" rel="noopener">vote-sdk</a></p>
+                            <div class="tag-row"><span class="tag tag-vote">vote-sdk</span><span
+                                    class="tag tag-verify">verify</span></div>
+                        </div>
+                        <div class="block stack-item" data-stacks="accounts clients">
+                            <div class="status-row">
+                                <h3>Smart authenticators (terp-rs)</h3>
+                                <span class="pill live">Priority demo</span>
+                            </div>
+                            <p>Priority demonstration: <a
+                                    href="https://github.com/terpnetwork/terp-core/tree/main/crates/terp-rs/contracts/smart-accounts/terp-authenticator-suite"
+                                    target="_blank" rel="noopener">terp-rs authenticator suite</a> for elegant
+                                <strong>ZK authentication gateways</strong> composed with IBC light clients (passkeys,
+                                curve credentials, membership gates). Built on the <a
+                                    href="https://github.com/MegaRockLabs/smart-account-auth" target="_blank"
+                                    rel="noopener">smart-account-auth</a> library — library is dependency; the grant
+                                story is the gateway demos.</p>
+                            <div class="tag-row"><span class="tag tag-accounts">auth</span><span
+                                    class="tag tag-clients">clients</span></div>
+                        </div>
+                        <div class="block stack-item" data-stacks="ops clients">
+                            <div class="status-row">
+                                <h3>Header/finality ingress + custom relayers</h3>
+                                <span class="pill grant">Grant</span>
+                            </div>
+                            <p>Closed-loop path that feeds real Zcash headers (and finality where available) into light
+                                clients so contracts can update without hand-rolled trust.</p>
+                            <div class="tag-row"><span class="tag tag-ops">ops</span><span
+                                    class="tag tag-clients">clients</span></div>
+                        </div>
+                        <div class="block stack-item" data-stacks="ops verify">
+                            <div class="status-row">
+                                <h3>Formal verification of surface stack</h3>
+                                <span class="pill grant">Grant</span>
+                            </div>
+                            <p>Open review and tests of the public surface (VM verify API, light-client update path,
+                                authenticator gates): checklist rigor and a public CI map. Residual work hardens what
+                                already compiles — not a second PoW client product as the grant headline.</p>
+                            <div class="tag-row"><span class="tag tag-ops">ops</span><span
+                                    class="tag tag-verify">verify</span></div>
+                        </div>
+                        <div class="block stack-item" data-stacks="ops">
+                            <div class="status-row">
+                                <h3>Community audit + design-space hackathon</h3>
+                                <span class="pill grant">Phase 3</span>
+                            </div>
+                            <p>Two-part community event: ZEC holders can register for audit-trace curation and
+                                vulnerability discovery. Sponsored compute credits and a capture gateway help produce
+                                an open dataset delivered with the residual.</p>
+                            <div class="tag-row"><span class="tag tag-ops">ops</span></div>
+                        </div>
+                        <p class="stack-empty">No components in this filter — try All or another stack.</p>
+                    </div>
+                </div>
+
+                <!-- 04 AUTH & ACCESS -->
+                <div class="panel" id="panel-auth" role="tabpanel">
+                    <h2>Auth &amp; access</h2>
+                    <p class="lede">Authenticators and DAO plugins that bind verified Zcash-native claims to
+                        membership, voting, and access along the interop edge.</p>
+                    <div class="blocks">
+                        <div class="block green-edge">
+                            <h3>Capabilities</h3>
+                            <ul>
+                                <li><strong>Smart authenticators (terp-rs priority)</strong> — multi-credential gates
+                                    (passkeys, curve credentials, membership) on accounts/DAOs; compose with IBC light
+                                    clients for ZK authentication gateways. Library substrate: <a
+                                        href="https://github.com/MegaRockLabs/smart-account-auth" target="_blank"
+                                        rel="noopener">smart-account-auth</a>.</li>
+                                <li><strong>vote-sdk DAO plugin</strong> — eligibility + ballot commitments that verify
+                                    under the proof VM without roster dumps. <a
+                                        href="https://github.com/terpnetwork/terp-core/tree/main/crates/vote-sdk"
+                                        target="_blank" rel="noopener">vote-sdk</a></li>
+                                <li><strong>Wallet-derived sessions</strong> — sessions extended with Zcash-native
+                                    curves so auth can derive from existing wallet material.</li>
+                            </ul>
+                        </div>
+                        <div class="block accent-edge">
+                            <h3>Prove entry, not identity graphs</h3>
+                            <p>Gates check a <strong>claim</strong> (set membership, note hold, role) with minimal
+                                disclosure — the same discipline selective disclosure and coinholder voting already
+                                assume. Reveal only what the policy requires.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 04b DEMOS -->
+                <div class="panel" id="panel-demos" role="tabpanel">
+                    <h2>Demos</h2>
+                    <p class="lede">Interactive surfaces land as the public testnet + faucet wire up. Preview of what’s coming is visible under the pending gate.</p>
+                    <div class="blocks">
+                        <div class="block accent-edge">
+                            <h3>Launch</h3>
+                            <div class="demo-pending-wrap" id="demo-pending-wrap" data-demos-pending="1" aria-busy="true">
+                                <div class="demo-pending-overlay" role="status">
+                                    <span class="demo-pending-badge">Pending</span>
+                                    <p class="demo-pending-title">Interactive demos coming soon</p>
+                                    <p class="demo-pending-note">Hosted desk is live. Prove→verify, authenticators, light-client notes, and bounty-board launchers unlock once the public testnet + faucet are wired.</p>
+                                </div>
+                                <div class="demo-pending-blur" aria-hidden="true">
+                                    <div class="demo-list">
+                                        <button type="button" id="demo-norick" data-demo="norick" disabled tabindex="-1">
+                                            <span class="d-title">No Rick · selective disclosure</span>
+                                            <span class="d-desc">Prove a secret is not “rick”, verify, mint — same prove→verify
+                                                shape as vote and membership apps.</span>
+                                        </button>
+                                        <button type="button" id="demo-auth" data-demo="auth-info" disabled tabindex="-1">
+                                            <span class="d-title">Smart authenticators · terp-rs suite</span>
+                                            <span class="d-desc">Priority gateway demos (passkey / curve credentials). Opens
+                                                sources and suite path; full in-browser suite expands with residual.</span>
+                                        </button>
+                                        <button type="button" id="demo-lc" data-demo="lc-info" disabled tabindex="-1">
+                                            <span class="d-title">IBC light clients · Crosslink path</span>
+                                            <span class="d-desc">Compiled 08-wasm + e2e notes. Header/finality public runbook is
+                                                residual.</span>
+                                        </button>
+                                        <button type="button" id="demo-board" data-demo="board-info" disabled tabindex="-1">
+                                            <span class="d-title">Bounty board · community event plane</span>
+                                            <span class="d-desc">DAO-DAO iframe path + credit control plane for audit/hackathon
+                                                participation.</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 05 PROGRESS -->
+                <div class="panel" id="panel-progress" role="tabpanel">
+                    <h2>What’s advanced since the first ask</h2>
+                    <p class="lede">Last-mile residual — not a greenfield rewrite.</p>
+                    <div class="blocks cols-2">
+                        <div class="block green-edge">
+                            <h3>VM · params, footer, cache</h3>
+                            <p>Native curve libraries on the VM surface. Residual emphasis: <strong>reusable param-file
+                                    storage</strong>, a formal <strong>circuit footer</strong> for specified
+                                serialization/deserialization (interoperability + identity of circuits), and full use of
+                                <strong>VM RAM / tiered caching</strong> (memory → LRU → filesystem) for efficiency
+                                under public acceptance tests.</p>
+                            <p style="margin-top:0.5rem"><a href="https://github.com/permissionlessweb/cosmwasm"
+                                    target="_blank" rel="noopener">zk-cosmwasm →</a> · <a
+                                    href="https://github.com/permissionlessweb/cosmwasm/blob/feat/zk-v2/ZK_CIRCUIT_QUICK_REFERENCE.md"
+                                    target="_blank" rel="noopener">circuit quick ref →</a></p>
+                        </div>
+                        <div class="block green-edge">
+                            <h3>vote-sdk DAO plugin</h3>
+                            <p>Commitment patterns and circuit hooks for a DAO plugin aligned with coinholder-voting
+                                design choices — eligibility, private ballots, contract-side verify.</p>
+                            <p style="margin-top:0.5rem"><a
+                                    href="https://github.com/terpnetwork/terp-core/tree/main/crates/vote-sdk"
+                                    target="_blank" rel="noopener">vote-sdk →</a> · <a
+                                    href="https://github.com/zcash/zips/pull/1200" target="_blank"
+                                    rel="noopener">shielded voting ZIP →</a></p>
+                        </div>
+                        <div class="block">
+                            <h3>terp-rs smart authenticators</h3>
+                            <p>Priority gateway demos for ZK-aware account gates composed with IBC light clients.
+                                Library: smart-account-auth underneath.</p>
+                            <p style="margin-top:0.5rem"><a
+                                    href="https://github.com/terpnetwork/terp-core/tree/main/crates/terp-rs/contracts/smart-accounts/terp-authenticator-suite"
+                                    target="_blank" rel="noopener">authenticator suite →</a></p>
+                        </div>
+                        <div class="block">
+                            <h3>Crosslink LC + demos</h3>
+                            <p>Selective disclosure demo live. Crosslink LC compiled with Ed25519 batch e2e. Residual:
+                                public header/finality closed loop + formal surface review.</p>
+                            <p style="margin-top:0.5rem"><a href="https://github.com/permissionlessweb/zebra-crosslink"
+                                    target="_blank" rel="noopener">zebra-crosslink →</a> · <a
+                                    href="https://github.com/terpnetwork/terp-core/tree/main/crates/terp-rs/contracts/light-clients"
+                                    target="_blank" rel="noopener">light-clients →</a></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 06 GRANT · timeline -->
+                <div class="panel" id="panel-grant" role="tabpanel">
+                    <h2>Grant timeline</h2>
+                    <p class="lede">$240,000 residual — what finishes after the baseline already in flight.</p>
+                    <div class="blocks">
+                        <div class="block accent-edge">
+                            <h3>Public verify path, composition, community Phase 3</h3>
+                            <p>Expand what already compiles and demos into outsider-runnable acceptance: header/finality
+                                closed loop, formal surface review, composition demos, and a community-led audit +
+                                design-space hackathon. Concurrent soft asks (Hub activation, Akash compute) are
+                                disclosed separately and do not replace these line items.</p>
+                        </div>
+                    </div>
+                    <ol class="timeline" aria-label="Grant milestones">
+                        <li class="tl-item done">
+                            <div class="tl-mark" aria-hidden="true"></div>
+                            <div class="tl-card">
+                                <div class="tl-phase">Baseline · Done</div>
+                                <h3>Proof VM on public testnet</h3>
+                                <p>Plonkish AIR + Groth16 surfaces, modular VK / param storage, circuit footer work,
+                                    tiered cache. Baseline for residual verify APIs.</p>
+                                <a href="https://github.com/permissionlessweb/cosmwasm" target="_blank"
+                                    rel="noopener">zk-cosmwasm</a>
+                                ·
+                                <a href="https://terp.network" target="_blank" rel="noopener">testnet / network desk</a>
+                            </div>
+                        </li>
+                        <li class="tl-item done">
+                            <div class="tl-mark" aria-hidden="true"></div>
+                            <div class="tl-card">
+                                <div class="tl-phase">Baseline · Done</div>
+                                <h3>IBC light clients (Crosslink path)</h3>
+                                <p>08-wasm Crosslink client: Ed25519 batch, freeze rules, e2e on Docker images —
+                                    complements Crosslink, does not replace it.</p>
+                                <a href="https://github.com/permissionlessweb/zebra-crosslink" target="_blank"
+                                    rel="noopener">zebra-crosslink</a>
+                                ·
+                                <a href="https://github.com/terpnetwork/terp-core/tree/main/crates/terp-rs/contracts/light-clients"
+                                    target="_blank" rel="noopener">light-clients suite</a>
+                            </div>
+                        </li>
+                        <li class="tl-item done">
+                            <div class="tl-mark" aria-hidden="true"></div>
+                            <div class="tl-card">
+                                <div class="tl-phase">Baseline · Done</div>
+                                <h3>Auth + vote-sdk plugin patterns</h3>
+                                <p>terp-rs smart authenticators + vote-sdk commitment patterns for DAO plugin design.
+                                </p>
+                                <a href="https://github.com/terpnetwork/terp-core/tree/main/crates/terp-rs/contracts/smart-accounts/terp-authenticator-suite"
+                                    target="_blank" rel="noopener">authenticator suite</a>
+                                ·
+                                <a href="https://github.com/terpnetwork/terp-core/tree/main/crates/vote-sdk"
+                                    target="_blank" rel="noopener">vote-sdk</a>
+                            </div>
+                        </li>
+                        <li class="tl-item next">
+                            <div class="tl-mark" aria-hidden="true"></div>
+                            <div class="tl-card">
+                                <div class="tl-phase">M1 · Residual</div>
+                                <h3>Public acceptance + formal surface review</h3>
+                                <p>Freeze verify APIs and docs; named acceptance tests; formal/checklist review of the
+                                    public stack surface (VM, LC update path, authenticators) to residual capacity.</p>
+                            </div>
+                        </li>
+                        <li class="tl-item next">
+                            <div class="tl-mark" aria-hidden="true"></div>
+                            <div class="tl-card">
+                                <div class="tl-phase">M2 · Residual</div>
+                                <h3>Header/finality closed loop + composition</h3>
+                                <p>Outsider runbook: real Zcash headers (+ Crosslink finality where available) → LC
+                                    update → on-chain verify → optional dual-way app step. vote-sdk DAO plugin +
+                                    authenticator gateway demos; public testnet path.</p>
+                                <a href="https://zips.z.cash/zip-0221" target="_blank" rel="noopener">ZIP-221
+                                    foundation</a>
+                            </div>
+                        </li>
+                        <li class="tl-item next">
+                            <div class="tl-mark" aria-hidden="true"></div>
+                            <div class="tl-card">
+                                <div class="tl-phase">M3 · Residual</div>
+                                <h3>Community audit + design-space hackathon</h3>
+                                <p>Community-led audit and builder event — bounty board + credit control plane for
+                                    participation. See community event panel.</p>
+                                <button type="button" class="inline-link-btn" data-panel="events" data-i18n="events.eventPlaneCta">Event plane →</button>
+                            </div>
+                        </li>
+                    </ol>
+                    <div class="inline-links">
+                        <a href="https://forum.zcashcommunity.com/t/grant-application-zk-cosmwasm-a-programmable-selective-disclosure-webassembly-smart-contract-virtual-machine/54211"
+                            target="_blank" rel="noopener">Forum thread</a>
+                        <a href="https://github.com/ZcashCommunityGrants/zcashcommunitygrants/issues/182"
+                            target="_blank" rel="noopener">ZCG #182</a>
+                        <a href="https://docs.google.com/spreadsheets/d/1nFMheKkv0ZQ1y052hWHjMqwAz0TpNtt5DCiR23D5ml0/edit?usp=sharing"
+                            target="_blank" rel="noopener">Budget sheet</a>
+                        <a href="https://terp.network" target="_blank" rel="noopener">Testnet / network</a>
+                        <button type="button" class="inline-link-btn" data-panel="contact">Contact</button>
+                    </div>
+                </div>
+
+                <!-- 06b EVENTS -->
+                <div class="panel" id="panel-events" role="tabpanel">
+                    <h2 data-i18n="events.h2">Community event plane</h2>
+                    <p class="lede" data-i18n="events.lede">Community review and design-space hackathons</p>
+                    <div class="blocks">
+                        <div class="block accent-edge">
+                            <h3 data-i18n="events.bountyTitle">Bounty board as DAO-DAO primitive</h3>
+                            <p data-i18n-html="events.bountyBody">We forked the <a href="https://github.com/ZecHub/zec-bounties" target="_blank"
+                                    rel="noopener">ZecHub bounty-board</a> support to run as an <strong>iframe in <a
+                                        href="https://daodao.terp.network" target="_blank"
+                                        rel="noopener">DAO-DAO</a></strong>, so <a href="https://zechub.wiki"
+                                    target="_blank" rel="noopener">ZecHub</a> and other DAOs have access to
+                                coordinating community-led audits and focal design spaces. That surface
+                                is the control plane for audit findings, hackathon tracks, and <strong>hackathon compute
+                                    credits</strong>.</p>
+                        </div>
+                        <div class="block green-edge">
+                            <h3 data-i18n="events.stackTitle">Powered by the stack: ZIP-304 × ADR-032 zk-JWT light clients</h3>
+                            <p data-i18n-html="events.stackBody1">The board is wired to demonstrate usage of this <strong>proof VM</strong> and
+                                <strong>light-client / authenticator gateway</strong> path.</p>
+                            <p data-i18n="events.stackBody2">Credits and elevated access for community audit + hackathon participants route through
+                                that plane with transparent mint/redeem intent.</p>
+                        </div>
+                        <div class="blocks cols-2" style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem">
+                            <div class="block">
+                                <h3 data-i18n="events.relatedTitle">Related desks</h3>
+                                <ul>
+                                    <li><a href="/loyalty#bounty" data-i18n="events.relatedLoyalty">Loyalty · bounty board (open network pattern)</a></li>
+                                    <li><a href="https://daodao.terp.network" target="_blank"
+                                            rel="noopener" data-i18n="events.relatedDao">daodao.terp.network (iframe host)</a></li>
+                                    <li><button type="button" class="text-panel-link" data-panel="auth" data-i18n="events.relatedAuth">Auth &amp;
+                                            access →</button></li>
+                                </ul>
+                            </div>
+                            <div class="block">
+                                <h3 data-i18n="events.computeTitle">Compute credit sponsorship</h3>
+                                <p data-i18n="events.computeBody1">Including compute sponsorship in the grant ask lets us curate an opportunity
+                                    for people eager to explore using LLMs to power review and building with Zcash.</p>
+                                <p data-i18n="events.computeBody2">We intend to leverage that opportunity while curating an open
+                                    training set of the conversations that come from audits.</p>
+                                <h3 data-i18n="events.rewardsTitle">Hackathon rewards</h3>
+                                <p data-i18n="events.rewardsBody">We want to use the demo stack to power Zcash coinholder voting on rewards for top demos,
+                                    tracing across various stacks.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 07 RESOURCES -->
+                <div class="panel" id="panel-resources" role="tabpanel">
+                    <h2>Sources</h2>
+                    <div class="block">
+                        <h3>Builds on (Zcash-in)</h3>
+                        <ul>
+                            <li><a href="https://github.com/zcash/zips/pull/1200" target="_blank"
+                                    rel="noopener">Coinholder / shielded voting direction</a></li>
+                            <li><a href="https://github.com/permissionlessweb/zebra-crosslink" target="_blank"
+                                    rel="noopener">Crosslink hybrid consensus (LC work)</a></li>
+                            <li><a href="https://zips.z.cash/protocol/protocol.pdf" target="_blank"
+                                    rel="noopener">Orchard / protocol crypto discipline</a></li>
+                            <li><a href="https://zips.z.cash/zip-0221" target="_blank" rel="noopener">ZIP-221 header /
+                                    history-tree foundation</a></li>
+                        </ul>
+                    </div>
+                    <div class="blocks cols-2">
+                        <div class="block">
+                            <div class="label">Repos</div>
+                            <h3><a href="https://github.com/permissionlessweb/cosmwasm" target="_blank"
+                                    rel="noopener">zk-cosmwasm</a></h3>
+                            <p>Proof-verification CosmWasm / Wasmer + circuit key storage.</p>
+                        </div>
+                        <div class="block">
+                            <div class="label">Repos</div>
+                            <h3><a href="https://github.com/permissionlessweb/zebra-crosslink" target="_blank"
+                                    rel="noopener">zebra-crosslink</a></h3>
+                            <p>Crosslink-oriented LC work tracking hybrid consensus.</p>
+                        </div>
+                        <div class="block">
+                            <h3><a href="https://github.com/permissionlessweb/cosmwasm/blob/feat/zk-v2/ZK_CIRCUIT_QUICK_REFERENCE.md"
+                                    target="_blank" rel="noopener">ZK circuit quick ref</a></h3>
+                            <p>VK workflow and circuit-facing notes.</p>
+                        </div>
+                        <div class="block">
+                            <h3><a href="https://zips.z.cash/zip-0221" target="_blank" rel="noopener">ZIP-221</a></h3>
+                            <p>Header history-tree commitments (Heartwood+) — foundation for consensus-state ingress
+                                demos.</p>
+                        </div>
+                        <div class="block">
+                            <h3><a href="https://github.com/terpnetwork/terp-core/tree/main/crates/vote-sdk"
+                                    target="_blank" rel="noopener">vote-sdk</a></h3>
+                            <p>DAO plugin commitments and coinholder-aligned patterns.</p>
+                        </div>
+                        <div class="block">
+                            <h3><a href="https://github.com/terpnetwork/terp-core/tree/main/crates/terp-rs/contracts/light-clients"
+                                    target="_blank" rel="noopener">IBC light clients</a></h3>
+                            <p>terp-rs 08-wasm clients and Crosslink path demos.</p>
+                        </div>
+                        <div class="block">
+                            <h3><a href="https://gist.github.com/hard-nett/81cfe5e6b05684e42bb587cb03147cd1"
+                                    target="_blank" rel="noopener">Product mind map</a></h3>
+                            <p>Deliverable relationships at a glance.</p>
+                        </div>
+                        <div class="block">
+                            <h3><button type="button" class="text-panel-link" data-panel="contact">Contact desk
+                                    →</button></h3>
+                            <p>Forum, email, GitHub, security — next panel, same tablet.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 08 CONTACT (unified in grant desk) -->
+                <div class="panel" id="panel-contact" role="tabpanel">
+                    <h2>Contact</h2>
+                    <div class="blocks">
+                        <div class="block accent-edge">
+                            <div class="label">ZCG · public</div>
+                            <h3><a href="https://forum.zcashcommunity.com/c/grants/33" target="_blank"
+                                    rel="noopener">Zcash Community Grants forum</a></h3>
+                            <p>Preferred for grant discussion, feedback, and on-the-record review questions.</p>
+                        </div>
+                        <div class="block">
+                            <div class="label">ZCG · thread</div>
+                            <h3><a href="https://forum.zcashcommunity.com/t/grant-application-zk-cosmwasm-a-programmable-selective-disclosure-webassembly-smart-contract-virtual-machine/54211/10"
+                                    target="_blank" rel="noopener">Forum Post</a></h3>
+                        </div>
+                        <div class="blocks cols-2" style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem">
+                            <div class="block">
+                                <div class="label">Direct</div>
+                                <h3><a href="mailto:permissionlessweb@proton.me">Email</a></h3>
+                                <p>Private notes, partnership, coordinated security.</p>
+                                <p style="margin-top:0.4rem"><a
+                                        href="mailto:permissionlessweb@proton.me">permissionlessweb@proton.me</a></p>
+                            </div>
+                            <div class="block">
+                                <div class="label">Code</div>
+                                <h3><a href="https://github.com/permissionlessweb" target="_blank"
+                                        rel="noopener">GitHub</a></h3>
+                                <p>Issues, PRs, technical review on repos.</p>
+                            </div>
+                            <div class="block">
+                                <div class="label">Social</div>
+                                <h3><a href="https://x.com/permissionlessw" target="_blank"
+                                        rel="noopener">@permissionlessw</a></h3>
+                                <p>Updates and short-form announcements.</p>
+                            </div>
+                            <div class="block">
+                                <div class="label">Desk</div>
+                                <h3><button type="button" class="text-panel-link" data-panel="grant">Grant timeline
+                                        →</button></h3>
+                                <p>Milestones, ask, and budget links in panel 06.</p>
+                            </div>
+                        </div>
+                        <div class="block green-edge">
+                            <div class="label">Security</div>
+                            <h3>Responsible disclosure</h3>
+                            <p>Email with subject <strong style="color:#e8eae6">[security]</strong>. Do not open public
+                                issues for unfixed vulns. Coordinated disclosure welcome after fix or agreed timeline.
+                            </p>
+                            <p style="margin-top:0.45rem"><a
+                                    href="mailto:permissionlessweb@proton.me?subject=%5Bsecurity%5D">permissionlessweb@proton.me</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="https://github.com/permissionlessweb" class="social-link" title="GitHub" target="_blank"
+                rel="noopener">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path
+                        d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z">
+                    </path>
+                </svg>
+            </a>
+            <a href="https://x.com/permissionlessw" class="social-link" title="X" target="_blank" rel="noopener">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path
+                        d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z">
+                    </path>
+                </svg>
+            </a>
+            <a href="mailto:permissionlessweb@proton.me" class="social-link" title="Email">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
+            </a>
+        </div>
+        <p class="footer-copy" data-i18n="footer.copy">Built on Terp Network · Open Source · No Permission Required</p>
+    </footer>
+
+    <script type="module">
+        import { openDemo } from '/lib/demo-shell.js';
+        import { ensureDemosRegistered } from '/lib/demos/registry.js';
+        import { initI18n } from '/lib/i18n.js';
+
+        // Ship desk now; unlock interactive demos with ?demos=1 or localStorage.pm_demos_live=1
+        const DEMOS_LIVE = (() => {
+            try {
+                if (new URLSearchParams(location.search).get('demos') === '1') return true;
+                if (localStorage.getItem('pm_demos_live') === '1') return true;
+            } catch { /* ignore */ }
+            return false;
+        })();
+
+        if (DEMOS_LIVE) {
+            document.body.classList.add('demos-live');
+            document.querySelectorAll('#demo-pending-wrap [data-demo]').forEach((btn) => {
+                btn.disabled = false;
+                btn.removeAttribute('tabindex');
+            });
+            const wrap = document.getElementById('demo-pending-wrap');
+            if (wrap) {
+                wrap.removeAttribute('data-demos-pending');
+                wrap.setAttribute('aria-busy', 'false');
+            }
+        }
+
+        ensureDemosRegistered();
+
+        // Locale messages used for tablet bar titles (updated on switch without reload)
+        let localeMsgs = {};
+        function t(key, fallback) {
+            if (!key) return fallback;
+            const parts = key.split('.');
+            let cur = localeMsgs;
+            for (const p of parts) {
+                if (cur == null) return fallback;
+                cur = cur[p];
+            }
+            return cur != null ? String(cur) : fallback;
+        }
+
+        function refreshTabletChrome(activeId) {
+            const id = activeId || document.querySelector('.side-nav button.active')?.getAttribute('data-panel') || 'essence';
+            const title = document.getElementById('tablet-title');
+            if (title) {
+                const key = TITLE_KEYS[id] || TITLE_KEYS.essence;
+                title.textContent = t(key, TITLES_FALLBACK[id] || TITLES_FALLBACK.essence);
+                title.setAttribute('data-i18n', key);
+            }
+        }
+
+        initI18n()
+            .then(({ msgs }) => {
+                localeMsgs = msgs || {};
+                refreshTabletChrome();
+            })
+            .catch(() => {
+                document.documentElement.classList.remove('i18n-pending');
+                document.documentElement.classList.add('i18n-ready');
+            });
+        // Absolute fallback: never leave a blank page if module chain stalls
+        setTimeout(() => {
+            document.documentElement.classList.remove('i18n-pending');
+            document.documentElement.classList.add('i18n-ready');
+        }, 1500);
+
+        window.addEventListener('pm:i18n', (ev) => {
+            localeMsgs = (ev.detail && ev.detail.msgs) || {};
+            refreshTabletChrome();
+        });
+
+        const demoCtx = {
+            config: {
+                chainId: 'morocco-1',
+                chainName: 'Terp Network',
+                rpc: 'https://rpc.terp.network',
+                rest: 'https://api.terp.network',
+                denom: 'uthiol',
+                bech32Prefix: 'terp',
+                gasPrice: '0.025uthiol',
+                contracts: { zkWasmvmTest: '' },
+            },
+        };
+
+        function launchNorick() {
+            if (!DEMOS_LIVE) return;
+            openDemo('norick', demoCtx);
+        }
+
+        function openInfoModal(title, html) {
+            let root = document.getElementById('grant-info-modal');
+            if (!root) {
+                root = document.createElement('div');
+                root.id = 'grant-info-modal';
+                root.setAttribute('role', 'dialog');
+                root.setAttribute('aria-modal', 'true');
+                root.innerHTML = `
+      <div class="gim-backdrop" data-close="1"></div>
+      <div class="gim-card">
+        <button type="button" class="gim-x" data-close="1" aria-label="Close">×</button>
+        <h3 class="gim-title"></h3>
+        <div class="gim-body"></div>
+      </div>`;
+                document.body.appendChild(root);
+                if (!document.getElementById('grant-info-modal-style')) {
+                    const st = document.createElement('style');
+                    st.id = 'grant-info-modal-style';
+                    st.textContent = `
+#grant-info-modal{position:fixed;inset:0;z-index:400;display:none;align-items:flex-end;justify-content:center;
+  padding:max(0.75rem,env(safe-area-inset-top)) max(0.75rem,env(safe-area-inset-right)) max(0.75rem,env(safe-area-inset-bottom)) max(0.75rem,env(safe-area-inset-left))}
+#grant-info-modal.open{display:flex}
+#grant-info-modal .gim-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.72)}
+#grant-info-modal .gim-card{position:relative;z-index:1;max-width:32rem;width:100%;max-height:min(88dvh,640px);overflow:auto;
+  background:#1a1b24;border:1px solid rgba(189,147,249,0.35);border-radius:14px 14px 12px 12px;padding:1.35rem 1.4rem 1.5rem;color:#f8f8f2;
+  -webkit-overflow-scrolling:touch}
+#grant-info-modal .gim-x{position:absolute;top:0.45rem;right:0.55rem;background:none;border:none;color:#b0bad8;font-size:1.65rem;cursor:pointer;line-height:1;
+  min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+#grant-info-modal .gim-title{font-size:1.2rem;color:#b1ebeb;margin:0 2rem 0.75rem 0;font-weight:700}
+#grant-info-modal .gim-body{font-size:1.05rem;line-height:1.55;color:#b0bad8}
+#grant-info-modal .gim-body a{color:#bd93f9}
+#grant-info-modal .gim-body p{margin:0 0 0.65rem}
+@media (min-width:640px){#grant-info-modal{align-items:center}#grant-info-modal .gim-card{border-radius:14px}}`;
+                    document.head.appendChild(st);
+                }
+                root.addEventListener('click', (e) => {
+                    if (e.target.getAttribute('data-close')) root.classList.remove('open');
+                });
+            }
+            root.querySelector('.gim-title').textContent = title;
+            root.querySelector('.gim-body').innerHTML = html;
+            root.classList.add('open');
+        }
+
+        if (DEMOS_LIVE) {
+            document.getElementById('demo-norick')?.addEventListener('click', launchNorick);
+
+            document.getElementById('demo-auth')?.addEventListener('click', () => {
+                openInfoModal('Smart authenticators (terp-rs)', `
+    <p>Priority residual demos: <strong>terp-rs authenticator suite</strong> for ZK authentication gateways composed with IBC light clients.</p>
+    <p>Library substrate: <a href="https://github.com/MegaRockLabs/smart-account-auth" target="_blank" rel="noopener">smart-account-auth</a>.</p>
+    <p><a href="https://github.com/terpnetwork/terp-core/tree/main/crates/terp-rs/contracts/smart-accounts/terp-authenticator-suite" target="_blank" rel="noopener">Open authenticator suite →</a></p>
+  `);
+            });
+
+            document.getElementById('demo-lc')?.addEventListener('click', () => {
+                openInfoModal('IBC light clients', `
+    <p>Crosslink 08-wasm client is compiled with Ed25519 batch e2e. Residual: public header/finality closed-loop runbook with real chain data.</p>
+    <p><a href="https://github.com/permissionlessweb/zebra-crosslink" target="_blank" rel="noopener">zebra-crosslink →</a></p>
+    <p><a href="https://github.com/terpnetwork/terp-core/tree/main/crates/terp-rs/contracts/light-clients" target="_blank" rel="noopener">terp-rs light-clients →</a></p>
+  `);
+            });
+
+            document.getElementById('demo-board')?.addEventListener('click', () => {
+                openInfoModal('Bounty board · event plane', `
+    <p>DAO-DAO iframe bounty board for sovereign participation; credits via zk-JWT plane and ephemeral access fabric for Phase 3 audit/hackathon.</p>
+    <p><a href="/loyalty#bounty">Loyalty bounty board desk →</a></p>
+    <p><a href="https://daodao.terp.network" target="_blank" rel="noopener">daodao.terp.network →</a></p>
+  `);
+            });
+        }
+
+        // ── Tablet panel routing ──────────────────────────────
+        const TITLE_KEYS = {
+            essence: 'desk.essence',
+            problem: 'desk.problem',
+            stack: 'desk.stackTitle',
+            auth: 'desk.auth',
+            demos: 'desk.demos',
+            progress: 'desk.progress',
+            grant: 'desk.grantTitle',
+            events: 'desk.events',
+            resources: 'desk.resources',
+            contact: 'desk.contact',
+        };
+        const TITLES_FALLBACK = {
+            essence: 'Overview',
+            problem: 'Problem → path',
+            stack: 'Stack inventory',
+            auth: 'Auth & access',
+            demos: 'Demos',
+            progress: 'Progress',
+            grant: 'Grant timeline',
+            events: 'Community event',
+            resources: 'Sources',
+            contact: 'Contact',
+        };
+        const PILL_KEYS = {
+            essence: [['live', 'pills.residual', 'ZCG residual']],
+            problem: [['live', 'pills.scope', 'Scope']],
+            stack: [['live', 'pills.inventory', 'Inventory']],
+            auth: [['live', 'pills.capabilities', 'Capabilities']],
+            demos: [['grant', 'pills.pending', 'Pending']],
+            progress: [['live', 'pills.shipped', 'Shipped']],
+            grant: [['grant', 'pills.ask', '$240k']],
+            events: [['grant', 'pills.community', 'Community']],
+            resources: [['live', 'pills.links', 'Links']],
+            contact: [['live', 'pills.channels', 'Channels']],
+        };
+
+        function showPanel(id) {
+            if (!TITLE_KEYS[id]) id = 'essence';
+            document.querySelectorAll('.panel').forEach((p) => {
+                p.classList.toggle('active', p.id === `panel-${id}`);
+            });
+            document.querySelectorAll('.side-nav button').forEach((b) => {
+                const on = b.getAttribute('data-panel') === id;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            document.querySelectorAll('.header-nav .nav-link-btn').forEach((b) => {
+                b.classList.toggle('active', b.getAttribute('data-panel') === id);
+            });
+            refreshTabletChrome(id);
+            const pills = document.getElementById('tablet-pills');
+            if (pills) {
+                pills.innerHTML = (PILL_KEYS[id] || [])
+                    .map(([cls, key, fallback]) => {
+                        const label = t(key, fallback);
+                        return `<span class="pill ${cls}" data-i18n="${key}">${label}</span>`;
+                    })
+                    .join('');
+            }
+            const body = document.querySelector('.tablet-body');
+            if (body) body.scrollTop = 0;
+            const desk = document.getElementById('desk');
+            const isNarrow = window.matchMedia('(max-width: 960px)').matches;
+            if (desk && (id === 'contact' || isNarrow)) {
+                const tablet = document.getElementById('tablet');
+                (tablet || desk).scrollIntoView({ behavior: 'smooth', block: isNarrow ? 'start' : 'nearest' });
+            }
+            // Keep active desk tab visible in horizontal mobile nav
+            const activeNav = document.querySelector('.side-nav button.active');
+            if (activeNav && typeof activeNav.scrollIntoView === 'function') {
+                try {
+                    activeNav.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                } catch { /* ignore */ }
+            }
+            try {
+                history.replaceState(null, '', `#${id}`);
+            } catch { /* ignore */ }
+        }
+
+        document.querySelectorAll('[data-panel]').forEach((el) => {
+            el.addEventListener('click', () => showPanel(el.getAttribute('data-panel')));
+        });
+
+        // Stack inventory filters (relevance containers)
+        function applyStackFilter(key) {
+            const grid = document.getElementById('stack-grid');
+            if (!grid) return;
+            const items = grid.querySelectorAll('.stack-item');
+            let visible = 0;
+            items.forEach((item) => {
+                const stacks = (item.getAttribute('data-stacks') || '').split(/\s+/).filter(Boolean);
+                const show = key === 'all' || stacks.includes(key);
+                item.classList.toggle('is-hidden', !show);
+                if (show) visible += 1;
+            });
+            grid.classList.toggle('filter-empty', visible === 0);
+            document.querySelectorAll('.stack-filters button').forEach((b) => {
+                b.classList.toggle('active', b.getAttribute('data-stack-filter') === key);
+            });
+        }
+        document.querySelectorAll('.stack-filters button').forEach((btn) => {
+            btn.addEventListener('click', () => applyStackFilter(btn.getAttribute('data-stack-filter') || 'all'));
+        });
+
+        // Deep links: #contact, ?panel=grant, ?stack=vote, ?demo=norick
+        try {
+            const params = new URLSearchParams(location.search);
+            const hash = (location.hash || '').replace(/^#/, '');
+            const panel = params.get('panel') || hash;
+            if (panel && TITLES[panel]) showPanel(panel);
+            const stack = params.get('stack');
+            if (stack) {
+                showPanel('stack');
+                applyStackFilter(stack);
+            }
+            const demo = params.get('demo');
+            if (demo === 'norick' || demo === 'no-rick') {
+                setTimeout(launchNorick, 400);
+            } else if (demo === 'board') {
+                setTimeout(() => showPanel('events'), 200);
+            } else if (demo === 'demos') {
+                setTimeout(() => showPanel('demos'), 200);
+            }
+        } catch { /* ignore */ }
+    </script>
+
+    <script>
+        // ── Deep-space Hopalong fractal ──
+        const canvas = document.getElementById('fractal-canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const variantNameEl = document.getElementById('variantName');
+        const zoomLevelEl = document.getElementById('zoomLevel');
+
+        const pixelSize = 6;
+        let width, height, cols, rows;
+        let hitBuffer = null;
+        let maxHit = 0;
+        let fractalX = 0, fractalY = 0;
+        let currentIteration = 0;
+
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            cols = Math.floor(width / pixelSize);
+            rows = Math.floor(height / pixelSize);
+            resetFractal();
+        }
+        function resetFractal() {
+            hitBuffer = new Uint32Array(cols * rows);
+            maxHit = 0;
+            currentIteration = 0;
+            fractalX = 0;
+            fractalY = 0;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const fractalSequences = [
+            {
+                name: 'Deep Cosmic',
+                params: { a: -3.14, b: 0.2, c: 0.3, d: -1, s: -1, f: 1, g: 0, h: 0 },
+                baseRange: 95,
+                zooms: [
+                    { cx: 12, cy: -18, scale: 2.2 },
+                    { cx: 14, cy: -16, scale: 5.5 },
+                    { cx: 15.2, cy: -15.4, scale: 11 },
+                    { cx: 12, cy: -18, scale: 3.0 },
+                ]
+            },
+            {
+                name: 'Outer Spiral',
+                params: { a: 0.4, b: 1.1, c: 0.0, d: -1, s: -1, f: 1, g: 0, h: 0 },
+                baseRange: 28,
+                zooms: [
+                    { cx: -9, cy: 11, scale: 1.8 },
+                    { cx: -11, cy: 13, scale: 4.5 },
+                    { cx: -12, cy: 14, scale: 9 },
+                    { cx: -9, cy: 11, scale: 2.5 },
+                ]
+            },
+            {
+                name: 'Night Sinusoid',
+                params: { a: 0.4, b: 1.0, c: 0.0, d: -1, s: -1, f: 0, g: 1, h: 0 },
+                baseRange: 160,
+                zooms: [
+                    { cx: -22, cy: 8, scale: 1.5 },
+                    { cx: -24, cy: 10, scale: 3.8 },
+                    { cx: -25, cy: 11, scale: 8 },
+                    { cx: -22, cy: 8, scale: 2.2 },
+                ]
+            },
+        ];
+
+        let currentSequenceIndex = 0;
+        let currentZoomIndex = 0;
+        let zoomProgress = 0;
+        const transitionDuration = 9000;
+        const iterationsPerFrame = 50000;
+        const maxIterations = 2500000;
+        let lastTimestamp = 0;
+        let colorOffset = 0;
+
+        function getCurrentView() {
+            const seq = fractalSequences[currentSequenceIndex];
+            const zoom1 = seq.zooms[currentZoomIndex];
+            const zoom2 = seq.zooms[(currentZoomIndex + 1) % seq.zooms.length];
+            const cx = interpolate(zoom1.cx, zoom2.cx, zoomProgress);
+            const cy = interpolate(zoom1.cy, zoom2.cy, zoomProgress);
+            const scale = interpolateZoom(zoom1.scale, zoom2.scale, zoomProgress);
+            const range = seq.baseRange / scale;
+            return {
+                xMin: cx - range / 2, xMax: cx + range / 2,
+                yMin: cy - range / 2, yMax: cy + range / 2,
+                scale
+            };
+        }
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+        function interpolateZoom(start, end, progress) {
+            const ep = easeInOutCubic(progress);
+            return Math.exp(Math.log(start) + (Math.log(end) - Math.log(start)) * ep);
+        }
+        function interpolate(start, end, progress) {
+            return start + (end - start) * easeInOutCubic(progress);
+        }
+
+        const colorPalette = new Array(120);
+        for (let i = 0; i < 120; i++) {
+            const hue = 220 + (i * 1.1) % 80;
+            const h = hue / 60;
+            const c = 0.55;
+            const x = c * (1 - Math.abs(h % 2 - 1));
+            const m = 0.12;
+            let rr, gg, bb;
+            if (h < 1) { rr = c; gg = x; bb = 0; }
+            else if (h < 2) { rr = x; gg = c; bb = 0; }
+            else if (h < 3) { rr = 0; gg = c; bb = x; }
+            else if (h < 4) { rr = 0; gg = x; bb = c; }
+            else if (h < 5) { rr = x; gg = 0; bb = c; }
+            else { rr = c; gg = 0; bb = x; }
+            colorPalette[i] = [
+                Math.floor((rr + m) * 255),
+                Math.floor((gg + m) * 255),
+                Math.floor((bb + m) * 220)
+            ];
+        }
+
+        function hopalongIterate(params) {
+            const { a, b, c, d, s, f, g, h } = params;
+            const bxc = b * fractalX - c;
+            const absBxc = Math.abs(bxc);
+            const signFactor = fractalX < 0 ? s : 1;
+            const term = f * Math.sqrt(absBxc) + g * Math.sin(bxc) + h * absBxc;
+            const xNew = fractalY + d * signFactor * term;
+            const yNew = a - fractalX;
+            fractalX = xNew;
+            fractalY = yNew;
+        }
+        function worldToGrid(wx, wy, view) {
+            const { xMin, xMax, yMin, yMax } = view;
+            const xRange = xMax - xMin;
+            const yRange = yMax - yMin;
+            const sc = Math.min(cols / xRange, rows / yRange);
+            const oX = (cols - xRange * sc) / 2;
+            const oY = (rows - yRange * sc) / 2;
+            return {
+                gx: Math.floor((wx - xMin) * sc + oX),
+                gy: Math.floor((wy - yMin) * sc + oY)
+            };
+        }
+        function renderHitBuffer() {
+            const imageData = ctx.createImageData(width, height);
+            const data = imageData.data;
+            const data32 = new Uint32Array(data.buffer);
+            if (maxHit === 0) { ctx.putImageData(imageData, 0, 0); return; }
+            const logMax = Math.log(maxHit + 1);
+            for (let gy = 0; gy < rows; gy++) {
+                for (let gx = 0; gx < cols; gx++) {
+                    const hitIdx = gy * cols + gx;
+                    if (hitBuffer[hitIdx] > 0) {
+                        const logVal = Math.log(hitBuffer[hitIdx] + 1) / logMax;
+                        const iter = logVal * 119;
+                        const shiftedIter = (iter + colorOffset) % 120;
+                        const colorIndex1 = Math.floor(shiftedIter) % 120;
+                        const colorIndex2 = (colorIndex1 + 1) % 120;
+                        const blend = shiftedIter - Math.floor(shiftedIter);
+                        const [r1, g1, b1] = colorPalette[colorIndex1];
+                        const [r2, g2, b2] = colorPalette[colorIndex2];
+                        const r = Math.floor(r1 + (r2 - r1) * blend);
+                        const g = Math.floor(g1 + (g2 - g1) * blend);
+                        const b = Math.floor(b1 + (b2 - b1) * blend);
+                        const color32 = (255 << 24) | (b << 16) | (g << 8) | r;
+                        const basePixelX = gx * pixelSize;
+                        const basePixelY = gy * pixelSize;
+                        for (let py = 0; py < pixelSize; py++) {
+                            const pixelY = basePixelY + py;
+                            if (pixelY >= height) break;
+                            for (let px = 0; px < pixelSize; px++) {
+                                const pixelX = basePixelX + px;
+                                if (pixelX >= width) break;
+                                data32[pixelY * width + pixelX] = color32;
+                            }
+                        }
+                    }
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+        function drawFractal(timestamp) {
+            if (lastTimestamp === 0) lastTimestamp = timestamp;
+            const deltaTime = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+            const seq = fractalSequences[currentSequenceIndex];
+            const view = getCurrentView();
+            if (variantNameEl) variantNameEl.textContent = seq.name;
+            if (zoomLevelEl) zoomLevelEl.textContent = view.scale.toFixed(1) + 'x';
+            colorOffset = (colorOffset + deltaTime / 200) % 120;
+            zoomProgress += deltaTime / transitionDuration;
+            if (currentIteration < maxIterations) {
+                for (let i = 0; i < iterationsPerFrame && currentIteration < maxIterations; i++, currentIteration++) {
+                    hopalongIterate(seq.params);
+                    const { gx, gy } = worldToGrid(fractalX, fractalY, view);
+                    if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) {
+                        const idx = gy * cols + gx;
+                        hitBuffer[idx]++;
+                        if (hitBuffer[idx] > maxHit) maxHit = hitBuffer[idx];
+                    }
+                }
+            }
+            renderHitBuffer();
+            if (zoomProgress >= 1) {
+                zoomProgress = 0;
+                currentZoomIndex = (currentZoomIndex + 1) % seq.zooms.length;
+                if (currentZoomIndex === 0) {
+                    currentSequenceIndex = (currentSequenceIndex + 1) % fractalSequences.length;
+                    resetFractal();
+                }
+            }
+            requestAnimationFrame(drawFractal);
+        }
+        requestAnimationFrame(drawFractal);
+    </script>
+</body>
+
+</html>

@@ -10,7 +10,7 @@ async function build() {
   await fs.mkdirSync(outdir, { recursive: true });
 
   // Minify HTML
-  for (const file of ['pages/index.html','pages/loyalty.html']) {
+  for (const file of ['pages/index.html', 'pages/loyalty.html', 'pages/zk.html', 'pages/contact.html']) {
     const content = await fs.readFileSync(file, 'utf8');
     const minified = await minify(content, { collapseWhitespace: true });
 
@@ -20,14 +20,20 @@ async function build() {
     await fs.writeFileSync(outputPath, minified, 'utf8');
   }
 
-  // Copy lib/ JS modules.
-  const libOut = path.join(outdir, 'lib');
-  fs.mkdirSync(libOut, { recursive: true });
-  for (const file of fs.readdirSync('lib')) {
-    if (file.endsWith('.js')) {
-      fs.copyFileSync(path.join('lib', file), path.join(libOut, file));
+  // Copy lib/ JS modules (including nested demos/).
+  function copyJsTree(srcDir, destDir) {
+    fs.mkdirSync(destDir, { recursive: true });
+    for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
+      const from = path.join(srcDir, entry.name);
+      const to = path.join(destDir, entry.name);
+      if (entry.isDirectory()) {
+        copyJsTree(from, to);
+      } else if (entry.name.endsWith('.js')) {
+        fs.copyFileSync(from, to);
+      }
     }
   }
+  copyJsTree('lib', path.join(outdir, 'lib'));
 
   // // Copy pkg/ WASM (if built).
   // if (fs.existsSync('pkg') && (fs.existsSync('pkg/passkey_wasm.js') || fs.existsSync('pkg/oline_wasm.js'))) {
@@ -45,6 +51,11 @@ async function build() {
 
   // Copy public/.
   fs.cpSync('public', path.join(outdir, 'public'), { recursive: true, force: true });
+
+  // Locale catalogs for client i18n (see docs/i18n.md).
+  if (fs.existsSync('locales')) {
+    fs.cpSync('locales', path.join(outdir, 'locales'), { recursive: true, force: true });
+  }
 
   console.log('Build complete');
 }
