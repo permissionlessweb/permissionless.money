@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.js",
+    "verify:mint-libs": "node scripts/verify-mint-libs.mjs dist",
     "lint": "eslint lib/ api/ eslint.config.js",
     "typecheck": "echo 'Static JS; add JSDoc or Flow for types'",
     "test": "echo \"Error: no test specified\" && exit 1",

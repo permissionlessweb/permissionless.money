@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>PERMISSIONLESS.MONEY — On-Chain Generative Art & Private Loyalty</title>
+    <title>PERMISSIONLESS.MONEY — On-chain generative art &amp; ZK</title>
     <meta name="description"
         content="Mint unique generative fractal NFTs on-chain. Run privacy-preserving loyalty programs. No gatekeepers, no permission needed.">
 
@@ -18,7 +18,7 @@
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://permissionless.money/">
-    <meta property="twitter:title" content="PERMISSIONLESS.MONEY — Generative Art & Private Loyalty on Chain">
+    <meta property="twitter:title" content="PERMISSIONLESS.MONEY — Generative art and ZK on Terp">
     <meta property="twitter:description"
         content="Mint unique fractal NFTs. Run privacy-preserving loyalty programs. Built on Terp Network.">
     <meta property="twitter:image" content="">
@@ -120,6 +120,7 @@
             text-decoration: none;
             font-size: 0.85rem;
             font-weight: 500;
+            font-family: inherit;
             transition: color 0.2s;
         }
 
@@ -353,6 +354,44 @@
             color: var(--text-dim);
         }
 
+        #donate {
+            scroll-margin-top: 4.5rem;
+        }
+        .donate-foot {
+            margin: 0 auto 1.6rem;
+            max-width: 28rem;
+        }
+        .donate-foot h2 {
+            color: var(--accent-teal);
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+        .donate-foot p {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        .donate-foot img {
+            display: block;
+            width: min(236px, 70vw);
+            height: auto;
+            margin: 0 auto 1rem;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 0 12px #fff;
+            image-rendering: pixelated;
+        }
+        .donate-uri {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.62rem;
+            color: var(--accent-teal);
+            word-break: break-all;
+            line-height: 1.4;
+            margin: 0;
+        }
+
         .footer svg {
             width: 28px;
             height: 28px;
@@ -520,8 +559,8 @@
     <header class="header">
         <a href="/" class="header-brand">PERMISSIONLESS.MONEY</a>
         <nav class="header-nav">
-            <!-- <a href="/mint">Mint</a> -->
-            <a href="/loyalty">Loyalty</a>
+            <a href="/mint">Mint</a>
+            <a href="#donate">Donate</a>
             <a href="https://github.com/permissionlessweb" target="_blank" rel="noopener">GitHub</a>
         </nav>
     </header>
@@ -534,7 +573,7 @@
                 <div class="hero-title-list" id="titleList">
                     <div class="hero-title-item">Art</div>
                     <div class="hero-title-item">Trust</div>
-                    <div class="hero-title-item">Loyalty</div>
+                    <div class="hero-title-item">Proofs</div>
                     <div class="hero-title-item">Privacy</div>
                     <div class="hero-title-item">Ownership</div>
                     <div class="hero-title-item">Freedom</div>
@@ -554,8 +593,7 @@
         <p class="hero-tagline">Building Systems That Respect And Cherish Users</p>
         <p class="hero-description"></p>
         <div class="hero-cta">
-            <!-- <a href="/mint" class="btn btn-primary">Mint a Fractal</a> -->
-            <a href="/loyalty" class="btn btn-outline">Loyalty Programs</a>
+            <a href="/mint" class="btn btn-primary">Mint</a>
         </div>
     </section>
 
@@ -570,14 +608,18 @@
         </div> -->
             <div class="prop-card reveal">
                 <div class="prop-card-icon">&#9733;</div>
-                <h3>Privacy Preserving Loyalty Programs</h3>
-                <p>HashMerchant lets businesses reward customers using cryptographic proofs — no personal data ever
-                    touches the blockchain. Eligibility is verified by math, not by middlemen.</p>
+                <h3>On-chain SVG collections</h3>
+                <p>Browse and mint parameterized SVG art on Terp. The collection lives in the contract — open Mint to play, pay, and collect.</p>
             </div>
             <div class="prop-card reveal">
                 <div class="prop-card-icon">&#8734;</div>
                 <h3>Censorship Resistant Market Libraries</h3>
                 <p>Verifiable workflows for curation of markets and pipelines</p>
+            </div>
+            <div class="prop-card reveal">
+                <div class="prop-card-icon">&#9670;</div>
+                <h3>ZK-CosmWasm &amp; Zcash Light Clients</h3>
+                <p>Proof VM + Zcash light clients that complement private voting and Crosslink — smart-account authenticators and vote-sdk.</p>
             </div>
             <span class="value" id="variantName"></span>
         </div>
@@ -587,7 +629,13 @@
     </section>
 
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer" id="donate">
+        <div class="donate-foot">
+            <h2>Support development</h2>
+            <p>Shielded ZEC to keep this desk running. Scan the ZIP-321 QR. Not a mint checkout — no memo. Pick the amount in Zodl or Vizor.</p>
+            <img src="/public/donate-zip321.gif" width="236" height="236" alt="ZIP-321 shielded ZEC donation QR">
+            <p class="donate-uri">zcash:u1uml44spc4nn732t6605wjcwu3wn9dla4aehpyrvnhssq2ew3dk8mqk5e9jhnndzfny7fkrkx5ape05nzf8gwruqykkvc27fm0v9ln4hfrwkmtfrs27r06xu0uc9eneh777le3m8362v7xaurgtkgxtspy5eqhgpzw6axjwgwdy5wjdjt</p>
+        </div>
         <div class="footer-links">
             <a href="https://github.com/permissionlessweb" class="social-link" title="PermissionlessWeb on GitHub"
                 target="_blank" rel="noopener">
@@ -616,18 +664,7 @@
         <p class="footer-copy">Built on Terp Network &middot; Open Source &middot; No Permission Required</p>
     </footer>
 
-    <!-- FAB Nav -->
-    <div id="fab-nav">
-        <div id="fab-menu" role="menu" aria-hidden="true">
-            <div class="fab-label">Navigate</div>
-            <a href="/mint" role="menuitem">Mint Fractals</a>
-            <a href="/loyalty" role="menuitem">Loyalty</a>
-            <div class="fab-divider" role="separator"></div>
-            <a href="https://github.com/permissionlessweb" target="_blank" rel="noopener" role="menuitem">GitHub</a>
-        </div>
-        <!-- SECURITY/UX: Add aria-expanded, keyboard handling for accessibility -->
-        <button id="fab-btn" aria-label="Menu" aria-expanded="false" aria-controls="fab-menu">+</button>
-    </div>
+
 
     <script>
         // ── Title Rotator ─────────────────────────────────────────────
@@ -931,43 +968,6 @@
             requestAnimationFrame(drawFractal);
         }
         requestAnimationFrame(drawFractal);
-
-        // ── FAB Toggle ────────────────────────────────────────────────
-        // UX: Added aria-expanded, Escape key to close, focus trap
-        var fabBtn = document.getElementById('fab-btn');
-        var fabMenu = document.getElementById('fab-menu');
-
-        function toggleFab(open) {
-            var isOpen = open !== undefined ? open : (fabMenu.style.display === 'flex');
-            fabMenu.style.display = isOpen ? 'none' : 'flex';
-            fabMenu.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
-            fabBtn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-            fabBtn.textContent = isOpen ? '+' : '×';
-        }
-
-        fabBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            toggleFab();
-        });
-
-        // Close FAB on outside click
-        document.addEventListener('click', function (e) {
-            var f = document.getElementById('fab-nav');
-            if (f && !f.contains(e.target)) {
-                toggleFab(true); // true = close it
-            }
-        });
-
-        // UX: Close FAB on Escape key
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
-                var fabNav = document.getElementById('fab-nav');
-                if (fabNav && fabNav.contains(document.activeElement) || fabMenu.style.display === 'flex') {
-                    toggleFab(true);
-                    fabBtn.focus();
-                }
-            }
-        });
 
         // ── Scroll Reveal ─────────────────────────────────────────────
         const revealIO = new IntersectionObserver((entries) => {

@@ -1,4 +1,5 @@
 .DS_Store
+.console.jsonl
 node_modules
 dist/
 pkg/

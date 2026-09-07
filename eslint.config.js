@@ -23,6 +23,7 @@ export default [
         Promise: 'readonly',
         BigInt: 'readonly',
         URL: 'readonly',
+        URLSearchParams: 'readonly',
         Blob: 'readonly',
         Map: 'readonly',
         Date: 'readonly',

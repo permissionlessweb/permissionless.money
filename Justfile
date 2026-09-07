@@ -7,7 +7,7 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 
 # start dev server on :8001 (no-cache for rapid iteration)
 serve:
-    npx http-server . -p 8001 -c-1
+    node scripts/dev-server.mjs
 
 # ── WASM ───────────────────────────────────────────────────────────
 

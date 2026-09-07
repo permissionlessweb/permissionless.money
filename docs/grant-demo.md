@@ -2,7 +2,8 @@
 
 **Live:** https://permissionless.money/zk  
 **Forum:** https://forum.zcashcommunity.com/t/54211 (topic id `54211`)  
-**Issue:** https://github.com/ZcashCommunityGrants/zcashcommunitygrants/issues/182  
+**Issue:** https://github.com/ZcashCommunityGrants/zcashcommunitygrants/issues/369 (active residual; original #182)  
+
 
 ## Goals (async with engineering)
 
@@ -28,7 +29,7 @@ Discourse JSON (no auth for public topics):
 
 1. Overview  
 2. Problem → path  
-3. Timeline ($240k residual)  
+3. Timeline ($230k residual)  
 4. Stack / Progress  
 5. Community event  
 6. Sources + forum thread  

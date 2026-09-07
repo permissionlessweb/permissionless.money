@@ -1,0 +1,2477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mint | PERMISSIONLESS.MONEY</title>
+  <script>
+  (function () {
+    var h = location.hostname;
+    if (h !== 'localhost' && h !== '127.0.0.1') return;
+    var s = document.createElement('script');
+    s.src = '/lib/console-ingest.js';
+    document.head.appendChild(s);
+  })();
+  </script>
+  <link rel="icon" type="image/png" sizes="32x32" href="/public/favicons/p-32x32.png">
+  <link href="https://fonts.cdnfonts.com/css/satoshi" rel="stylesheet">
+  <style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #08090d;
+      --text: #f8f8f2;
+      --muted: #6272a4;
+      --teal: #b1ebeb;
+      --purple: #bd93f9;
+      --green: #50fa7b;
+      --red: #ff5555;
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    body { overflow: hidden; }
+
+    #fractal-preview {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      display: block; z-index: 0; background: #000;
+      pointer-events: none !important;
+    }
+
+    .chrome {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 2;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 1.25rem;
+      background: linear-gradient(to bottom, rgba(8,9,13,0.75), transparent);
+      pointer-events: none;
+    }
+    .chrome a, .chrome button { pointer-events: auto; }
+    .brand {
+      color: var(--teal); text-decoration: none; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.04em;
+    }
+    .nav { display: flex; gap: 1rem; align-items: center; }
+    .nav a { color: var(--muted); text-decoration: none; font-size: 0.8rem; font-weight: inherit; font-family: inherit; }
+    .nav a:hover, .nav a.on { color: var(--text); }
+
+    .dock {
+      position: fixed; z-index: 80;
+      left: 50%; bottom: max(0.85rem, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      width: min(440px, calc(100vw - 1.25rem));
+      padding: 0.7rem 0.85rem 0.8rem;
+      background: rgba(8, 9, 13, 0.78);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      max-height: min(52vh, 480px);
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      pointer-events: auto;
+      overflow: hidden;
+    }
+    .crumbs {
+      display: flex; gap: 0.15rem; flex-wrap: nowrap; overflow-x: auto;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+      flex: 0 0 auto; min-height: 1.55rem; width: 100%;
+    }
+    .crumbs::-webkit-scrollbar { display: none; }
+    .crumbs button {
+      flex: 1 0 auto; border: 0; background: transparent; color: var(--muted);
+      font: inherit; font-size: 0.68rem; font-weight: 650; letter-spacing: 0.03em;
+      padding: 0.22rem 0.18rem; cursor: pointer; white-space: nowrap;
+    }
+    .crumbs button.on { color: var(--teal); }
+    .dock-top, .dock-foot { flex: 0 0 auto; }
+    .step { display: none; min-height: 0; overflow: auto; }
+    .step.on { display: block; flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+    .dock-foot { flex: 0 0 auto; }
+    .dock-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.55rem; }
+    .variant { font-size: 0.78rem; color: var(--teal); letter-spacing: 0.06em; text-transform: uppercase; }
+    .price { font-size: 0.78rem; color: var(--green); }
+    .price.paid { color: var(--text); }
+    .lede { font-size: 0.78rem; color: var(--muted); line-height: 1.4; margin-bottom: 0.7rem; }
+    .mode-row { display: flex; gap: 2px; padding: 2px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; margin-bottom: 0.55rem; }
+    .mode {
+      flex: 1; border-radius: 4px; cursor: pointer; font: inherit; font-size: 0.7rem;
+      padding: 0.35rem 0.4rem; background: transparent; color: var(--muted);
+      border: 0;
+    }
+    .mode.on { color: #08090d; background: var(--teal); }
+    .vars {
+      margin-bottom: 0.75rem;
+      padding: 0.55rem 0.6rem 0.6rem;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+    }
+    .forms { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.55rem; }
+    .form-tab {
+      border-radius: 6px; cursor: pointer; font: inherit; font-size: 0.65rem;
+      padding: 0.28rem 0.45rem; background: transparent; color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .form-tab.on { color: var(--teal); border-color: rgba(177,235,235,0.35); background: rgba(177,235,235,0.08); }
+    .coords { display: grid; gap: 0.28rem; position: relative; z-index: 2; pointer-events: auto; }
+    .coords label { display: grid; grid-template-columns: 2.1rem 1fr; gap: 0.4rem; align-items: center; font-size: 0.68rem; color: var(--muted); pointer-events: auto; }
+    .coords input[type=range] {
+      width: 100%; accent-color: var(--teal);
+      pointer-events: auto; touch-action: none; position: relative; z-index: 3;
+    }
+    .vars.sealed { opacity: 0.35; pointer-events: none; }
+
+    .actions { display: flex; gap: 0.5rem; }
+    .btn {
+      flex: 1; border: 0; border-radius: 8px; cursor: pointer;
+      font-family: inherit; font-size: 0.88rem; font-weight: 600;
+      padding: 0.72rem 0.8rem; transition: opacity 0.15s;
+    }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-ghost {
+      background: transparent; color: var(--teal);
+      border: 1px solid rgba(177,235,235,0.28);
+    }
+    .btn-primary {
+      background: var(--teal); color: var(--bg);
+    }
+    .btn:hover:not(:disabled) { opacity: 0.88; }
+    .btn:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+
+    .status { min-height: 1.1rem; margin-top: 0.55rem; font-size: 0.72rem; color: var(--muted); }
+    .status.err { color: var(--red); }
+    .status.ok { color: var(--green); }
+
+    .more-body { display: flex; flex-direction: column; gap: 0.45rem; }
+    .qty-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; color: var(--muted); }
+    #mint-qty-row { padding: 0.2rem 0.1rem 0.15rem; }
+    .qty-row input {
+      width: 3.2rem; text-align: center; background: transparent;
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;
+      color: var(--text); font: inherit; padding: 0.25rem;
+    }
+    .qty-ctrl { display: flex; align-items: center; gap: 0.28rem; }
+    .qty-btn {
+      width: 1.7rem; height: 1.7rem; border-radius: 6px; cursor: pointer;
+      border: 1px solid rgba(177,235,235,0.28); background: transparent;
+      color: var(--teal); font: inherit; font-size: 1rem; line-height: 1;
+    }
+    .pay-total {
+      font-size: 0.8rem; color: var(--green); margin: 0.35rem 0 0.15rem;
+      letter-spacing: 0.02em; text-align: center; font-weight: 650;
+    }
+    .pk-list { display: flex; flex-direction: column; gap: 0.35rem; max-height: 9rem; overflow: auto; margin-top: 0.45rem; }
+    .pk-list[hidden] { display: none; }
+    .pk-row {
+      display: flex; align-items: center; gap: 0.4rem; font-size: 0.68rem;
+      width: 100%; text-align: left; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.22); border-radius: 8px; padding: 0.38rem 0.5rem;
+      font: inherit; color: var(--muted);
+    }
+    .pk-use {
+      flex: 1; min-width: 0; border: 0; background: transparent; text-align: left;
+      cursor: pointer; color: inherit; font: inherit; padding: 0;
+    }
+    .pk-row b { color: var(--text); font-weight: 650; display: block; }
+    .pk-row .pk-sub { color: var(--muted); font-size: 0.6rem; }
+    .pk-row.on { color: var(--teal); border-color: rgba(177,235,235,0.4); }
+    .pk-row .btn { flex: 0 0 auto; font-size: 0.62rem; font-weight: 500; padding: 0.28rem 0.45rem; }
+    .pk-row .btn-danger {
+      background: transparent; color: var(--red);
+      border: 1px solid rgba(255,85,85,0.35);
+    }
+    .pk-add { width: 100%; }
+    .pk-row input {
+      flex: 1; min-width: 0; background: transparent;
+      border: 1px solid rgba(177,235,235,0.22); border-radius: 6px;
+      color: var(--text); font: inherit; padding: 0.32rem 0.45rem;
+    }
+    .pk-row input:focus { outline: none; border-color: var(--teal); }
+    .tokens { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .tok {
+      font-size: 0.68rem; color: var(--teal); cursor: pointer;
+      border: 1px solid rgba(177,235,235,0.2); border-radius: 999px; padding: 0.15rem 0.45rem;
+    }
+    .tok.on { background: rgba(177,235,235,0.12); border-color: rgba(177,235,235,0.45); }
+    #reveal-veil {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(8,9,13,0.72);
+      color: var(--teal); font-size: 0.95rem; letter-spacing: 0.04em; text-align: center;
+      padding: 2rem;
+    }
+    #reveal-veil.on { display: flex; }
+
+    .toast {
+      position: fixed; bottom: calc(48vh + 0.5rem); left: 50%; transform: translateX(-50%) translateY(12px);
+      z-index: 5; opacity: 0; pointer-events: none;
+      padding: 0.45rem 0.75rem; border-radius: 8px; font-size: 0.75rem;
+      background: rgba(20,22,30,0.95); border: 1px solid rgba(255,255,255,0.1); color: var(--text);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.err { color: var(--red); }
+    .toast.ok { color: var(--green); }
+
+    @media (max-width: 720px) {
+      html, body { height: 100%; overflow: hidden; }
+      .chrome { padding: 0.55rem 0.75rem; padding-top: max(0.55rem, env(safe-area-inset-top)); }
+      .nav { gap: 0.65rem; }
+      .nav a { font-size: 0.72rem; }
+      .dock {
+        width: calc(100vw - 0.7rem);
+        max-height: min(68dvh, 620px);
+        border-radius: 16px 16px 12px 12px;
+        padding-bottom: max(0.7rem, env(safe-area-inset-bottom));
+      }
+      .crumbs button { font-size: 0.6rem; letter-spacing: 0.02em; padding: 0.2rem 0.08rem; }
+      .pay-qr { width: min(200px, 58vw); height: auto; }
+      .lede { font-size: 0.72rem; margin-bottom: 0.45rem; }
+      .btn { padding: 0.62rem 0.7rem; font-size: 0.82rem; }
+    }
+    .unlock-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 0.55rem; }
+    .unlock-opt {
+      text-align: center; border-radius: 10px; cursor: pointer; font: inherit;
+      padding: 0.55rem 0.5rem; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.28); color: var(--text);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      min-height: 4.35rem;
+    }
+    .unlock-opt.on { border-color: rgba(177,235,235,0.45); background: rgba(177,235,235,0.08); }
+    .unlock-opt b { display: block; font-size: 0.78rem; color: var(--teal); }
+    .unlock-opt span { display: block; font-size: 0.62rem; color: var(--muted); margin-top: 0.22rem; line-height: 1.35; font-weight: 400; }
+    .unlock-opts.locked { pointer-events: none; }
+    .unlock-opts.locked .unlock-opt { opacity: 0.38; }
+    .unlock-opts.locked .unlock-opt.on { opacity: 1; }
+    .sess-card {
+      border: 1px solid rgba(177,235,235,0.16); border-radius: 10px;
+      padding: 0.55rem 0.65rem; background: rgba(0,0,0,0.35);
+    }
+    .sess-kicker { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.28rem; }
+    .sess-addr {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.7rem; line-height: 1.45; color: var(--teal);
+      overflow-wrap: anywhere; word-break: break-all;
+    }
+    #pay-detail { cursor: pointer; }
+    .sess-addr.empty { color: var(--muted); font-family: inherit; word-break: normal; }
+    .pay-note {
+      font-size: 0.72rem; color: var(--muted); line-height: 1.4; margin: 0;
+    }
+    .pay-field { margin-top: 0.4rem; }
+    .pay-field[hidden], .pay-note[hidden] { display: none; }
+    .pay-note { text-align: center; }
+    #pay-card { text-align: center; }
+    #pay-card .sess-kicker { text-align: center; }
+    #pay-qr-wrap:not([hidden]) {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 0.7rem 0.45rem 0.8rem; margin-top: 0.5rem;
+      background: rgba(255,255,255,0.04); border-radius: 12px;
+    }
+    #pay-qr-wrap .sess-kicker { margin-bottom: 0.5rem; }
+    .pay-qr {
+      display: block; width: min(220px, 70vw); height: auto; aspect-ratio: 1;
+      background: #fff; border-radius: 10px; margin: 0 auto;
+      image-rendering: pixelated;
+      box-shadow: 0 0 0 10px #fff;
+      cursor: pointer;
+    }
+    .pay-qr[hidden] { display: none; }
+    #pay-to-wrap:not([hidden]) { text-align: center; }
+    #pay-detail {
+      font-size: 0.58rem; line-height: 1.4; max-height: 3.4rem; overflow: auto;
+      text-align: left; padding: 0.4rem 0.45rem; border-radius: 6px;
+      background: rgba(0,0,0,0.28);
+    }
+    .pay-wallets:not([hidden]) {
+      display: flex; flex-direction: column; gap: 0.4rem; width: min(100%, 260px);
+      margin: 0.65rem auto 0.15rem; text-align: center;
+    }
+    .pay-wallets .btn { width: 100%; padding: 0.62rem 0.7rem; font-size: 0.82rem; }
+    .pay-wallets-get {
+      display: flex; justify-content: center; gap: 0.85rem;
+      font-size: 0.65rem; margin-top: 0.15rem;
+    }
+    .pay-wallets-get a { color: var(--muted); }
+    .pay-wallets-get a:hover { color: var(--teal); }
+    .pay-field .sess-kicker { margin-bottom: 0.18rem; }
+    .pay-track {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.15rem;
+      list-style: none; margin: 0 0 0.55rem; padding: 0;
+    }
+    .pay-track li {
+      text-align: center; font-size: 0.58rem; letter-spacing: 0.04em; text-transform: uppercase;
+      color: var(--muted); position: relative; padding-top: 0.85rem;
+    }
+    .pay-track li::before {
+      content: ''; position: absolute; top: 0.18rem; left: 50%; transform: translateX(-50%);
+      width: 0.42rem; height: 0.42rem; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.22); background: transparent;
+    }
+    .pay-track li.on { color: var(--teal); }
+    .pay-track li.on::before { background: var(--teal); border-color: var(--teal); }
+    .pay-track li.done { color: var(--green); }
+    .pay-track li.done::before { background: var(--green); border-color: var(--green); }
+    .vault-row { display: none; margin-top: 0.45rem; }
+    .vault-row.on { display: block; }
+    .vault-row span { display: block; font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.2rem; }
+    .vault-row input {
+      width: 100%; background: transparent; color: var(--teal);
+      border: 1px solid rgba(177,235,235,0.22); border-radius: 6px;
+      font: inherit; font-size: 0.68rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      padding: 0.32rem 0.45rem;
+    }
+    .vault-row input:focus { outline: none; border-color: var(--teal); }
+    .consent {
+      display: none; flex-direction: column; gap: 0.45rem;
+      padding: 0.55rem 0.15rem 0.15rem;
+      border-top: 1px solid rgba(177,235,235,0.16);
+    }
+    .consent.on { display: flex; }
+    .consent-title { font-size: 0.72rem; color: var(--teal); letter-spacing: 0.04em; text-transform: uppercase; }
+    .consent p { font-size: 0.72rem; color: var(--muted); line-height: 1.45; margin: 0; white-space: pre-wrap; }
+    .lede-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+    .lede-row .lede { flex: 1; margin-bottom: 0.55rem; }
+    .info-link {
+      flex: 0 0 auto; border: 0; background: transparent; cursor: pointer;
+      font: inherit; font-size: 0.65rem; font-weight: 650; color: var(--teal);
+      letter-spacing: 0.02em; padding: 0.12rem 0; text-decoration: underline;
+      text-underline-offset: 0.18em;
+    }
+    .info-link[hidden] { display: none; }
+    .you-info-body { font-size: 0.7rem; color: var(--muted); line-height: 1.45; overflow: auto; max-height: 28vh; }
+    .you-info-body p { margin: 0 0 0.55rem; white-space: normal; }
+    .you-info-body ol { margin: 0 0 0.55rem; padding-left: 1.15rem; }
+    .you-info-body li { margin: 0 0 0.4rem; }
+    .you-info-body b { color: var(--text); font-weight: 650; }
+    @media (max-width: 720px) {
+      .unlock-opts { grid-template-columns: 1fr; }
+      .sess-addr { font-size: 0.65rem; }
+    }
+
+  </style>
+</head>
+<body>
+
+<canvas id="fractal-preview" aria-label="Hopalong attractor preview"></canvas>
+<div id="reveal-veil">Preview hidden. The real picture comes from the token after you mint.</div>
+<header class="chrome">
+  <a class="brand" href="/">permissionless.money</a>
+  <nav class="nav">
+    <a href="/mint" class="on">Mint</a>
+    <a href="/#donate">Donate</a>
+  </nav>
+</header>
+<aside class="dock" id="dock">
+  <nav class="crumbs" id="crumbs" aria-label="Mint steps">
+    <button type="button" data-step="play" class="on">Play</button>
+    <button type="button" data-step="unlock">You</button>
+    <button type="button" data-step="mint">Pay</button>
+    <button type="button" data-step="watch">Watch</button>
+    <button type="button" data-step="tokens">Yours</button>
+  </nav>
+  <div class="dock-top">
+    <div class="variant" id="variant-label">Classic</div>
+    <div class="price" id="price-line">Play</div>
+  </div>
+  <section class="step on" data-step-panel="play">
+    <p class="lede" id="lede">These are variants of the same piece. Pick one, then randomize or nudge the sliders. The minted token is what you own — not this preview.</p>
+    <div class="forms" id="form-tabs" role="tablist" aria-label="Variants"></div>
+    <div class="vars" id="vars">
+      <div class="coords" id="coord-panel">
+        <label>A <input type="range" id="coord-a" min="-400" max="400" value="-200"></label>
+        <label>B <input type="range" id="coord-b" min="-150" max="150" value="-33"></label>
+        <label>CX <input type="range" id="coord-cx" min="-80" max="80" value="1"></label>
+        <label>CY <input type="range" id="coord-cy" min="-200" max="200" value="0"></label>
+        <label>DX <input type="range" id="coord-dx" min="-200" max="200" value="0"></label>
+        <label>DY <input type="range" id="coord-dy" min="-200" max="200" value="0"></label>
+        <button type="button" class="btn btn-ghost" id="btn-entropy">Random</button>
+      </div>
+    </div>
+  </section>
+  <section class="step" data-step-panel="unlock">
+    <div class="lede-row">
+      <p class="lede" id="unlock-lede">This device uses two short-lived keys plus a passkey. The account’s first key is not kept in the browser. Name the passkey so you can find it next time. Keplr is the other path.</p>
+      <button type="button" class="info-link" id="btn-you-info">Why two keys?</button>
+    </div>
+    <div class="unlock-opts" role="tablist" aria-label="How you hold the mint">
+      <button type="button" class="unlock-opt on" id="opt-session">
+        <b>This device</b>
+        <span>Two secp256k1 keys + a passkey. The onboard key is thrown away. Disconnects Keplr.</span>
+      </button>
+      <button type="button" class="unlock-opt" id="opt-keplr">
+        <b>Keplr</b>
+        <span>Keplr holds the address and signs. No passkey and no smart-account authenticator.</span>
+      </button>
+    </div>
+    <div class="sess-card">
+      <div class="sess-kicker" id="sess-kicker">No address yet</div>
+      <div class="sess-addr empty" id="sess-addr">Choose how you’ll hold the mint</div>
+      <div class="pk-list" id="holder-list" hidden></div>
+    </div>
+  </section>
+  <section class="step" data-step-panel="mint">
+    <p class="lede" id="mint-lede">Pay with Zcash (ZIP-321 — save the QR for Zodl, open Vizor, or scan) or on Terp. ETH, Base, and Bitcoin are parked — no live house watchers.</p>
+    <div class="unlock-opts" id="rail-opts" role="tablist" aria-label="How you pay">
+      <!-- parked: no live house watchers
+      <button type="button" class="unlock-opt" id="opt-eth" data-rail="eth">
+        <b>Ethereum</b>
+        <span id="rail-eth-amt"></span>
+      </button>
+      <button type="button" class="unlock-opt" id="opt-base" data-rail="base" hidden>
+        <b>Base</b>
+        <span id="rail-base-amt"></span>
+      </button>
+      <button type="button" class="unlock-opt" id="opt-btc" data-rail="btc">
+        <b>Bitcoin</b>
+        <span id="rail-btc-amt"></span>
+      </button>
+      -->
+      <button type="button" class="unlock-opt on" id="opt-zec" data-rail="zec">
+        <b>Zcash · ZIP-321</b>
+        <span id="rail-zec-amt">Scan QR at checkout</span>
+      </button>
+      <button type="button" class="unlock-opt" id="opt-native" data-rail="native">
+        <b>TERP / THIOL</b>
+        <span id="rail-native-amt"></span>
+      </button>
+    </div>
+    <div class="qty-row" id="mint-qty-row">
+      <span>Pieces</span>
+      <div class="qty-ctrl">
+        <button type="button" id="mint-qty-dec" class="qty-btn" aria-label="Fewer pieces">−</button>
+        <input type="number" id="mint-qty" min="1" max="20" value="1" inputmode="numeric" aria-label="How many to mint">
+        <button type="button" id="mint-qty-inc" class="qty-btn" aria-label="More pieces">+</button>
+      </div>
+    </div>
+    <p class="pay-total" id="pay-total"></p>
+  </section>
+  <section class="step" data-step-panel="watch">
+    <p class="lede" id="watch-lede">This checkout is locked. Keep this tab open — the mint desk watches for the payment. Cancel only if you have not sent it.</p>
+    <ol class="pay-track" id="pay-track" aria-label="Payment progress">
+      <li data-track="you">You</li>
+      <li data-track="desk">Desk</li>
+      <li data-track="send">Send</li>
+      <li data-track="seen">Seen</li>
+      <li data-track="yours">Yours</li>
+    </ol>
+    <div class="sess-card" id="pay-card">
+      <div class="sess-kicker" id="pay-kicker">Waiting on the desk</div>
+      <p class="pay-note" id="pay-note">Pick how you’ll pay, then lock it in.</p>
+      <div class="pay-field" id="pay-to-wrap" hidden>
+        <div class="sess-kicker">Send to</div>
+        <div class="sess-addr" id="pay-detail"></div>
+      </div>
+      <div class="pay-field" id="pay-qr-wrap" hidden>
+        <div class="sess-kicker" id="pay-qr-kicker">Scan with Zodl or Vizor</div>
+        <canvas id="pay-qr" class="pay-qr" width="240" height="240" hidden></canvas>
+        <div class="pay-wallets" id="pay-wallets" hidden>
+          <button type="button" class="btn btn-primary" id="btn-open-zodl">Save QR for Zodl</button>
+          <button type="button" class="btn btn-ghost" id="btn-open-vizor">Open in Vizor</button>
+          <div class="pay-wallets-get">
+            <a id="get-zodl" href="https://zodl.com/" target="_blank" rel="noopener">Get Zodl</a>
+            <a id="get-vizor" href="https://vizor.cash/get" target="_blank" rel="noopener">Get Vizor</a>
+          </div>
+        </div>
+      </div>
+      <div class="pay-field" id="pay-memo-wrap" hidden>
+        <div class="sess-kicker">Note</div>
+        <div class="sess-addr" id="pay-memo"></div>
+      </div>
+    </div>
+    <div class="status" id="mint-status"></div>
+  </section>
+  <section class="step" data-step-panel="tokens">
+    <p class="lede">Pieces minted to your address. Tap one to look up its on-chain picture.</p>
+    <div class="tokens" id="collection-grid"></div>
+    <div class="qty-row"><span>Minted</span><span id="stat-minted">—</span></div>
+  </section>
+  <div class="dock-foot actions" id="dock-foot">
+    <button class="btn btn-ghost" type="button" id="btn-wallet">Use this device</button>
+    <button class="btn btn-ghost" type="button" id="btn-cancel" hidden>Cancel checkout</button>
+    <button class="btn btn-primary" type="button" id="btn-mint" disabled>Pay</button>
+  </div>
+  <div class="consent" id="consent" hidden>
+    <div class="consent-title" id="consent-title">Before we continue</div>
+    <p id="consent-body"></p>
+    <div class="actions">
+      <button type="button" class="btn btn-ghost" id="consent-no">Not now</button>
+      <button type="button" class="btn btn-primary" id="consent-yes">Continue</button>
+    </div>
+  </div>
+  <div class="consent" id="you-info" hidden>
+    <div class="consent-title">How this device holds the mint</div>
+    <div class="you-info-body">
+      <p>This path needs <b>two ephemeral secp256k1 keys</b> and a <b>passkey</b>. Keplr does not use this.</p>
+      <ol>
+        <li><b>Base key</b> — creates the on-chain account. It signs the one-time onboard message (HashMerchant covers the fee with a feegrant) that registers the custom authenticator. After that signature, this key is destroyed. It is not left in the browser.</li>
+        <li><b>Browser key</b> — a second secp256k1 key that stays in this tab. It is used <b>together with your passkey</b> in an AllOf authenticator. Day-to-day signing is passkey + this browser key, not the account’s original key.</li>
+      </ol>
+      <p>Why two: smart-account auth can fall back to ordinary key signing. If the key left in the browser were the account’s default key and it leaked, the account would be compromised. So we never keep the default account key here.</p>
+    </div>
+    <button type="button" class="btn btn-primary" id="you-info-ok">Got it</button>
+  </div>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  /* Classic Play binder. type=module is deferred and dies if any /lib export is missing.
+     This must keep sliders, variants, crumbs, and Continue alive anyway. */
+  function $(id) { return document.getElementById(id); }
+  function showStep(name) {
+    document.querySelectorAll('#crumbs [data-step]').forEach(function (b) {
+      b.classList.toggle('on', b.getAttribute('data-step') === name);
+    });
+    document.querySelectorAll('[data-step-panel]').forEach(function (p) {
+      p.classList.toggle('on', p.getAttribute('data-step-panel') === name);
+    });
+    var wallet = $('btn-wallet');
+    var mint = $('btn-mint');
+    if (!wallet || !mint) return;
+    if (name === 'unlock') {
+      wallet.style.display = '';
+      mint.style.display = 'none';
+    } else {
+      wallet.style.display = 'none';
+      mint.style.display = '';
+      mint.disabled = false;
+      mint.textContent = name === 'play' ? 'Choose where it lives' : 'Continue';
+    }
+  }
+  var crumbs = $('crumbs');
+  if (crumbs) {
+    crumbs.addEventListener('click', function (e) {
+      if (window.__PM_MODULE_READY__) return;
+      var b = e.target.closest('[data-step]');
+      if (!b) return;
+      showStep(b.getAttribute('data-step'));
+    });
+  }
+  function setMode(which) {
+    $('mode-prng') && $('mode-prng').classList.toggle('on', which === 'prng');
+    $('mode-entropy') && $('mode-entropy').classList.toggle('on', which === 'entropy');
+  }
+  $('mode-prng') && $('mode-prng').addEventListener('click', function () { setMode('prng'); });
+  $('mode-entropy') && $('mode-entropy').addEventListener('click', function () { setMode('entropy'); });
+  $('btn-entropy') && $('btn-entropy').addEventListener('click', function () {
+    if (!window.randomizeCoords) return;
+    var c = window.randomizeCoords();
+    if ($('coord-a')) $('coord-a').value = Math.round(c.a * 100);
+    if ($('coord-b')) $('coord-b').value = Math.round(c.b * 100);
+    if ($('coord-cx')) $('coord-cx').value = Math.round(c.cx * 100);
+    if ($('coord-cy')) $('coord-cy').value = Math.round(c.cy * 100);
+    if ($('coord-dx')) $('coord-dx').value = Math.round(c.dx * 100);
+    if ($('coord-dy')) $('coord-dy').value = Math.round(c.dy * 100);
+  });
+  function pushUserCoords() {
+    if (!window.applyUserCoords) return;
+    window.applyUserCoords(
+      Number(($('coord-a') || {}).value || 0) / 100,
+      Number(($('coord-b') || {}).value || 0) / 100,
+      Number(($('coord-cx') || {}).value || 0) / 100,
+      Number(($('coord-cy') || {}).value || 0) / 100,
+      Number(($('coord-dx') || {}).value || 0) / 100,
+      Number(($('coord-dy') || {}).value || 0) / 100
+    );
+  }
+  ['coord-a', 'coord-b', 'coord-cx', 'coord-cy', 'coord-dx', 'coord-dy'].forEach(function (id) {
+    var el = $(id);
+    if (el) el.addEventListener('input', pushUserCoords);
+  });
+  var mint = $('btn-mint');
+  if (mint) {
+    mint.disabled = false;
+    mint.textContent = 'Choose where it lives';
+    mint.addEventListener('click', function () {
+      if (window.__PM_MODULE_READY__) return;
+      var on = document.querySelector('#crumbs [data-step].on');
+      var step = on ? on.getAttribute('data-step') : 'play';
+      if (step === 'play') showStep('unlock');
+      else if (step === 'unlock') showStep('mint');
+    });
+  }
+  var wallet = $('btn-wallet');
+  if (wallet) wallet.style.display = 'none';
+})();
+</script>
+
+<script type="module">
+    let registerPasskey, authenticatePasskey, connectKeplr, disconnectKeplr, useDeviceSession, isLoopbackIp;
+    let listPasskeys, getActivePasskey, bindAccount, renamePasskey;
+    let ensureBrowserWallet, listBrowserWallets;
+    let CHAINS, detectMintChainId, loadTerpState, resolveCollection, querySmart, queryOwnerTokens, mintSvgNft;
+
+    function isTerp1(addr) {
+      return typeof addr === 'string' && /^terp1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{38,58}$/.test(addr);
+    }
+    function loopbackNow() {
+      return typeof isLoopbackIp === 'function' && isLoopbackIp();
+    }
+
+    let dreggMod = null;
+    let zecWallets = null;
+    // DREGG TLS helper only — not pm-dregg / HashMerchant onboard / mixed attach graph.
+    async function ensureDregg() {
+      if (dreggMod) return dreggMod;
+      dreggMod = await import('/lib/dregg-svg-checkout.js?v=3b115d3a36');
+      return dreggMod;
+    }
+    async function ensureZecWallets() {
+      if (zecWallets) return zecWallets;
+      zecWallets = await import('/lib/zec-wallets.js');
+      return zecWallets;
+    }
+
+    function zecPayUri(targets) {
+      let uri = dreggMod && dreggMod.zecPayUri ? dreggMod.zecPayUri(targets) : null;
+      if (!uri && targets?.zec_uri && String(targets.zec_uri).startsWith('zcash:')
+        && !/terp1/i.test(String(targets.zec_uri))) {
+        uri = String(targets.zec_uri).trim();
+      }
+      if (!uri) return null;
+      const q = targets?.qty != null ? Math.max(1, Number(targets.qty) || getQty()) : getQty();
+      const zat = zecTotalZat(q);
+      if (zat == null) return uri;
+      const amount = zatDecimal(zat);
+      if (/[?&]amount=/.test(uri)) {
+        uri = uri.replace(/([?&])amount=[^&]*/, `$1amount=${amount}`);
+      } else {
+        uri = uri + (uri.includes('?') ? '&' : '?') + 'amount=' + amount;
+      }
+      if (dreggMod && dreggMod.zip321WithReadableMemo) {
+        uri = dreggMod.zip321WithReadableMemo(uri, targets?.memo_hex);
+      }
+      if (dreggMod && dreggMod.canonicalizeZip321) {
+        uri = dreggMod.canonicalizeZip321(uri) || uri;
+      }
+      return uri;
+    }
+    let remainingSupply = null;
+    function getQty() {
+      let q = Math.floor(Number($('mint-qty')?.value) || 1);
+      if (!Number.isFinite(q) || q < 1) q = 1;
+      if (q > 20) q = 20;
+      if (remainingSupply >= 1) q = Math.min(q, Math.floor(remainingSupply));
+      return q;
+    }
+    function zatDecimal(zat) {
+      try {
+        const z = BigInt(zat);
+        const whole = z / 100000000n;
+        const frac = z % 100000000n;
+        if (frac === 0n) return String(whole);
+        return `${whole}.${frac.toString().padStart(8, '0')}`.replace(/0+$/, '');
+      } catch {
+        return '';
+      }
+    }
+    function zecTotalZat(qty) {
+      const unit = dreggPrices?.zec?.zat;
+      if (unit == null) return null;
+      try { return BigInt(unit) * BigInt(qty); } catch { return null; }
+    }
+    function payTotalText(rail) {
+      const q = getQty();
+      if (rail === 'zec') {
+        const zat = zecTotalZat(q);
+        if (zat == null) return '';
+        return `${zatDecimal(zat)} ZEC for ${q} piece${q === 1 ? '' : 's'}`;
+      }
+      if (rail === 'native') {
+        const unit = Number(dreggPrices?.native?.display);
+        if (!Number.isFinite(unit)) return '';
+        return `${unit * q} TERP / THIOL for ${q} piece${q === 1 ? '' : 's'}`;
+      }
+      return '';
+    }
+    function railLabelFromPrices(prices, rail) {
+      const q = getQty();
+      if (rail === 'zec' || rail === 'native') return payTotalText(rail);
+      return dreggMod && dreggMod.railLabelFromPrices
+        ? dreggMod.railLabelFromPrices(prices, rail, q)
+        : '';
+    }
+    function paintPayTotals() {
+      const q = getQty();
+      const zec = payTotalText('zec');
+      const nat = payTotalText('native');
+      if ($('rail-zec-amt')) $('rail-zec-amt').textContent = zec || 'ZIP-321';
+      if ($('rail-native-amt')) $('rail-native-amt').textContent = nat || '';
+      if ($('pay-total')) {
+        const line = payTotalText(payRail);
+        $('pay-total').textContent = line ? `Total ${line}` : '';
+      }
+      const qtyEl = $('mint-qty');
+      if (qtyEl && String(qtyEl.value) !== String(q)) qtyEl.value = String(q);
+    }
+
+    let libsReady = null;
+    async function loadMintLibs() {
+      if (libsReady) return libsReady;
+      libsReady = (async () => {
+        const [auth, pks, bw, svg] = await Promise.all([
+          import('/lib/auth.js'),
+          import('/lib/passkeys.js'),
+          import('/lib/browser-wallet.js'),
+          import('/lib/mint-svg.js'),
+        ]);
+        registerPasskey = auth.registerPasskey;
+        authenticatePasskey = auth.authenticatePasskey;
+        connectKeplr = auth.connectKeplr;
+        disconnectKeplr = auth.disconnectKeplr;
+        useDeviceSession = auth.useDeviceSession;
+        isLoopbackIp = auth.isLoopbackIp;
+        listPasskeys = pks.listPasskeys;
+        getActivePasskey = pks.getActivePasskey;
+        bindAccount = pks.bindAccount;
+        renamePasskey = pks.renamePasskey;
+        ensureBrowserWallet = bw.ensureBrowserWallet;
+        listBrowserWallets = bw.listBrowserWallets;
+        CHAINS = svg.CHAINS;
+        detectMintChainId = svg.detectMintChainId;
+        loadTerpState = svg.loadTerpState;
+        resolveCollection = svg.resolveCollection;
+        querySmart = svg.querySmart;
+        queryOwnerTokens = svg.queryOwnerTokens;
+        mintSvgNft = svg.mintSvgNft;
+        if (typeof loadTerpState === 'function') {
+          try { await loadTerpState(); } catch (e) { console.warn('terp-state', e); }
+        }
+        const id = typeof detectMintChainId === 'function' ? detectMintChainId() : 'morocco-1';
+        if (CHAINS && CHAINS[id]) Object.assign(chain, CHAINS[id]);
+        CHAIN_ID = chain.chainId;
+        RPC = chain.rpc;
+        REST = chain.rest;
+        DENOM = chain.denom;
+        if (typeof resolveCollection === 'function') {
+          CONTRACT_ADDRESS = resolveCollection(chain) || CONTRACT_ADDRESS;
+          chain.collection = CONTRACT_ADDRESS;
+        }
+        if (CHAINS && CHAINS[id]) {
+          chain.passkeyCodeId = CHAINS[id].passkeyCodeId;
+          chain.authCodeIds = CHAINS[id].authCodeIds;
+          chain.codeIds = CHAINS[id].codeIds;
+          chain.noncircuitAuth = CHAINS[id].noncircuitAuth;
+        }
+        contractConfig = CONTRACT_ADDRESS ? { contractAddr: CONTRACT_ADDRESS } : null;
+      })();
+      return libsReady;
+    }
+
+    // Defaults so Play/You can run before /lib modules load. Overlay from mint-svg after import.
+    let chain = {
+      chainId: 'morocco-1',
+      chainName: 'Terp Network',
+      rpc: 'https://rpc.terp.network',
+      rest: 'https://api.terp.network',
+      denom: 'uthiol',
+      collection: 'terp1vp7smemrv846hpsyqrzlnqapmu3sv7hyygf4rrnw3ls26ezk864qupr5zt',
+      minter: 'terp188jpppxtfpf0vvt5gypdj52hk2xuswwcn38auczzxv20fcxz3kss9fhlru',
+    };
+    let CHAIN_ID = chain.chainId;
+    let RPC = chain.rpc;
+    let REST = chain.rest;
+    let DENOM = chain.denom;
+    const DECIMALS = 6;
+    const FREE_MINTS = 1;
+    let CONTRACT_ADDRESS = chain.collection;
+    chain.collection = CONTRACT_ADDRESS;
+
+    /** @type {{ address: string, signer: object|null, source: 'extension'|'session-hd', unlock: 'none'|'passkey', granter?: string } | null} */
+    let session = null;
+    let contractConfig = CONTRACT_ADDRESS ? { contractAddr: CONTRACT_ADDRESS } : null;
+    let pricePerToken = 0n;
+    let ownedCount = 0;
+    let unlockHow = 'session';
+    let payRail = 'zec';
+    const LIVE_RAILS = ['zec', 'native']; // parked: eth, base, btc — no live house watchers
+    let railLocked = false;
+    let checkoutTargets = null;
+    let checkoutFor = null;
+    let lastTargets = null;
+    let lastPhase = 'waiting';
+    let watchStartedAt = 0;
+    let statusPoll = null;
+    let dreggHealthy = false;
+    let dreggPrices = null;
+    let checkoutReady = false;
+    let checkoutInflight = null;
+    let checkoutInflightFor = null;
+    let checkoutGen = 0;
+    const WATCH_KEY = 'pm-mint-watch';
+    const PHASE_RANK = { waiting: 0, Deposited: 1, Entitled: 2, Settled: 3 };
+
+    const $ = (id) => document.getElementById(id);
+    const STEPS = ['play', 'unlock', 'mint', 'watch', 'tokens'];
+    let mintStep = 'play';
+
+    function holderReady() {
+      if (unlockHow === 'keplr') {
+        return session?.source === 'extension' && isTerp1(session.address);
+      }
+      if (!isTerp1(session?.address) || session?.source === 'extension') return false;
+      if (loopbackNow()) return true;
+      return session.unlock === 'passkey';
+    }
+
+    function paintUnlockCopy() {
+      const el = $('unlock-lede');
+      const info = $('btn-you-info');
+      if (info) info.hidden = unlockHow === 'keplr';
+      if (!el) return;
+      if (unlockHow === 'keplr') {
+        el.textContent = 'Keplr holds the mint address and signs on Terp. No passkey, and no smart-account authenticator — Keplr is the signer.';
+        return;
+      }
+      if (loopbackNow()) {
+        el.textContent = 'You’re on a local address, so this tab will make a mint address here. A passkey needs a real site name. Two keys + passkey still apply on the live site. Keplr does not use a passkey.';
+        return;
+      }
+      el.textContent = 'This device uses two short-lived secp256k1 keys plus a passkey. The account’s first key is destroyed after onboard. Name the passkey so you can find it next time.';
+    }
+
+    function setYouInfoOpen(on) {
+      const box = $('you-info');
+      const foot = $('dock-foot');
+      if (!box) return;
+      box.hidden = !on;
+      box.classList.toggle('on', !!on);
+      if (foot) foot.style.display = on ? 'none' : '';
+    }
+
+    function setMintStep(name) {
+      if (name === 'look' || name === 'tune') name = 'play';
+      if (name === 'watch' && !railLocked) name = 'mint';
+      if ((name === 'mint' || name === 'watch') && !railLocked && !holderReady()) {
+        name = 'unlock';
+      }
+      if (!STEPS.includes(name)) name = 'play';
+      mintStep = name;
+      document.querySelectorAll('#crumbs [data-step]').forEach((b) => {
+        b.classList.toggle('on', b.dataset.step === name);
+      });
+      document.querySelectorAll('[data-step-panel]').forEach((p) => {
+        p.classList.toggle('on', p.getAttribute('data-step-panel') === name);
+      });
+      $('rail-opts')?.classList.toggle('locked', railLocked);
+      const next = STEPS[STEPS.indexOf(name) + 1];
+      const wallet = $('btn-wallet');
+      const mint = $('btn-mint');
+      if (name === 'unlock') {
+        wallet.style.display = '';
+        paintUnlockCopy();
+        paintHolderList();
+        if (holderReady()) {
+          mint.style.display = '';
+          mint.disabled = false;
+          mint.textContent = 'Continue to pay';
+        } else {
+          mint.style.display = 'none';
+        }
+      } else if (name === 'mint') {
+        wallet.style.display = 'none';
+        mint.style.display = '';
+        updateMintButton();
+        void refreshDesk();
+        const held = peekWatch();
+        if (held?.locked && held.address === session?.address) {
+          restoreWatchState();
+        } else if (isTerp1(session?.address) && !railLocked && !(held?.locked && held.address && held.address !== session.address)) {
+          void loadCheckout(session.address);
+        }
+      } else if (name === 'watch') {
+        wallet.style.display = 'none';
+        mint.style.display = '';
+        updateMintButton();
+        startWatch();
+      } else if (name === 'tokens') {
+        wallet.style.display = 'none';
+        mint.style.display = '';
+        updateMintButton();
+        void loadContractConfig();
+      } else {
+        wallet.style.display = 'none';
+        mint.style.display = '';
+        mint.disabled = false;
+        const nextLabel = { unlock: 'Choose where it lives', mint: 'Continue to pay' }[next];
+        mint.textContent = nextLabel || 'Continue';
+      }
+      paintCancelBtn();
+    }
+    document.getElementById('crumbs').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-step]');
+      if (!b) return;
+      let step = b.dataset.step;
+      if (step === 'tokens' && railLocked && lastPhase !== 'Settled') step = 'watch';
+      if ((step === 'mint' || step === 'watch') && !railLocked && !holderReady()) {
+        showToast(unlockHow === 'keplr' ? 'Connect Keplr first' : 'Register or unlock a passkey first', 'error');
+      }
+      setMintStep(step);
+    });
+
+    function isValidBech32Address(addr) {
+      return typeof addr === 'string' && /^[a-z]+1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{38,90}$/.test(addr);
+    }
+
+    function freeLeft() {
+      return Math.max(0, FREE_MINTS - ownedCount);
+    }
+
+    function railPriceLabel(rail) {
+      return railLabelFromPrices(dreggPrices, rail) || '';
+    }
+
+    function paintRailLabels() {
+      paintPayTotals();
+    }
+
+    function noteCheckoutReady(health) {
+      const open = dreggMod && dreggMod.payOpenFromHealth
+        ? dreggMod.payOpenFromHealth(health)
+        : (health?.checkout_ready === true && health?.zec_tip?.ok !== false);
+      checkoutReady = open === true;
+    }
+
+    async function refreshDesk() {
+      try {
+        const D = await ensureDregg();
+        const h = await D.fetchDreggHealth();
+        dreggHealthy = !h.error;
+        dreggPrices = await D.fetchDreggPrices();
+        remainingSupply = h?.remaining_supply != null ? Number(h.remaining_supply) : null;
+        const qtyEl = $('mint-qty');
+        if (qtyEl && remainingSupply >= 1) {
+          qtyEl.max = String(Math.min(20, remainingSupply));
+        }
+        noteCheckoutReady(h);
+      } catch (e) {
+        console.warn('dregg prices', e);
+        dreggHealthy = false;
+        dreggPrices = null;
+        checkoutReady = false;
+      }
+      paintRailLabels();
+      paintZecRail(checkoutTargets);
+      paintBaseRail(checkoutTargets);
+      updateMintButton();
+      updatePrice();
+      if (!dreggHealthy) {
+        setStatus('Mint desk is unreachable.', 'err');
+      } else if (!dreggPrices) {
+        setStatus('Mint desk prices are down. Pay is closed.', 'err');
+      } else if (!checkoutReady) {
+        setStatus('Pay is closed (mint desk not ready, or Zcash house tip drifted). ZEC and native are hidden until it recovers.', 'err');
+      }
+    }
+
+    function updatePrice() {
+      const line = $('price-line');
+      if (!line) return;
+      if (mintStep !== 'mint' && mintStep !== 'tokens') {
+        line.textContent = 'Play';
+        line.classList.remove('paid');
+        return;
+      }
+      line.textContent = payTotalText(payRail) || railPriceLabel(payRail) || 'Pay';
+      line.classList.add('paid');
+    }
+    window.updatePrice = updatePrice;
+
+    function setStatus(text, kind) {
+      const el = $('mint-status');
+      el.textContent = text || '';
+      el.className = 'status' + (kind === 'err' ? ' err' : kind === 'ok' ? ' ok' : '');
+    }
+
+    function showToast(msg, type, ms) {
+      const el = $('toast');
+      el.textContent = msg;
+      el.className = 'toast on' + (type === 'error' ? ' err' : type === 'success' ? ' ok' : '');
+      if (type === 'error') console.error('[mint]', msg);
+      clearTimeout(el._t);
+      el._t = setTimeout(() => { el.className = 'toast'; }, ms || 3200);
+    }
+
+    function walletErr(err) {
+      if (!err) return 'wallet error';
+      if (typeof err === 'string') return err;
+      return err.message || err.data?.message || String(err);
+    }
+
+    let consentWait = null;
+    function askConsent({ title, body, yes }) {
+      if (consentWait) consentWait(false);
+      return new Promise((resolve) => {
+        const box = $('consent');
+        const foot = $('dock-foot');
+        $('consent-title').textContent = title || 'Before we continue';
+        $('consent-body').textContent = body;
+        $('consent-yes').textContent = yes || 'Continue';
+        box.hidden = false;
+        box.classList.add('on');
+        if (foot) foot.style.display = 'none';
+        const done = (v) => {
+          box.hidden = true;
+          box.classList.remove('on');
+          if (foot) foot.style.display = '';
+          $('consent-yes').onclick = null;
+          $('consent-no').onclick = null;
+          consentWait = null;
+          resolve(v);
+        };
+        consentWait = done;
+        $('consent-yes').onclick = () => done(true);
+        $('consent-no').onclick = () => done(false);
+      });
+    }
+
+    function shortLabel(addr) {
+      if (!addr) return '';
+      if (addr.startsWith('passkey:') || addr.startsWith('pk:')) return addr;
+      return addr.slice(0, 6) + '…' + addr.slice(-4);
+    }
+
+    function paintPasskeys() {
+      const kicker = $('sess-kicker');
+      const addr = $('sess-addr');
+      if (!kicker || !addr) return;
+      if (session?.address) {
+        const pkLabel = session.unlock === 'passkey' && typeof getActivePasskey === 'function'
+          ? getActivePasskey()?.label
+          : '';
+        const how = session.source === 'extension'
+          ? 'Keplr · this is you'
+          : session.unlock === 'passkey'
+            ? (pkLabel ? `This device · ${pkLabel}` : 'This device · passkey')
+            : 'This device · address only';
+        kicker.textContent = how;
+        addr.textContent = session.address;
+        addr.classList.remove('empty');
+      } else {
+        kicker.textContent = 'No address yet';
+        addr.textContent = unlockHow === 'keplr'
+          ? 'Connect Keplr to continue'
+          : (loopbackNow() ? 'Use this device to continue' : 'Register or unlock a passkey to continue');
+        addr.classList.add('empty');
+      }
+      paintHolderList();
+    }
+
+    function paintHolderList() {
+      const list = $('holder-list');
+      if (!list) return;
+      if (unlockHow === 'keplr') {
+        list.hidden = true;
+        list.innerHTML = '';
+        return;
+      }
+      const pks = typeof listPasskeys === 'function' ? listPasskeys() : [];
+      const wallets = typeof listBrowserWallets === 'function' ? listBrowserWallets() : [];
+      list.innerHTML = '';
+      const seen = new Set();
+      const addRow = ({ key, title, sub, on, renameId }) => {
+        if (seen.has(key)) return;
+        seen.add(key);
+        const row = document.createElement('div');
+        row.className = 'pk-row' + (on ? ' on' : '');
+        row.dataset.key = key;
+        const use = document.createElement('button');
+        use.type = 'button';
+        use.className = 'pk-use';
+        use.dataset.key = key;
+        const name = document.createElement('b');
+        name.className = 'pk-label';
+        name.textContent = title;
+        const meta = document.createElement('span');
+        meta.className = 'pk-sub';
+        meta.textContent = sub;
+        use.appendChild(name);
+        use.appendChild(meta);
+        row.appendChild(use);
+        if (renameId) {
+          const rn = document.createElement('button');
+          rn.type = 'button';
+          rn.className = 'btn btn-ghost';
+          rn.dataset.rename = renameId;
+          rn.textContent = 'Rename';
+          row.appendChild(rn);
+        }
+        list.appendChild(row);
+      };
+      for (const pk of pks) {
+        const acc = pk.account && isTerp1(pk.account) ? pk.account : '';
+        addRow({
+          key: `pk:${pk.credentialId}`,
+          title: pk.label || 'Passkey',
+          sub: acc ? shortLabel(acc) : 'Unlock this passkey',
+          on: session?.unlock === 'passkey' && acc && acc === session.address,
+          renameId: pk.credentialId,
+        });
+      }
+      for (const w of wallets) {
+        if (!isTerp1(w.address)) continue;
+        addRow({
+          key: `w:${w.address}`,
+          title: w.label || shortLabel(w.address),
+          sub: shortLabel(w.address),
+          on: session?.source === 'session-hd' && w.address === session.address,
+        });
+      }
+      list.hidden = list.children.length === 0;
+    }
+
+    function startRename(credentialId) {
+      if (!credentialId || typeof renamePasskey !== 'function') return;
+      const list = $('holder-list');
+      const row = list && [...list.querySelectorAll('.pk-row')].find((r) => r.dataset.key === `pk:${credentialId}`);
+      if (!row) return;
+      const use = row.querySelector('.pk-use');
+      const labelEl = row.querySelector('.pk-label');
+      if (!use || !labelEl || row.querySelector('input')) return;
+      const pk = listPasskeys().find((p) => p.credentialId === credentialId);
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.maxLength = 48;
+      input.value = pk?.label || '';
+      input.placeholder = 'Name this passkey';
+      input.setAttribute('aria-label', 'Passkey name');
+      const commit = () => {
+        if (input._done) return;
+        input._done = true;
+        const rec = renamePasskey(credentialId, input.value);
+        showToast(rec?.label ? `Saved as “${rec.label}”` : 'Name unchanged', 'success');
+        paintPasskeys();
+      };
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+        if (e.key === 'Escape') { input._done = true; paintHolderList(); }
+      });
+      input.addEventListener('blur', commit);
+      use.replaceChild(input, labelEl);
+      input.focus();
+      input.select();
+    }
+
+    async function afterConnect() {
+      $('btn-wallet').textContent = walletButtonLabel();
+      updateMintButton();
+      paintPasskeys();
+      await loadContractConfig();
+      await loadUserTokens();
+      updatePrice();
+      updateMintButton();
+    }
+
+    function railDeskReady(targets, rail) {
+      if (!LIVE_RAILS.includes(rail)) return false;
+      if (!targets) return false;
+      if (rail === 'zec') return !!zecPayUri(targets);
+      if (rail === 'native') return true;
+      return false;
+    }
+
+    function payWatchReady() {
+      // Prices ok is not Pay. Need checkout_ready and a 200 pay-targets body.
+      return isTerp1(session?.address)
+        && checkoutReady === true
+        && !!checkoutTargets
+        && checkoutFor === session.address
+        && railDeskReady(checkoutTargets, payRail);
+    }
+
+    function updateMintButton() {
+      const mint = $('btn-mint');
+      const nativeReady = isTerp1(session?.address) && checkoutReady === true && !!dreggPrices;
+      const ready = payRail === 'native' ? nativeReady : payWatchReady();
+      if (mintStep === 'tokens') {
+        const another = !railLocked || lastPhase === 'Settled';
+        mint.disabled = !nativeReady || !another;
+        mint.textContent = another ? 'Pay for another' : 'Minting…';
+        return;
+      }
+      if (mintStep === 'watch') {
+        if (lastPhase === 'Settled') {
+          mint.disabled = false;
+          mint.textContent = 'See it';
+        } else if (lastPhase === 'Entitled' || lastPhase === 'Deposited') {
+          mint.disabled = true;
+          mint.textContent = lastPhase === 'Entitled' ? 'Minting…' : 'Payment seen';
+        } else if (payRail === 'zec') {
+          mint.disabled = !ready;
+          mint.textContent = isMobileZec() ? 'Open in Zodl / Vizor' : 'Open ZIP-321';
+        } else {
+          mint.disabled = true;
+          mint.textContent = 'Watching';
+        }
+        paintCancelBtn();
+        return;
+      }
+      if (mintStep !== 'mint') return;
+      if (payRail === 'zec') {
+        const zecGo = isTerp1(session?.address) && checkoutReady === true;
+        mint.disabled = !zecGo;
+        mint.textContent = zecPayUri(checkoutTargets) ? 'Watch Zcash' : 'Request ZIP-321';
+        return;
+      }
+      mint.disabled = !ready;
+      mint.textContent = 'Pay on Terp';
+    }
+
+    function walletButtonLabel() {
+      if (session?.address && (holderReady() || unlockHow === 'keplr')) return shortLabel(session.address);
+      if (unlockHow === 'keplr') return 'Connect Keplr';
+      if (loopbackNow()) return 'Use this device';
+      if (typeof listPasskeys === 'function' && listPasskeys().length) return 'Unlock passkey';
+      return 'Register passkey';
+    }
+
+    async function dropKeplrSession() {
+      if (typeof disconnectKeplr === 'function') {
+        try { await disconnectKeplr(CHAIN_ID); } catch { /* ignore */ }
+      } else {
+        try { sessionStorage.removeItem('keplrAddress'); } catch { /* ignore */ }
+      }
+      if (session?.source === 'extension') {
+        session = null;
+        paintPasskeys();
+      }
+    }
+
+    async function maybeAttachPasskey(result, _w) {
+      // Keplr signs as a normal account. Do not attach a passkey authenticator.
+      if (unlockHow === 'keplr' || session?.source === 'extension') {
+        return { skipped: true, reason: 'keplr-signer' };
+      }
+      // Never fetch HashMerchant from this page. POST /onboard/v1/passkey-grant
+      // from permissionless.money preflights OPTIONS with no ACAO.
+      if (result?.deviceOnly || !result?.credentialId) return { skipped: true };
+      const rec = result.record || (typeof getActivePasskey === 'function' ? getActivePasskey() : null);
+      if (rec?.grantAt && rec?.pendingAttach === false) return { granted: true, skipped: true };
+      return { granted: false, skipped: true, reason: 'hm-cors' };
+    }
+
+    async function finishPasskey(result, created, opts = {}) {
+      const bound = result?.record?.account;
+      const prefer = opts.address || (isTerp1(bound) ? bound : null);
+      const have = prefer && typeof listBrowserWallets === 'function'
+        && listBrowserWallets().some((w) => w.address === prefer);
+      const w = await ensureBrowserWallet({
+        prefix: 'terp',
+        address: have ? prefer : undefined,
+        forceNew: !!opts.forceNew || (!!prefer && !have),
+      });
+      session = {
+        address: w.address,
+        signer: w.wallet,
+        source: 'session-hd',
+        unlock: result?.credentialId ? 'passkey' : 'none',
+      };
+      if (result?.credentialId) bindAccount(result.credentialId, w.address);
+
+      let attachNote = null;
+      let attachKind = 'success';
+      if (result?.credentialId && !result.deviceOnly && !loopbackNow()) {
+        try {
+          const attach = await maybeAttachPasskey(result, w);
+          if (attach?.granter) session.granter = attach.granter;
+          if (attach?.stub) {
+            attachNote = 'Passkey saved. HashMerchant is the local desk — chain attach waits for live onboard.';
+          } else if (attach?.granted && !attach.skipped) {
+            attachNote = 'This passkey is on the wallet. HashMerchant covered the gas.';
+          } else if (attach && !attach.granted && !attach.skipped) {
+            attachKind = '';
+            attachNote = 'Address is ready. Passkey attach can wait — you can still pay.';
+            if (attach.error) console.warn('passkey attach', attach);
+          }
+        } catch (e) {
+          console.warn('passkey grant/attach', e);
+          attachKind = '';
+          attachNote = 'Address is ready. Passkey attach can wait — you can still pay.';
+        }
+        setStatus('');
+      }
+
+      await afterConnect();
+      if (restoreWatchState()) return;
+      if (created && result?.credentialId && unlockHow === 'session' && !loopbackNow()) {
+        setMintStep('unlock');
+        paintHolderList();
+        startRename(result.credentialId);
+        showToast('Name this passkey so it’s easy to find next time', 'success', 5200);
+        return;
+      }
+      showToast(
+        attachNote
+          || (result?.deviceOnly
+            ? 'This tab now has your mint address'
+            : created
+              ? 'This device is tied to your mint address'
+              : 'Welcome back — same address on this device'),
+        attachKind,
+      );
+      setMintStep('mint');
+    }
+
+    async function createNewPasskey() {
+      const result = await registerPasskey();
+      await finishPasskey(result, true);
+    }
+
+    $('btn-wallet').addEventListener('click', async () => {
+      const btn = $('btn-wallet');
+      try {
+        btn.disabled = true;
+        btn.textContent = '…';
+        await loadMintLibs();
+        if (unlockHow === 'keplr') {
+          await connectExtension();
+          return;
+        }
+        await dropKeplrSession();
+        if (loopbackNow()) {
+          const result = await useDeviceSession();
+          await finishPasskey(result, false);
+          showToast(listBrowserWallets?.()?.length ? 'Using a saved address on this tab' : 'This tab now has your mint address', 'success');
+        } else if (listPasskeys().length) {
+          const ok = await askConsent({
+            title: 'Your device will ask next',
+            body: 'We’ll ask this computer or phone to confirm it’s you — Face ID, a fingerprint, or a saved passkey. That only unlocks this tab. It is not a blockchain login. Pay stays closed until that passkey succeeds.',
+            yes: 'Unlock passkey',
+          });
+          if (!ok) return;
+          const result = await authenticatePasskey();
+          await finishPasskey(result, false);
+        } else {
+          const ok = await askConsent({
+            title: 'Passkey required',
+            body: 'This phone must create a passkey for permissionless.money before you can pay. Face ID / fingerprint only unlocks this tab — it is not a chain login and it does not open Keplr.',
+            yes: 'Create a passkey',
+          });
+          if (!ok) {
+            showToast('Register a passkey before you pay', 'error');
+            return;
+          }
+          await createNewPasskey();
+        }
+      } catch (err) {
+        console.error('unlock', err);
+        showToast(walletErr(err), 'error');
+        btn.textContent = walletButtonLabel();
+      } finally {
+        btn.disabled = false;
+        if (mintStep === 'unlock' && !session?.address) btn.textContent = walletButtonLabel();
+      }
+    });
+
+    // Session key without a passkey: hold Unlock, or start when WebAuthn fails.
+
+    function markUnlockOpt(which) {
+      $('opt-session').classList.toggle('on', which === 'session');
+      $('opt-keplr').classList.toggle('on', which === 'keplr');
+      paintUnlockCopy();
+      if (which === 'keplr') setYouInfoOpen(false);
+    }
+    $('btn-you-info')?.addEventListener('click', () => setYouInfoOpen(true));
+    $('you-info-ok')?.addEventListener('click', () => setYouInfoOpen(false));
+    $('opt-session').addEventListener('click', () => {
+      unlockHow = 'session';
+      markUnlockOpt('session');
+      const hadKeplr = session?.source === 'extension';
+      void (async () => {
+        await loadMintLibs();
+        await dropKeplrSession();
+        if (hadKeplr) showToast('Keplr disconnected — using this device', 'success');
+        $('btn-wallet').textContent = walletButtonLabel();
+        paintHolderList();
+      })();
+    });
+    $('holder-list')?.addEventListener('click', async (e) => {
+      if (e.target.closest('input')) return;
+      const renameBtn = e.target.closest('[data-rename]');
+      if (renameBtn) {
+        e.preventDefault();
+        startRename(renameBtn.getAttribute('data-rename'));
+        return;
+      }
+      const row = e.target.closest('.pk-row');
+      if (!row?.dataset.key) return;
+      const btn = $('btn-wallet');
+      try {
+        btn.disabled = true;
+        btn.textContent = '…';
+        await loadMintLibs();
+        await dropKeplrSession();
+        const key = row.dataset.key;
+        if (key.startsWith('pk:')) {
+          const id = key.slice(3);
+          const pk = listPasskeys().find((p) => p.credentialId === id);
+          if (loopbackNow()) {
+            await finishPasskey({ credentialId: null, deviceOnly: true, record: pk }, false, { address: pk?.account });
+            return;
+          }
+          const result = await authenticatePasskey(id);
+          await finishPasskey(result, false, { address: pk?.account });
+        } else if (key.startsWith('w:')) {
+          const address = key.slice(2);
+          const pk = listPasskeys().find((p) => p.account === address);
+          if (loopbackNow()) {
+            await finishPasskey({ credentialId: null, deviceOnly: true, record: pk }, false, { address });
+            return;
+          }
+          if (pk?.credentialId) {
+            const result = await authenticatePasskey(pk.credentialId);
+            await finishPasskey(result, false, { address });
+          } else {
+            const ok = await askConsent({
+              title: 'Passkey required',
+              body: 'This saved address has no passkey yet. Create one on this phone to bind it before Pay.',
+              yes: 'Create a passkey',
+            });
+            if (!ok) {
+              showToast('Register a passkey before you pay', 'error');
+              return;
+            }
+            const result = await registerPasskey();
+            await finishPasskey(result, true, { address });
+          }
+        }
+      } catch (err) {
+        console.error('holder', err);
+        showToast(walletErr(err), 'error');
+      } finally {
+        btn.disabled = false;
+        if (mintStep === 'unlock') btn.textContent = walletButtonLabel();
+      }
+    });
+    $('opt-keplr').addEventListener('click', () => {
+      unlockHow = 'keplr';
+      if (session?.source === 'session-hd') session = null;
+      markUnlockOpt('keplr');
+      paintPasskeys();
+      $('btn-wallet').textContent = walletButtonLabel();
+    });
+    const TRACK = ['you', 'desk', 'send', 'seen', 'yours'];
+    function setPayTrack(current) {
+      const idx = TRACK.indexOf(current);
+      document.querySelectorAll('#pay-track [data-track]').forEach((el) => {
+        const i = TRACK.indexOf(el.getAttribute('data-track'));
+        el.classList.toggle('done', idx > i && i >= 0);
+        el.classList.toggle('on', i === idx);
+      });
+    }
+
+    function paintPayCard({ kicker, note, to, memo }) {
+      $('pay-kicker').textContent = kicker || '';
+      const noteEl = $('pay-note');
+      noteEl.textContent = note || '';
+      noteEl.hidden = !note;
+      const toWrap = $('pay-to-wrap');
+      const toEl = $('pay-detail');
+      if (to) {
+        toEl.textContent = to;
+        toEl.classList.remove('empty');
+        toWrap.hidden = false;
+      } else {
+        toEl.textContent = '';
+        toEl.classList.add('empty');
+        toWrap.hidden = true;
+      }
+      const memoWrap = $('pay-memo-wrap');
+      const memoEl = $('pay-memo');
+      if (memo) {
+        memoEl.textContent = memo;
+        memoWrap.hidden = false;
+      } else {
+        memoEl.textContent = '';
+        memoWrap.hidden = true;
+      }
+      if (!to || !String(to).startsWith('zcash:')) paintZecQr(null);
+    }
+
+    function isMobileZec() {
+      const ua = navigator.userAgent || '';
+      return /Android|iPhone|iPad|iPod|webOS|Mobile/i.test(ua)
+        || (navigator.maxTouchPoints > 2 && Math.min(screen.width, screen.height) < 920);
+    }
+    function saveQrForZodl(canvas, kind) {
+      if (!zecWallets || typeof zecWallets.saveAndOpenQrPng !== 'function') {
+        void ensureZecWallets().then(() => saveQrForZodl(canvas, kind));
+        return;
+      }
+      const name = zecWallets.qrPngFileName(kind || 'pay');
+      const r = zecWallets.saveAndOpenQrPng(canvas, name);
+      if (!r.saved && !r.prompted) {
+        showToast('Could not save the QR picture', 'error');
+        return;
+      }
+      showToast('QR saved. Open that picture in Zodl (import image).', 'success', 6200);
+    }
+    async function openVizorWithUri(uri) {
+      const W = await ensureZecWallets();
+      const { launched } = await W.openVizorWallet(uri);
+      if (launched) {
+        showToast('Opening Vizor. Scan this QR — Vizor does not take zcash: links (that is why Zodl was opening).', 'success', 5600);
+      } else {
+        showToast('ZIP-321 copied. Open Vizor yourself and scan this QR. Vizor has no zcash: handler, so we will not send you to Zodl.', 'success', 6200);
+      }
+    }
+    function paintZecQr(uri) {
+      const wrap = $('pay-qr-wrap');
+      const canvas = $('pay-qr');
+      if (!wrap || !canvas) return;
+      const ok = uri && dreggMod && typeof dreggMod.paintZecPayQr === 'function'
+        && dreggMod.paintZecPayQr(canvas, uri);
+      wrap.hidden = !ok;
+      canvas.hidden = !ok;
+      const wallets = $('pay-wallets');
+      if (wallets) wallets.hidden = !ok;
+      const k = $('pay-qr-kicker');
+      if (k) k.textContent = isMobileZec()
+        ? 'Save the QR for Zodl, open Vizor, or scan'
+        : 'Scan, or save the QR as a picture for Zodl';
+      wrap.dataset.zip321 = ok ? uri : '';
+    }
+
+    function paintDesk(targets, rail) {
+      if (!targets) return;
+      // parked: eth / base / btc — no live house watchers; do not paint those desks.
+      if (rail === 'eth' || rail === 'base' || rail === 'btc') return;
+      if (rail === 'zec') {
+        const uri = zecPayUri(targets);
+        paintPayCard({
+          kicker: uri ? 'Zcash · ZIP-321' : 'Zcash · waiting on the desk',
+          note: uri
+            ? `Pay ${payTotalText('zec') || 'the ZIP-321 amount'}. On a phone, open Zodl or Vizor with this request — or scan the QR. Memo shows as hex, not your Terp address.`
+            : `ZIP-321 total ${payTotalText('zec') || 'is unit × pieces'}. Checkout asks the desk for a zcash: URI. Native still mints if there is no URI yet.`,
+          to: uri || '',
+        });
+        paintZecQr(uri);
+      }
+    }
+
+    function highlightRail(which) {
+      if (!LIVE_RAILS.includes(which)) which = 'native';
+      payRail = which;
+      LIVE_RAILS.forEach((r) => {
+        $('opt-' + r)?.classList.toggle('on', r === which);
+      });
+      if (which !== 'zec') paintZecQr(null);
+      paintPayTotals();
+      updateMintButton();
+      updatePrice();
+    }
+
+    function selectRail(which) {
+      if (railLocked) return;
+      if (!LIVE_RAILS.includes(which)) return;
+      highlightRail(which);
+      if (which === 'zec' && isTerp1(session?.address) && !railLocked) {
+        void loadCheckout(session.address);
+      }
+    }
+    LIVE_RAILS.forEach((r) => {
+      $('opt-' + r)?.addEventListener('click', () => selectRail(r));
+    });
+    $('pay-detail')?.addEventListener('click', async () => {
+      const uri = $('pay-detail')?.textContent || '';
+      if (!uri.startsWith('zcash:')) return;
+      try {
+        await navigator.clipboard.writeText(uri);
+        showToast('Copied zcash: request', 'success');
+      } catch { /* ignore */ }
+    });
+
+    function paintZecRail(targets) {
+      const zec = $('opt-zec');
+      if (!zec) return;
+      zec.hidden = false;
+      zec.removeAttribute('aria-disabled');
+      paintPayTotals();
+    }
+
+    function paintBaseRail() {
+      // parked: no live house watchers
+    }
+
+    function peekWatch() {
+      try {
+        const raw = sessionStorage.getItem(WATCH_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    async function loadCheckout(recipient, { fresh } = {}) {
+      if (!isTerp1(recipient)) return null;
+      const held = peekWatch();
+      if (held?.locked && held.address && held.address !== recipient) {
+        setStatus('This tab has a locked checkout for another dest. Finish Watch or Pay for another after it settles.');
+        return null;
+      }
+      const wantQty = getQty();
+      const inflightKey = `${recipient}#${wantQty}`;
+      if (railLocked && checkoutFor === recipient) {
+        paintZecRail(checkoutTargets);
+        paintBaseRail(checkoutTargets);
+        return checkoutTargets;
+      }
+      if (!fresh && checkoutTargets && checkoutFor === recipient && checkoutTargets.qty === wantQty) {
+        paintZecRail(checkoutTargets);
+        paintBaseRail(checkoutTargets);
+        return checkoutTargets;
+      }
+      if (checkoutInflight && checkoutInflightFor === inflightKey) return checkoutInflight;
+      const gen = ++checkoutGen;
+      const job = (async () => {
+        const D = await ensureDregg();
+        const health = await D.fetchDreggHealth();
+        if (gen !== checkoutGen) return checkoutTargets;
+        dreggHealthy = !health.error;
+        remainingSupply = health?.remaining_supply != null ? Number(health.remaining_supply) : remainingSupply;
+        noteCheckoutReady(health);
+        if (health.error || checkoutReady !== true) {
+          setStatus('Pay desk is closed. ZEC QR and native mint are hidden.', 'err');
+          paintZecRail(null);
+          updateMintButton();
+          return null;
+        }
+        let t;
+        try {
+          t = await D.fetchPayTargets(recipient, lastTargets, undefined, wantQty);
+          t = D.applyQtyToTargets ? D.applyQtyToTargets(t, dreggPrices, wantQty, remainingSupply) : t;
+        } catch (e) {
+          console.warn('pay-targets', e);
+          setStatus('Couldn’t open a Zcash desk. TERP/THIOL still mints.', 'err');
+          paintZecRail(null);
+          updateMintButton();
+          return null;
+        }
+        if (gen !== checkoutGen || railLocked) return checkoutTargets;
+        lastTargets = t;
+        checkoutTargets = t;
+        checkoutFor = recipient;
+        paintZecRail(t);
+        paintBaseRail(t);
+        if (zecPayUri(t)) {
+          setStatus('Zcash is on this checkout. TERP/THIOL still mints.');
+        }
+        updateMintButton();
+        return t;
+      })();
+      checkoutInflight = job;
+      checkoutInflightFor = inflightKey;
+      try {
+        return await job;
+      } finally {
+        if (checkoutInflight === job) {
+          checkoutInflight = null;
+          checkoutInflightFor = null;
+        }
+      }
+    }
+
+    function saveWatchState() {
+      try {
+        sessionStorage.setItem(WATCH_KEY, JSON.stringify({
+          address: session?.address || null,
+          rail: payRail,
+          locked: railLocked,
+          targets: checkoutTargets,
+          phase: lastPhase,
+          at: watchStartedAt,
+        }));
+      } catch { /* ignore */ }
+    }
+
+    function clearWatchState() {
+      railLocked = false;
+      lastPhase = 'waiting';
+      watchStartedAt = 0;
+      checkoutTargets = null;
+      checkoutFor = null;
+      lastTargets = null;
+      checkoutInflight = null;
+      checkoutInflightFor = null;
+      checkoutGen += 1;
+      stopStatusPoll();
+      try { sessionStorage.removeItem(WATCH_KEY); } catch { /* ignore */ }
+      $('rail-opts')?.classList.remove('locked');
+      paintZecQr(null);
+      paintCancelBtn();
+    }
+
+    function canCancelCheckout() {
+      if (!railLocked) return false;
+      if (lastPhase === 'Deposited' || lastPhase === 'Entitled' || lastPhase === 'Settled') return false;
+      return true;
+    }
+
+    function paintCancelBtn() {
+      const b = $('btn-cancel');
+      if (!b) return;
+      const show = mintStep === 'watch' && canCancelCheckout();
+      b.hidden = !show;
+      b.style.display = show ? '' : 'none';
+    }
+
+    async function cancelCheckout() {
+      if (!canCancelCheckout()) {
+        showToast('This checkout already saw a payment. It cannot be cancelled.', 'error');
+        return;
+      }
+      const ok = await askConsent({
+        title: 'Cancel this checkout?',
+        body: 'The ZIP-321 / Terp request in this tab will be abandoned. Do not pay that QR. The next Pay asks the desk for a new one-time request.',
+        yes: 'Cancel checkout',
+      });
+      if (!ok) return;
+      const dest = session?.address;
+      try {
+        const D = await ensureDregg();
+        if (D.cancelCheckout && isTerp1(dest)) await D.cancelCheckout(dest);
+      } catch (e) {
+        console.warn('dregg cancel', e);
+      }
+      clearWatchState();
+      paintPayCard({
+        kicker: 'Checkout cancelled',
+        note: 'Do not pay the old QR. Pick pieces and Pay again for a new request.',
+      });
+      setStatus('Checkout cancelled. Do not pay the old ZIP-321 request.');
+      showToast('Checkout cancelled', 'success');
+      setMintStep('mint');
+    }
+
+    function restoreWatchState() {
+      try {
+        const st = peekWatch();
+        if (!st?.locked) return false;
+        if (st.address !== session?.address) {
+          if (checkoutFor && checkoutFor !== session?.address) {
+            railLocked = false;
+            checkoutTargets = null;
+            checkoutFor = null;
+            lastPhase = 'waiting';
+            stopStatusPoll();
+            $('rail-opts')?.classList.remove('locked');
+          }
+          return false;
+        }
+        payRail = LIVE_RAILS.includes(st.rail) ? st.rail : 'native';
+        checkoutTargets = st.targets || checkoutTargets;
+        checkoutFor = st.address;
+        lastTargets = st.targets || lastTargets;
+        lastPhase = st.phase || 'waiting';
+        watchStartedAt = st.at || Date.now();
+        railLocked = true;
+        highlightRail(payRail);
+        setMintStep('watch');
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function bumpPhase(phase) {
+      const next = phase || 'waiting';
+      if ((PHASE_RANK[next] || 0) >= (PHASE_RANK[lastPhase] || 0)) lastPhase = next;
+      return lastPhase;
+    }
+
+    function railNetName(rail) {
+      return ({ eth: 'Ethereum', base: 'Base', btc: 'Bitcoin', zec: 'Zcash', native: 'Terp' })[rail] || rail;
+    }
+
+    function startWatch() {
+      if (!railLocked) return;
+      if (checkoutFor && session?.address && checkoutFor !== session.address) return;
+      const net = railNetName(payRail);
+      if ($('watch-lede')) {
+        $('watch-lede').textContent =
+          `${net} is locked. Keep this tab open. The mint desk is watching for this payment — it will not switch rails.`;
+      }
+      if (checkoutTargets) paintDesk(checkoutTargets, payRail);
+      const track = lastPhase === 'Settled'
+        ? 'yours'
+        : lastPhase === 'Deposited' || lastPhase === 'Entitled' ? 'seen' : 'send';
+      setPayTrack(track);
+      updateMintButton();
+      saveWatchState();
+      const recipient = session?.address;
+      if (!isTerp1(recipient)) return;
+      if (!watchStartedAt) watchStartedAt = Date.now();
+      stopStatusPoll();
+      void pollMintStatus(recipient);
+      statusPoll = setInterval(() => pollMintStatus(recipient), 6000);
+    }
+    async function connectExtension() {
+      if (!window.keplr) {
+        throw new Error('Keplr isn’t in this browser. Use this device instead.');
+      }
+      const ok = await askConsent({
+        title: 'Keplr will ask next',
+        body: 'Keplr will ask to connect to Terp and share the address we should mint to. Nothing is paid yet. Approve only if that’s the account you want.',
+        yes: 'Open Keplr',
+      });
+      if (!ok) return;
+      try {
+        try {
+          await window.keplr.enable(CHAIN_ID);
+        } catch (enableErr) {
+          if (typeof window.keplr.experimentalSuggestChain !== 'function') {
+            throw new Error('Keplr needs Terp added first. Try again, or use this device.');
+          }
+          await window.keplr.experimentalSuggestChain({
+            chainId: CHAIN_ID,
+            chainName: chain.chainName,
+            rpc: RPC,
+            rest: REST,
+            bip44: { coinType: 118 },
+            bech32Config: {
+              bech32PrefixAccAddr: 'terp',
+              bech32PrefixAccPub: 'terppub',
+              bech32PrefixValAddr: 'terpvaloper',
+              bech32PrefixValPub: 'terpvaloperpub',
+              bech32PrefixConsAddr: 'terpvalcons',
+              bech32PrefixConsPub: 'terpvalconspub',
+            },
+            currencies: [{ coinDenom: 'THIOL', coinMinimalDenom: 'uthiol', coinDecimals: 6 }],
+            feeCurrencies: [{ coinDenom: 'THIOL', coinMinimalDenom: 'uthiol', coinDecimals: 6, gasPriceStep: { low: 0.01, average: 0.025, high: 0.04 } }],
+            stakeCurrency: { coinDenom: 'TERP', coinMinimalDenom: 'uterp', coinDecimals: 6 },
+          });
+          await window.keplr.enable(CHAIN_ID);
+          void enableErr;
+        }
+        const { address } = await connectKeplr(CHAIN_ID);
+        session = {
+          address,
+          signer: window.keplr.getOfflineSigner(CHAIN_ID),
+          source: 'extension',
+          unlock: 'none',
+        };
+        showToast('Keplr is connected — that’s your mint address. No passkey.', 'success');
+        await afterConnect();
+        if (restoreWatchState()) return;
+        setMintStep('mint');
+      } catch (err) {
+        console.error('keplr', err);
+        throw err;
+      }
+    }
+
+    function stopStatusPoll() {
+      if (statusPoll) { clearInterval(statusPoll); statusPoll = null; }
+    }
+    async function pollMintStatus(recipient) {
+      try {
+        if (watchStartedAt && Date.now() - watchStartedAt > 20 * 60 * 1000
+          && (PHASE_RANK[lastPhase] || 0) < PHASE_RANK.Deposited) {
+          stopStatusPoll();
+          setStatus('We have not seen the payment yet. Keep this tab — the desk is one-time.');
+          saveWatchState();
+          return;
+        }
+        const st = await (await ensureDregg()).fetchMintStatus(recipient);
+        const phase = bumpPhase(st.phase || lastPhase || 'waiting');
+        const human = {
+          waiting: 'Waiting for your payment to show up.',
+          Deposited: 'Payment seen. The mint is queued.',
+          Entitled: 'You’re in. The mint is going through.',
+          Settled: 'Minted. It’s yours.',
+        }[phase] || ('Status: ' + phase);
+        setStatus(human, phase === 'Settled' || phase === 'Entitled' || phase === 'Deposited' ? 'ok' : '');
+        if (phase === 'Deposited' || phase === 'Entitled') setPayTrack('seen');
+        if (phase === 'Settled') {
+          setPayTrack('yours');
+          stopStatusPoll();
+          showToast(human, 'success');
+          await loadUserTokens();
+          setMintStep('tokens');
+        }
+        updateMintButton();
+        saveWatchState();
+      } catch (e) {
+        console.warn('status', e);
+      }
+    }
+
+    async function sendNativeMint(recipient) {
+      const viaKeplr = session?.source === 'extension' || unlockHow === 'keplr';
+      if (!session?.signer) {
+        throw new Error(viaKeplr ? 'Connect Keplr to pay on Terp' : 'Unlock this device first');
+      }
+      if (!dreggPrices) throw new Error('Mint desk prices are down. Pay is closed.');
+      const qty = getQty();
+      const D = await ensureDregg();
+      const amt = D.timesUnit ? D.timesUnit(dreggPrices.native.amount, qty) : String(dreggPrices.native.amount);
+      D.assertCheckoutAmounts({ native_amount: amt }, dreggPrices, 'native', qty);
+      const denom = dreggPrices.native.denom || 'uthiol';
+      const shown = railLabelFromPrices(dreggPrices, 'native');
+      const ok = await askConsent(viaKeplr ? {
+        title: 'Keplr will ask to mint',
+        body: `Keplr will mint ${qty} on the hopalong collection for ${shown}. Keplr is the signer — no passkey and no smart-account authenticator. Nothing is signed until you approve in Keplr.`,
+        yes: 'Open Keplr',
+      } : {
+        title: 'This device will mint',
+        body: `This device will mint ${qty} on the hopalong collection for ${shown}. Not the minter. Nothing is signed until you approve.`,
+        yes: 'Mint',
+      });
+      if (!ok) {
+        setStatus('Paused — nothing was sent');
+        return;
+      }
+      const result = await mintSvgNft({
+        chain,
+        collection: CONTRACT_ADDRESS,
+        address: recipient,
+        wallet: session.signer,
+        amount: qty,
+        bogo: false,
+        funds: [{ denom, amount: String(amt) }],
+      });
+      setStatus('Minted on Terp.', 'ok');
+      showToast(result?.transactionHash || 'Mint submitted', 'success');
+      await loadUserTokens();
+      setMintStep('tokens');
+    }
+
+    async function lockAndWatch() {
+      const recipient = session.address;
+      const targets = await loadCheckout(recipient);
+      if (!targets) throw new Error('Pay desk is down');
+      if (!LIVE_RAILS.includes(payRail)) {
+        throw new Error('ETH, Base, and Bitcoin are parked');
+      }
+      if (payRail !== 'native') {
+        (await ensureDregg()).assertCheckoutAmounts(targets, dreggPrices, payRail, getQty());
+        if (!railDeskReady(targets, payRail)) {
+          if (payRail === 'zec') {
+            setStatus('Zcash ZIP-321 is selected. The mint desk has not issued a zcash: URI yet (no UA). Pay on Terp, or retry after DREGG has a diversified UA.', 'err');
+            paintDesk(targets, 'zec');
+            return;
+          }
+          throw new Error(`${railNetName(payRail)} isn’t on this checkout`);
+        }
+      }
+      railLocked = true;
+      lastPhase = lastPhase && lastPhase !== 'waiting' ? lastPhase : 'waiting';
+      watchStartedAt = Date.now();
+      saveWatchState();
+      setMintStep('watch');
+    }
+
+    async function sendLockedPayment() {
+      const recipient = session.address;
+      if (checkoutFor && checkoutFor !== recipient) {
+        throw new Error('This checkout is locked to another dest');
+      }
+      const targets = checkoutTargets || await loadCheckout(recipient);
+      if (!targets) throw new Error('Pay desk is down');
+      const memoHex = targets.memo_hex;
+      if (!memoHex) throw new Error('This checkout is missing its one-time commitment');
+      // parked: eth / base / btc — no live house watchers (no MetaMask / BIP21).
+      if (payRail === 'eth' || payRail === 'base' || payRail === 'btc') {
+        throw new Error('ETH, Base, and Bitcoin are parked');
+      }
+      if (payRail === 'zec') {
+        const uri = zecPayUri(targets);
+        if (!uri) throw new Error('Zcash isn’t offered on this checkout yet');
+        (await ensureDregg()).assertCheckoutAmounts(targets, dreggPrices, 'zec', getQty());
+        const mobile = isMobileZec();
+        const ok = await askConsent({
+          title: mobile ? 'Save QR for Zodl?' : 'Save ZIP-321 QR?',
+          body: mobile
+            ? 'Zodl does not open from a zcash: link here. We’ll save this ZIP-321 QR as a picture and open it. In Zodl, import that image. Or scan the QR / open Vizor. Nothing is signed until you approve in the wallet.'
+            : 'We’ll save the ZIP-321 QR as a PNG and open that picture. Import it in Zodl, or scan the QR with Vizor. Nothing is signed until you approve in the wallet.',
+          yes: 'Save QR',
+        });
+        if (!ok) {
+          setStatus('Paused — nothing was sent. The desk is still watching.');
+          return;
+        }
+        saveQrForZodl($('pay-qr'), 'pay');
+      }
+    }
+
+    function zip321FromDesk() {
+      return $('pay-qr-wrap')?.dataset.zip321 || zecPayUri(checkoutTargets) || '';
+    }
+    $('btn-open-zodl')?.addEventListener('click', () => {
+      if (!zip321FromDesk()) return;
+      saveQrForZodl($('pay-qr'), 'pay');
+    });
+    $('pay-qr')?.addEventListener('click', () => {
+      if (!zip321FromDesk()) return;
+      saveQrForZodl($('pay-qr'), 'pay');
+    });
+    $('btn-open-vizor')?.addEventListener('click', () => {
+      const uri = zip321FromDesk();
+      if (!uri) return;
+      void openVizorWithUri(uri);
+    });
+    $('btn-cancel')?.addEventListener('click', () => { void cancelCheckout(); });
+    $('btn-mint').addEventListener('click', async () => {
+      if (mintStep === 'play' || mintStep === 'look' || mintStep === 'tune') {
+        return setMintStep('unlock');
+      }
+      if (mintStep === 'unlock') {
+        if (!holderReady()) {
+          showToast(unlockHow === 'keplr' ? 'Connect Keplr first' : 'Register or unlock a passkey first', 'error');
+          $('btn-wallet')?.click();
+          return;
+        }
+        return setMintStep('mint');
+      }
+      if (mintStep === 'tokens') {
+        if (railLocked && lastPhase !== 'Settled') return setMintStep('watch');
+        clearWatchState();
+        highlightRail(payRail);
+        return setMintStep('mint');
+      }
+      if (mintStep === 'watch' && lastPhase === 'Settled') {
+        return setMintStep('tokens');
+      }
+      if (!isTerp1(session?.address)) {
+        setMintStep('unlock');
+        return showToast('Choose where the piece will live, first', 'error');
+      }
+      const recipient = session.address;
+      const mintBtn = $('btn-mint');
+      try {
+        mintBtn.disabled = true;
+        mintBtn.textContent = '…';
+        if (payRail === 'native' && mintStep === 'mint') {
+          await sendNativeMint(recipient);
+          return;
+        }
+        if (mintStep === 'mint') {
+          setStatus('Locking this checkout…');
+          await lockAndWatch();
+          return;
+        }
+        if (mintStep === 'watch') {
+          await sendLockedPayment();
+          return;
+        }
+      } catch (err) {
+        console.error('pay', err);
+        setStatus(walletErr(err), 'err');
+        showToast(walletErr(err), 'error');
+      } finally {
+        updateMintButton();
+      }
+    });
+
+    function onQtyEdited() {
+      const el = $('mint-qty');
+      if (el) el.value = String(getQty());
+      paintPayTotals();
+      updatePrice();
+      updateMintButton();
+      if (isTerp1(session?.address) && mintStep === 'mint' && !railLocked) {
+        void loadCheckout(session.address, { fresh: true });
+      }
+    }
+    $('mint-qty')?.addEventListener('input', onQtyEdited);
+    $('mint-qty')?.addEventListener('change', onQtyEdited);
+    $('mint-qty-dec')?.addEventListener('click', () => {
+      const el = $('mint-qty');
+      if (!el) return;
+      el.value = String(Math.max(1, getQty() - 1));
+      onQtyEdited();
+    });
+    $('mint-qty-inc')?.addEventListener('click', () => {
+      const el = $('mint-qty');
+      if (!el) return;
+      el.value = String(Math.min(20, getQty() + 1));
+      onQtyEdited();
+    });
+
+    async function loadContractConfig() {
+      const contractAddr = contractConfig?.contractAddr;
+      if (!contractAddr) {
+        $('stat-minted').textContent = `not on ${CHAIN_ID}`;
+        pricePerToken = 0n;
+        updatePrice();
+        updateMintButton();
+        return;
+      }
+      if (!isValidBech32Address(contractAddr)) {
+        $('stat-minted').textContent = 'bad config';
+        return;
+      }
+      try {
+        // cw721_svg has no `config` query — that 500 from api.terp.network
+        // omits CORS headers and looks like a policy block in the console.
+        const countData = await querySmart(REST, contractAddr, { num_tokens: {} });
+        $('stat-minted').textContent = String(countData.count ?? countData.tokens?.length ?? '—');
+      } catch (err) {
+        console.warn('collection query', err);
+        $('stat-minted').textContent = 'offline';
+      }
+      updatePrice();
+    }
+
+    async function loadUserTokens() {
+      const grid = $('collection-grid');
+      grid.innerHTML = '';
+      const contractAddr = contractConfig?.contractAddr;
+      ownedCount = 0;
+      if (!session?.address || !contractAddr || !isValidBech32Address(session.address)) {
+        updatePrice();
+        return;
+      }
+      try {
+        const ids = await queryOwnerTokens(REST, contractAddr, session.address);
+        ownedCount = ids.length;
+        ids.forEach((id) => {
+          const s = document.createElement('span');
+          s.className = 'tok';
+          s.textContent = `#${id}`;
+          s.addEventListener('click', () => selectOnChainToken(id));
+          grid.appendChild(s);
+        });
+        updatePrice();
+      } catch (err) {
+        console.warn('tokens', err);
+      }
+    }
+
+    async function selectOnChainToken(tokenId) {
+      if (!CONTRACT_ADDRESS) return;
+      try {
+        const uri = await querySmart(REST, CONTRACT_ADDRESS, {
+          svg_token_uri: { token_id: String(tokenId) },
+        }).catch(() => null);
+        const info = await querySmart(REST, CONTRACT_ADDRESS, {
+          nft_info: { token_id: String(tokenId) },
+        }).catch(() => null);
+        setVeil(false);
+        setStatus(`Token #${tokenId}${uri ? ' · svg uri' : ''}`, 'ok');
+        void info;
+      } catch (e) {
+        setStatus(e.message, 'err');
+      }
+    }
+
+    let coordMode = 'entropy';
+    let selectedMintId = null;
+
+    function coordsFromSeed(seed) {
+      let h = 2166136261;
+      const s = String(seed || '');
+      for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+      const u = (n) => ((h >>> (n * 7)) & 0xffff) / 0xffff;
+      return {
+        a: -4 + u(0) * 8,
+        b: -1.5 + u(1) * 3,
+        c: -0.8 + u(2) * 1.6,
+      };
+    }
+
+    function setVeil(on) {
+      $('reveal-veil')?.classList.toggle('on', !!on);
+      $('vars')?.classList.toggle('sealed', !!on);
+    }
+
+    function applyRevealed(abc) {
+      if (!abc || !window.applyUserCoords) return;
+      $('coord-a').value = Math.round(abc.a * 100);
+      $('coord-b').value = Math.round(abc.b * 100);
+      if ($('coord-cx')) $('coord-cx').value = Math.round((abc.cx ?? abc.c) * 100);
+      if ($('coord-cy')) $('coord-cy').value = Math.round((abc.cy || 0) * 100);
+      if ($('coord-dx')) $('coord-dx').value = Math.round((abc.dx || 0) * 100);
+      if ($('coord-dy')) $('coord-dy').value = Math.round((abc.dy || 0) * 100);
+      window.applyUserCoords(abc.a, abc.b, abc.cx ?? abc.c, abc.cy, abc.dx, abc.dy);
+    }
+
+    function setMode(mode) {
+      coordMode = mode;
+      $('mode-prng')?.classList.toggle('on', mode === 'prng');
+      $('mode-entropy')?.classList.toggle('on', mode === 'entropy');
+      selectedMintId = null;
+      if (mode === 'prng') {
+        setVeil(true);
+      } else {
+        setVeil(false);
+        rollLocalEntropy();
+      }
+    }
+
+    function rollLocalEntropy() {
+      if (!window.randomizeCoords) return;
+      const c = window.randomizeCoords();
+      $('coord-a').value = Math.round(c.a * 100);
+      $('coord-b').value = Math.round(c.b * 100);
+      if ($('coord-cx')) $('coord-cx').value = Math.round(c.cx * 100);
+      if ($('coord-cy')) $('coord-cy').value = Math.round(c.cy * 100);
+      if ($('coord-dx')) $('coord-dx').value = Math.round(c.dx * 100);
+      if ($('coord-dy')) $('coord-dy').value = Math.round(c.dy * 100);
+    }
+
+    $('mode-prng')?.addEventListener('click', () => setMode('prng'));
+    $('mode-entropy')?.addEventListener('click', () => setMode('entropy'));
+    $('btn-entropy')?.addEventListener('click', () => {
+      rollLocalEntropy();
+    });
+    function pushUserCoords() {
+      if (!window.applyUserCoords) return;
+      window.applyUserCoords(
+        Number($('coord-a').value) / 100,
+        Number($('coord-b').value) / 100,
+        Number($('coord-cx')?.value || 0) / 100,
+        Number($('coord-cy')?.value || 0) / 100,
+        Number($('coord-dx')?.value || 0) / 100,
+        Number($('coord-dy')?.value || 0) / 100
+      );
+    }
+    ['coord-a', 'coord-b', 'coord-cx', 'coord-cy', 'coord-dx', 'coord-dy'].forEach((id) => {
+      $(id)?.addEventListener('input', pushUserCoords);
+    });
+
+    $('mint-lede').textContent =
+      'Pay with Zcash (ZIP-321 — save the QR for Zodl, open Vizor, or scan) or on Terp. ETH, Base, and Bitcoin are parked.';
+    highlightRail('zec');
+    setMintStep('play');
+    updatePrice();
+    window.__PM_MODULE_READY__ = true;
+    void ensureZecWallets();
+
+    void (async function bootMint() {
+      try {
+        await loadMintLibs();
+      } catch (e) {
+        console.error('mint libs', e);
+      }
+      paintUnlockCopy();
+      try { await refreshDesk(); } catch (e) { console.warn('desk', e); }
+      const boot = typeof getActivePasskey === 'function' ? getActivePasskey() : null;
+      if (boot?.account && boot.account.startsWith('terp1')) {
+        session = { address: boot.account, signer: null, source: 'session-hd', unlock: 'passkey' };
+        if (typeof ensureBrowserWallet === 'function') {
+          void ensureBrowserWallet({ prefix: 'terp', address: boot.account }).then((w) => {
+            if (session?.address === w.address) session.signer = w.wallet;
+          }).catch((e) => console.warn('restore wallet', e));
+        }
+      } else {
+        try {
+          const keplrAddr = sessionStorage.getItem('keplrAddress');
+          if (keplrAddr && keplrAddr.startsWith('terp1')) {
+            session = {
+              address: keplrAddr,
+              signer: window.keplr ? window.keplr.getOfflineSigner(CHAIN_ID) : null,
+              source: 'extension',
+              unlock: 'none',
+            };
+            unlockHow = 'keplr';
+            markUnlockOpt('keplr');
+          }
+        } catch { /* ignore */ }
+      }
+      paintPasskeys();
+      if (!restoreWatchState()) setMintStep('play');
+      updatePrice();
+    })();
+</script>
+<script>
+(function () {
+    const cv = document.getElementById('fractal-preview');
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
+    const pxSz = 3;
+    let W, H, cols, rows, hitBuf, maxH = 0, fx = 0, fy = 0, iter = 0;
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      W = cv.width = Math.floor(window.innerWidth * dpr);
+      H = cv.height = Math.floor(window.innerHeight * dpr);
+      cols = Math.floor(W / pxSz);
+      rows = Math.floor(H / pxSz);
+      reset();
+    }
+    function reset() { hitBuf = new Uint32Array(cols * rows); maxH = 0; iter = 0; fx = 0; fy = 0; }
+
+    const seqs = [
+      { name: 'Classic', p: { a: -2.0, b: -0.33, c: 0.01, d: -1, s: -1, f: 1, g: 0, h: 0 }, range: 35 },
+      { name: 'Spiral', p: { a: 0.4, b: 1.1, c: 0.0, d: -1, s: -1, f: 1, g: 0, h: 0 }, range: 14 },
+      { name: 'Cosmic Web', p: { a: -3.14, b: 0.2, c: 0.3, d: -1, s: -1, f: 1, g: 0, h: 0 }, range: 80 },
+      { name: 'Sinusoidal', p: { a: 0.4, b: 1.0, c: 0.0, d: -1, s: -1, f: 0, g: 1, h: 0 }, range: 140 },
+      { name: 'Additive', p: { a: -2.0, b: -0.33, c: 0.01, d: -1, s: -1, f: 1, g: 0, h: 1 }, range: 50 },
+      { name: 'Positive', p: { a: -3.14, b: 0.19, c: 0.32, d: 1, s: -1, f: 1, g: 0, h: 0 }, range: 73 },
+    ];
+    let si = 0;
+
+    const pal = new Array(120);
+    for (let i = 0; i < 120; i++) {
+      const hu = (i * 10) % 360, hh = hu / 60, c = 0.7, x = c * (1 - Math.abs(hh % 2 - 1)), m = 0.5 - c / 2;
+      let r, g, b;
+      if (hh < 1) { r = c; g = x; b = 0; }
+      else if (hh < 2) { r = x; g = c; b = 0; }
+      else if (hh < 3) { r = 0; g = c; b = x; }
+      else if (hh < 4) { r = 0; g = x; b = c; }
+      else if (hh < 5) { r = x; g = 0; b = c; }
+      else { r = c; g = 0; b = x; }
+      pal[i] = [Math.floor((r + m) * 255), Math.floor((g + m) * 255), Math.floor((b + m) * 255)];
+    }
+
+    let cOff = 0;
+    function hop(p) {
+      const cx = p.cx ?? p.c;
+      const cy = p.cy || 0;
+      const dx = p.dx || 0;
+      const dy = p.dy || 0;
+      const bxc = p.b * fx - cx, abs = Math.abs(bxc), sf = fx < 0 ? p.s : 1;
+      const t = p.f * Math.sqrt(abs) + p.g * Math.sin(bxc) + p.h * abs;
+      const xn = fy + cy + p.d * sf * t + dx;
+      fy = p.a - fx + dy;
+      fx = xn;
+    }
+
+    function draw() {
+      const s = seqs[si], range = s.range;
+      const xMin = -range / 2, xMax = range / 2, yMin = -range / 2, yMax = range / 2;
+      const xR = xMax - xMin, yR = yMax - yMin;
+      const sc = Math.min(cols / xR, rows / yR);
+      const oX = (cols - xR * sc) / 2, oY = (rows - yR * sc) / 2;
+
+      cOff = (cOff + 0.25) % 120;
+      if (iter < 2000000) {
+        for (let i = 0; i < 50000 && iter < 2000000; i++, iter++) {
+          hop(s.p);
+          const gx = Math.floor((fx - xMin) * sc + oX), gy = Math.floor((fy - yMin) * sc + oY);
+          if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) {
+            const idx = gy * cols + gx;
+            hitBuf[idx]++;
+            if (hitBuf[idx] > maxH) maxH = hitBuf[idx];
+          }
+        }
+      }
+      const id = ctx.createImageData(W, H), d32 = new Uint32Array(id.data.buffer);
+      if (maxH > 0) {
+        const lm = Math.log(maxH + 1);
+        for (let gy = 0; gy < rows; gy++) for (let gx = 0; gx < cols; gx++) {
+          if (hitBuf[gy * cols + gx] > 0) {
+            const lv = Math.log(hitBuf[gy * cols + gx] + 1) / lm * 119;
+            const sh = (lv + cOff) % 120, ci = Math.floor(sh) % 120, ci2 = (ci + 1) % 120, bl = sh - Math.floor(sh);
+            const [r1, g1, b1] = pal[ci], [r2, g2, b2] = pal[ci2];
+            const r = r1 + (r2 - r1) * bl | 0, g = g1 + (g2 - g1) * bl | 0, b = b1 + (b2 - b1) * bl | 0;
+            const c32 = (255 << 24) | (b << 16) | (g << 8) | r;
+            const bpx = gx * pxSz, bpy = gy * pxSz;
+            for (let py = 0; py < pxSz; py++) {
+              const py2 = bpy + py; if (py2 >= H) break;
+              for (let px = 0; px < pxSz; px++) {
+                const px2 = bpx + px; if (px2 >= W) break;
+                d32[py2 * W + px2] = c32;
+              }
+            }
+          }
+        }
+      }
+      ctx.putImageData(id, 0, 0);
+      requestAnimationFrame(draw);
+    }
+
+    function paintFormTabs() {
+      const wrap = document.getElementById('form-tabs');
+      if (!wrap) return;
+      wrap.innerHTML = '';
+      seqs.forEach((s, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'form-tab' + (i === si ? ' on' : '');
+        b.textContent = s.name;
+        b.addEventListener('click', () => window.setFormIndex(i));
+        wrap.appendChild(b);
+      });
+    }
+
+    window.setFormIndex = function (i) {
+      si = ((i % seqs.length) + seqs.length) % seqs.length;
+      document.getElementById('variant-label').textContent = seqs[si].name;
+      const p = seqs[si].p;
+      const a = document.getElementById('coord-a');
+      const b = document.getElementById('coord-b');
+      const cx = document.getElementById('coord-cx');
+      const cy = document.getElementById('coord-cy');
+      const dx = document.getElementById('coord-dx');
+      const dy = document.getElementById('coord-dy');
+      if (a) a.value = Math.round(p.a * 100);
+      if (b) b.value = Math.round(p.b * 100);
+      if (cx) cx.value = Math.round((p.cx ?? p.c) * 100);
+      if (cy) cy.value = Math.round((p.cy || 0) * 100);
+      if (dx) dx.value = Math.round((p.dx || 0) * 100);
+      if (dy) dy.value = Math.round((p.dy || 0) * 100);
+      paintFormTabs();
+      reset();
+    };
+
+    paintFormTabs();
+
+    window.applyUserCoords = function (a, b, cx, cy, dx, dy) {
+      seqs[si].p.a = a;
+      seqs[si].p.b = b;
+      seqs[si].p.c = cx;
+      seqs[si].p.cx = cx;
+      seqs[si].p.cy = cy || 0;
+      seqs[si].p.dx = dx || 0;
+      seqs[si].p.dy = dy || 0;
+      reset();
+    };
+
+    window.randomizeCoords = function () {
+      const a = -4 + Math.random() * 8;
+      const b = -1.5 + Math.random() * 3;
+      const cx = -0.8 + Math.random() * 1.6;
+      const cy = -0.5 + Math.random();
+      const dx = -0.5 + Math.random();
+      const dy = -0.5 + Math.random();
+      seqs[si].p.a = a;
+      seqs[si].p.b = b;
+      seqs[si].p.c = cx;
+      seqs[si].p.cx = cx;
+      seqs[si].p.cy = cy;
+      seqs[si].p.dx = dx;
+      seqs[si].p.dy = dy;
+      reset();
+      return { a, b, c: cx, cx, cy, dx, dy };
+    };
+
+    (function bindPlayControls() {
+      function readSliders() {
+        const n = (id) => Number((document.getElementById(id) || {}).value || 0) / 100;
+        window.applyUserCoords(n('coord-a'), n('coord-b'), n('coord-cx'), n('coord-cy'), n('coord-dx'), n('coord-dy'));
+      }
+      ['coord-a', 'coord-b', 'coord-cx', 'coord-cy', 'coord-dx', 'coord-dy'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el || el.dataset.pmBound === '1') return;
+        el.dataset.pmBound = '1';
+        el.addEventListener('input', readSliders);
+        el.addEventListener('change', readSliders);
+      });
+      const rnd = document.getElementById('btn-entropy');
+      if (rnd && rnd.dataset.pmBound !== '1') {
+        rnd.dataset.pmBound = '1';
+        rnd.addEventListener('click', function () {
+          const c = window.randomizeCoords();
+          if (!c) return;
+          const set = (id, v) => { const e = document.getElementById(id); if (e) e.value = String(Math.round(v * 100)); };
+          set('coord-a', c.a); set('coord-b', c.b); set('coord-cx', c.cx);
+          set('coord-cy', c.cy); set('coord-dx', c.dx); set('coord-dy', c.dy);
+        });
+      }
+    })();
+
+    if (document.getElementById('mode-entropy')?.classList.contains('on')) {
+      const rolled = window.randomizeCoords();
+      const elA = document.getElementById('coord-a');
+      const elB = document.getElementById('coord-b');
+      const elCx = document.getElementById('coord-cx');
+      if (rolled && elA) elA.value = Math.round(rolled.a * 100);
+      if (rolled && elB) elB.value = Math.round(rolled.b * 100);
+      if (rolled && elCx) elCx.value = Math.round(rolled.cx * 100);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    requestAnimationFrame(draw);
+  })();
+</script>
+</body>
+</html>
