@@ -9,3 +9,8 @@ target
 soon/
 scripts/
 review/
+# local backups, caches, archives (2026-11-08)
+*.bak
+*.bak-*
+.cache/
+*.zip
