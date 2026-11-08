@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en" data-config="mainnet" data-pweb="svg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: https://s3.terp.network; connect-src 'self' https://terp.network https://api.terp.network https://rpc.terp.network https://s3.terp.network; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<title>svg collections | PERMISSIONLESS.MONEY</title>
+<script type="module" src="lib/index-page.js"></script>
+<link rel="icon" type="image/png" sizes="32x32" href="/public/favicons/p-32x32.png">
+<link rel="stylesheet" href="/svg/vendor/fonts/satoshi.css">
+<link rel="stylesheet" href="css/wiki.css">
+<link rel="stylesheet" href="css/pweb.css">
+</head>
+<body>
+<header class="pm-chrome">
+  <a class="pm-brand" href="/">permissionless.money</a>
+  <nav class="pm-nav" aria-label="Site">
+    <a href="/mint">Mint</a>
+    <a href="/svg/" class="on" aria-current="page">SVG</a>
+    <a href="/svg/marain-orb">Marain orb</a>
+    <a href="/svg/latent-benders">Latent Benders</a>
+    <a href="/svg/yijing-harmony">Yi Jing</a>
+    <a href="/svg/auction">Auctions</a>
+    <a href="/svg/shield-usdc">Shield USDC</a>
+    <a href="/#donate">Donate</a>
+  </nav>
+</header>
+<div class="page">
+  <nav class="side"><a class="brand" href="./">svg collections</a>
+    <h4>Collections</h4><ul><li><a href="marain-orb">Marain orb</a></li><li><a href="latent-benders">Latent Benders: A Study</a></li><li><a href="yijing-harmony">Yi Jing Harmony</a></li><li><a href="interchain-logos">Interchain logos</a></li></ul>
+    <h4>Auctions</h4>
+    <ul><li><a href="auction">Auctions</a></li><li><a href="shield-usdc">Shield USDC</a></li></ul>
+    <h4>Privacy</h4><ul><li><a href="/mint">Fractal mint</a></li></ul>
+    <h4>Wallet</h4>
+    <div id="wallet"></div></nav>
+  <main>
+    <h1>svg collections</h1>
+    <div class="meta"><span>packed-only SVP1</span><span>rendered on chain</span><span id="net">loading…</span></div>
+    <p class="lede">Collections whose art is drawn by the contract itself. You can read them without a wallet. Every cost is shown before you sign, and every entry links back to the chain.</p>
+    <h2 id="collections">Collections</h2>
+    <div class="col-cards" id="cards">
+      <a class="col-card" href="marain-orb" data-col="marain"><div class="art" aria-hidden="true"></div><div class="body"><h3>Marain orb</h3>
+        <p>Orbs that speak a nine-dot script. Anyone can propose a line for a fee, and the shield-orb holder picks one each epoch.</p>
+        <div class="foot"><span class="pill state-slot">reading chain…</span><span class="count"></span></div><div class="price"></div></div></a>
+      <a class="col-card" href="latent-benders" data-col="latentBenders"><div class="art" aria-hidden="true"></div><div class="body"><h3>Latent Benders: A Study</h3>
+        <p>One fresh draw a day, a Kara &amp; Gippy session and a curated painting, each an open mint. Fictional generative art, not dosing, safety or medical advice.</p>
+        <div class="foot"><span class="pill state-slot">reading chain…</span><span class="count"></span></div><div class="price"></div></div></a>
+      <a class="col-card" href="yijing-harmony" data-col="yijing"><div class="art" aria-hidden="true"></div><div class="body"><h3>Yi Jing Harmony</h3>
+        <p>Every line of DAO DAO code that says DAO becomes a hexagram, picked by a public rulebook and a three-round tournament anyone can re-run.</p>
+        <div class="foot"><span class="pill state-slot">reading chain…</span><span class="count"></span></div><div class="price"></div></div></a>
+      <a class="col-card" href="interchain-logos" data-col="interchainLogos"><div class="art" aria-hidden="true"></div><div class="body"><h3>Interchain logos</h3>
+        <p>Thirteen logos from across the interchain, Penumbra to Zcash. Each is its own collection of 10,000, drawn on chain.</p>
+        <div class="foot"><span class="pill state-slot">reading chain…</span><span class="count"></span></div><div class="price"></div></div></a>
+    </div>
+    <h2 id="privacy">Privacy</h2>
+    <p class="meta">Mints you can pay for without linking your wallet to the payment. They run on their own mint, separate from the collections above.</p>
+    <div class="col-cards privacy">
+      <a class="col-card" href="/mint" data-col="fractal"><div class="art fractal" aria-hidden="true"></div><div class="body"><h3>Permissionless Fractals</h3>
+        <p>A one-of-a-kind hopalong-attractor fractal, rendered as SVG on chain. Pay with shielded Zcash (ZIP-321) or THIOL, and hold it with a passkey or Keplr.</p>
+        <div class="foot"><span class="pill privacy">shielded payment</span><span class="count"></span></div><div class="price"></div></div></a>
+    </div>
+    <footer>Static pages. They read public chain data and sign only when you press a button and confirm the fees. Kara &amp; Gippy are original characters, inspired by wibandwob's symbient approach. Substance and practice data: <a href="https://psychedex.org/" rel="noopener noreferrer" target="_blank">psychedex.org</a>.<p class="pm-foot">part of <a href="/">permissionless.money</a> · <a href="https://github.com/permissionlessweb" target="_blank" rel="noopener">GitHub</a></p></footer>
+  </main>
+  <aside class="side toc"></aside>
+</div>
+</body>
+</html>

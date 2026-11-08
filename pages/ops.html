@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Desk · permissionless.money</title>
+  <link href="https://fonts.cdnfonts.com/css/satoshi" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; background: #f4f1ea; color: #14161c;
+      font: 15px/1.4 Satoshi, system-ui, sans-serif;
+    }
+    .app {
+      height: 100dvh;
+      display: grid;
+      grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+      min-height: 0;
+    }
+    .rail, .board { min-height: 0; overflow: auto; }
+    .rail {
+      padding: 0.8rem 0.85rem 1rem;
+      border-right: 1px solid #14161c;
+      background: #fff;
+    }
+    .board {
+      display: grid;
+      grid-template-rows: auto auto;
+      align-content: start;
+      gap: 0.6rem;
+      padding: 0.6rem;
+      background: #f4f1ea;
+    }
+    @media (max-width: 800px) {
+      .app { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: 100dvh; }
+      .rail { max-height: 42dvh; border-right: 0; border-bottom: 1px solid #14161c; }
+      .board { grid-template-rows: auto auto; }
+    }
+    h1 { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.45rem; }
+    p, label { font-size: 0.86rem; color: #14161c; }
+    label { display: block; margin: 0.55rem 0 0.25rem; font-weight: 700; }
+    input {
+      width: 100%; background: #fff; color: #14161c;
+      border: 1px solid #14161c; padding: 0.45rem 0.55rem; font: inherit;
+    }
+    .row { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.55rem; }
+    button {
+      border: 1px solid #14161c; background: #14161c; color: #f4f1ea;
+      font: inherit; font-weight: 700; padding: 0.4rem 0.65rem; cursor: pointer;
+    }
+    button.ghost { background: #fff; color: #14161c; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th, td { text-align: left; padding: 0.35rem 0.4rem; border-bottom: 1px solid #14161c; vertical-align: top; }
+    th { font-weight: 700; }
+    .scroll { overflow: auto; min-height: 0; flex: 1; }
+    .co-tabs { display: flex; flex-wrap: wrap; gap: 0; margin: 0.5rem 0 0; border-bottom: 1px solid #14161c; }
+    .co-tab { border-radius: 0; background: transparent; color: inherit; border: 1px solid transparent; border-bottom: 0; padding: 0.35rem 0.7rem; font: inherit; font-size: 0.8rem; cursor: pointer; opacity: 0.65; }
+    .co-tab.on { opacity: 1; border-color: #14161c; font-weight: 700; }
+    .co-tab .n { font-variant-numeric: tabular-nums; margin-left: 0.25rem; }
+    .co-legend { font-size: 0.75rem; opacity: 0.7; margin: 0.35rem 0; }
+    .co-scroll { height: min(44rem, 78dvh); min-height: 18rem; max-height: none; overflow: auto; flex: 0 0 auto; border: 1px solid #14161c; }
+    .co-scroll table { min-width: 44rem; }
+    .co-scroll thead th { position: sticky; top: 0; background: var(--bg, #fff); z-index: 1; box-shadow: 0 1px 0 #14161c; }
+    .dl { display: grid; grid-template-columns: 7.5rem 1fr; gap: 0.2rem 0.45rem; font-size: 0.86rem; }
+    .panel {
+      min-height: 0; display: flex; flex-direction: column; gap: 0.35rem;
+      background: #fff; border: 1px solid #14161c; padding: 0.55rem 0.6rem;
+    }
+    .panel h2 { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0; }
+    .zec-total { font-size: 1.05rem; font-weight: 700; margin: 0; }
+    .err { color: #8d1d18; font-weight: 700; }
+    .ok { color: #0b6b4f; font-weight: 700; }
+    a { color: #0b3a82; }
+    .addr-row { display: flex; align-items: center; gap: 0.5rem; margin: 0.35rem 0 0; }
+    .mono-addr { font-family: ui-monospace, Menlo, monospace; color: #14161c; }
+    .copy-btn { padding: 0.2rem 0.6rem; font-size: 0.8rem; }
+    #grant-addr { word-break: break-all; font-family: ui-monospace, Menlo, monospace; }
+  </style>
+</head>
+<body>
+  <div class="app"><aside class="rail">
+  <h1>Mint desk</h1>
+  <p>Sign in with <b>Keplr (ADR-036)</b> to read the house total. Each recover asks Keplr to sign <b>once more</b> — that signature binds the zat amount to the donation unified address and cannot be reused. Token / zid can read info; they cannot spend.</p>
+  <label for="origin">DREGG origin</label>
+  <input id="origin" value="https://dregg-svg.permissionless.money" autocomplete="off">
+  <div class="row">
+    <button type="button" id="keplr">Sign in with Keplr</button>
+    <button type="button" id="zid" class="ghost">zafu / zid</button>
+    <button type="button" id="go" class="ghost">Token</button>
+    <button type="button" id="reload-info" class="ghost">Refresh info</button>
+  </div>
+  <label for="tok">Backup admin token</label>
+  <input id="tok" type="password" autocomplete="off">
+  <p class="ok" id="who"></p>
+  <div class="panel">
+    <h2>Designated admin</h2>
+    <p>Only these Keplr accounts can sign in to the desk.</p>
+    <p class="addr-row"><span id="admin-addr" class="mono-addr">Checking…</span>
+      <button type="button" id="admin-copy" class="ghost copy-btn" hidden aria-label="Copy designated admin address">Copy</button></p>
+  </div>
+  <div class="panel">
+    <h2>Minter sponsor <span style="font-weight:400;font-size:0.8rem">· authz = failover</span></h2>
+    <p>Lets the minter <span id="authz-grantee" class="mono-addr"></span> sponsor passkey sign-ups from <span id="authz-granter" class="mono-addr"></span>'s funds. Read live from the network. Changes are signed in Keplr here.</p>
+    <ul id="authz-list" style="margin:0.35rem 0;padding-left:1.1rem"></ul>
+    <p style="margin:0.2rem 0">Minter balance: <b id="authz-bal">…</b></p>
+    <p style="margin:0.2rem 0">Active mode: <b id="authz-mode">…</b></p>
+    <p style="margin:0.2rem 0;font-size:0.78rem" id="authz-mode-note">The minter pays fee allowances from its own balance. The authz grant below is used only when that balance is under the threshold or a direct grant fails.</p>
+    <p style="margin:0.2rem 0" id="authz-issued"></p>
+    <div class="row" style="align-items:center">
+      <label for="authz-exp" style="margin:0">Expires</label>
+      <input id="authz-exp" type="date" style="max-width:11rem">
+    </div>
+    <div class="row">
+      <button type="button" id="authz-grant">Grant</button>
+      <button type="button" id="authz-extend" class="ghost">Extend</button>
+      <button type="button" id="authz-revoke" class="ghost">Revoke</button>
+      <button type="button" id="authz-refresh" class="ghost">Refresh</button>
+    </div>
+    <p id="authz-out"></p>
+  </div>
+  <div class="panel">
+    <h2>Grant address</h2>
+    <p>Withdraws go only to this donation address. Confirm it before you send.</p>
+    <p id="grant-addr" style="color:#14161c;word-break:break-all;font-family:ui-monospace,Menlo,monospace">Sign in to show it</p>
+  </div>
+  <div class="panel">
+    <h2>ZEC wallet</h2>
+    <p class="zec-total" id="zec-total">Sign in to read the house total</p>
+    <p id="zec-note">Spendable is what can be sent. Watched deposit is a payment this desk has matched. They are not the same number.</p>
+    <p id="zec-sync" style="margin:0.2rem 0;font-size:0.78rem">Sign in to read sync progress</p>
+    <p id="pay-reached" hidden style="margin:0.35rem 0 0;color:#0b6b4f;font-weight:500"></p>
+    <label for="zat">Withdraw zat (ZEC, to donation UA)</label>
+    <input id="zat" type="number" min="1" step="1" placeholder="zat" autocomplete="off">
+    <div class="row">
+      <button type="button" id="wd" class="ghost">Withdraw ZEC</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Desk</h2>
+    <div class="dl" id="info">…</div>
+  </div>
+  <div class="panel">
+    <h2>House</h2>
+    <div class="dl" id="out">Sign in to load the house</div>
+    <p id="out-err" class="err"></p>
+  </div>
+  </aside><main class="board"><div class="panel">
+    <h2>Checkouts</h2>
+    <div class="row" role="tablist">
+      <button type="button" id="tab-co" role="tab" aria-selected="true">Checkouts</button>
+      <button type="button" id="tab-ma" role="tab" class="ghost" aria-selected="false">Manual actions</button>
+    </div>
+    <div id="pane-co">
+    <p>Each row has its own actions. Mint to sends the NFT on Terp (a paid row mints now; an unpaid row asks before a comp mint). Refund marks the row refunded; return funds yourself. Mark resolved closes the row with no chain action. Every action is logged.</p>
+    <div class="row">
+      <button type="button" class="ghost" id="act-flush">Export history once</button>
+    </div>
+    <p id="act-out"></p>
+    <div class="co-tabs" role="tablist" aria-label="Checkout stage" id="co-tabs">
+      <button type="button" role="tab" class="co-tab on" data-stage="awaiting">Awaiting payment <span class="n">0</span></button>
+      <button type="button" role="tab" class="co-tab" data-stage="paid">Paid / minting <span class="n">0</span></button>
+      <button type="button" role="tab" class="co-tab" data-stage="attention">Needs attention <span class="n">0</span></button>
+      <button type="button" role="tab" class="co-tab" data-stage="resolved">Resolved / refunded <span class="n">0</span></button>
+    </div>
+    <p class="co-legend" id="co-legend"></p>
+    <div class="scroll co-scroll"><table>
+      <thead><tr><th>When</th><th>Address</th><th>Status</th><th>zat</th><th>Tx</th><th>Actions</th></tr></thead>
+      <tbody id="sessions"></tbody>
+    </table></div>
+    <div class="row">
+      <button type="button" class="ghost" id="sess-newer">Newer</button>
+      <button type="button" class="ghost" id="sess-older">Older</button>
+    </div>
+    </div>
+    <div id="pane-ma" hidden>
+      <p>Every checkout an admin acted on, newest first. Read from the desk's append-only action log.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>When</th><th>Address</th><th>Action</th><th>Admin</th><th>Result</th><th>Tx</th></tr></thead>
+        <tbody id="actions"></tbody>
+      </table></div>
+      <div class="row"><button type="button" class="ghost" id="ma-refresh">Refresh</button></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Withdraws</h2>
+    <p>mined = in a block. mempool = accepted, not confirmed. expired = built here, then dropped, grant wallet cannot see it. missing = wallet has it, node does not. ZEC ids open CipherScan.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>When</th><th>zat</th><th>Fee</th><th>Status</th><th>Tx</th><th></th></tr></thead>
+      <tbody id="withdraws"></tbody>
+    </table></div>
+    <div class="row">
+      <button type="button" class="ghost" id="wd-newer">Newer</button>
+      <button type="button" class="ghost" id="wd-older">Older</button>
+    </div>
+  </div>
+  </main></div>
+  <script type="module">
+    const out = document.getElementById('out');
+    const info = document.getElementById('info');
+    const who = document.getElementById('who');
+    const originEl = document.getElementById('origin');
+    const tokEl = document.getElementById('tok');
+    const zecTotal = document.getElementById('zec-total');
+    let spendableIron = 0;
+    let watchedDeposit = 0;
+    function paintBalanceLine() {
+      zecTotal.textContent = spendableIron + ' zat spendable · ' + watchedDeposit + ' zat watched deposit';
+      zecNote.textContent = 'Spendable is what the house wallet can send. Watched deposit is the payment this desk already matched (mempool, entitled, or deposited). Those stay apart until the wallet scan includes that note.';
+    }
+    const zecNote = document.getElementById('zec-note');
+    let withdrawTo = '';
+    let lastSigner = '';
+
+    function origin() {
+      const v = (originEl.value || '').trim().replace(/\/$/, '');
+      return v || window.location.origin;
+    }
+
+
+    function paintZecWallet(w) {
+      if (!w || typeof w !== 'object') {
+        zecTotal.textContent = 'No zec_wallet in info yet';
+        return;
+      }
+      if (w.ok === false) {
+        zecTotal.className = 'zec-total err';
+        zecTotal.textContent = 'Wallet unread — ' + (w.error || 'error');
+        zecNote.textContent = '';
+        return;
+      }
+      const iron = Number(w.ironwood_spendable_zat || 0);
+      spendableIron = iron;
+      zecTotal.className = 'zec-total';
+      paintBalanceLine();
+      const sync = document.getElementById('zec-sync');
+      if (sync) {
+        const tip = Number(w.chain_tip_height || 0), at = Number(w.synced_height || 0);
+        const pend = Number(w.pending_zat || 0);
+        const pct = tip && w.birthday ? Math.min(100, Math.floor(100 * (at - w.birthday + 1) / Math.max(1, tip - w.birthday + 1))) : null;
+        sync.textContent = (pend ? pend + ' zat pending (under 3 confirmations) · ' : '')
+          + (at ? ('Scanned to ' + at + (tip ? ' of ' + tip : '') + (pct != null ? ' (' + pct + '%)' : '')) : 'Not scanned yet')
+          + (w.synced_at ? ' · last sync ' + whenText(w.synced_at) : '')
+          + (w.unspent_notes != null ? ' · ' + w.unspent_notes + ' unspent note' + (w.unspent_notes === 1 ? '' : 's') : '');
+      }
+    }
+
+    function dl(el, pairs) {
+      el.className = 'dl';
+      el.replaceChildren();
+      for (const [k, v] of pairs) {
+        const b = document.createElement('b');
+        b.textContent = k;
+        const s = document.createElement('span');
+        s.textContent = v == null || v === '' ? '—' : String(v);
+        el.append(b, s);
+      }
+    }
+    function whenText(sec) {
+      if (sec == null || sec === '') return '—';
+      if (typeof sec === 'string' && (sec.includes('T') || sec.includes('-'))) {
+        const d = new Date(sec);
+        return Number.isNaN(d.getTime()) ? sec : d.toLocaleString();
+      }
+      const n = Number(sec);
+      if (!n) return '—';
+      try { return new Date(n * 1000).toLocaleString(); } catch { return String(n); }
+    }
+
+    function explorerLink(txid, kind) {
+      const id = String(txid || '');
+      const a = document.createElement('a');
+      a.textContent = shortAddr(id);
+      a.target = '_blank';
+      a.rel = 'noopener';
+      if (!id || id === '—') return a;
+      a.href = kind === 'terp'
+        ? ('https://explorer.chaintools.tech/terp/tx/' + id)
+        : ('https://cipherscan.app/tx/' + id);
+      return a;
+    }
+    function shortAddr(a) {
+      const s = String(a || '');
+      return s.length > 16 ? s.slice(0, 10) + '…' + s.slice(-4) : (s || '—');
+    }
+    async function loadInfo() {
+      try {
+        const r = await fetch(origin() + '/health', { cache: 'no-store' });
+        const j = await r.json();
+        dl(info, [
+          ['Pay', j.pay ? 'open' : 'closed'],
+          ['Checkout', j.checkout_ready ? 'ready' : 'not ready'],
+          ['Minted', j.minted],
+          ['Remaining', j.remaining_supply],
+          ['Reasons', (j.reasons || []).join(', ') || 'none'],
+          ['ZEC rail', zecRailText(j.zec_tip)],
+          ['Our node height', (j.zec_tip && j.zec_tip.private_height) || '—'],
+          ['Public height', j.zec_tip ? (j.zec_tip.public_height || (j.zec_tip.last_public_height ? ('unavailable · last ' + j.zec_tip.last_public_height + ' (' + j.zec_tip.last_public_age_secs + ' s ago)') : 'unavailable')) : '—'],
+          ['Drift', j.zec_tip && j.zec_tip.drift != null ? j.zec_tip.drift : '—'],
+        ]);
+      } catch (e) {
+        info.textContent = String(e);
+      }
+    }
+
+
+    function zecRailText(t) {
+      if (!t) return '—';
+      if (t.configured === false) return 'open (no public check configured)';
+      switch (t.status) {
+        case 'ok': return 'open';
+        case 'degraded_public_unavailable': return 'open · degraded (public height unavailable; our node is advancing)';
+        case 'stale_private': return 'paused · our node has not advanced for ' + (t.private_advanced_secs_ago || '?') + ' s';
+        case 'drift': return 'paused · our node is behind the public tip';
+        case 'private_unreachable': return 'paused · our node is unreachable';
+        default: return t.ok ? 'open' : 'paused';
+      }
+    }
+    function paintIncoming(j) {
+      const el = document.getElementById('pay-reached');
+      if (!el) return;
+      const rows = Array.isArray(j && j.incoming) ? j.incoming : [];
+      const n = Number((j && j.mempool) || 0);
+      if (!n && !rows.length) {
+        el.hidden = true;
+        el.textContent = '';
+        return;
+      }
+      const sum = rows.reduce((a, r) => a + (Number(r && r.zat) || 0), 0);
+      const count = n || rows.length;
+      el.hidden = false;
+      el.textContent = 'Payment in mempool · ' + count + (sum ? ' · ' + sum + ' zat' : '');
+    }
+
+    let sessionBefore = [];
+    // Stages from the desk's own phases (svg-mint-fed sessions.rs / main.rs):
+    // issued → mempool → deposited/entitled → minted/settled; expired, refunded, resolved close a row.
+    const STAGE_OF = { issued: 'awaiting', waiting: 'awaiting', mempool: 'paid', deposited: 'paid', entitled: 'paid', minted: 'resolved', settled: 'resolved', refunded: 'resolved', resolved: 'resolved', expired: 'resolved' };
+    const STUCK_SECS = 20 * 60; // mint_timeout_secs on /health
+    const CO_LEGEND = {
+      awaiting: 'issued = checkout created, no payment seen yet.',
+      paid: 'mempool = payment seen, not mined · deposited / entitled = in a block, mint next.',
+      attention: 'Paid but not minted after 20 min, or a phase the desk does not normally use. Act on these.',
+      resolved: 'minted / settled = NFT sent · refunded · resolved = closed by an admin · expired = checkout ended unpaid.',
+    };
+    let coTab = 'awaiting';
+    let coRows = [];
+    function coStage(row) {
+      const st = STAGE_OF[row.phase];
+      if (!st) return 'attention';
+      if (st === 'paid') {
+        const raw = row.at; const at = typeof raw === 'string' && /[T-]/.test(raw) ? Date.parse(raw) / 1000 : (Number(raw) > 1e12 ? Number(raw) / 1000 : Number(raw));
+        if (Number.isFinite(at) && at > 0 && Date.now() / 1000 - at > STUCK_SECS) return 'attention';
+      }
+      return st;
+    }
+    document.getElementById('co-tabs')?.addEventListener('click', (ev) => {
+      const t = ev.target.closest('.co-tab');
+      if (!t) return;
+      coTab = t.dataset.stage;
+      const tok = tokEl.value.trim();
+      if (tok) { sessionBefore = []; void loadSessions(tok); }
+    });
+
+
+    let selectedTerp = '';
+    async function adminPost(path, body) {
+      const tok = tokEl.value.trim();
+      const headers = { Authorization: 'Bearer ' + tok, 'X-Dregg-Admin': tok, 'Content-Type': 'application/json' };
+      const r = await fetch(origin() + path, { method: 'POST', headers, body: JSON.stringify(body || {}), cache: 'no-store' });
+      const j = await r.json().catch(() => ({}));
+      return { r, j };
+    }
+    let withdrawBefore = null;
+    async function loadWithdraws(tok, before) {
+      const headers = { Authorization: 'Bearer ' + tok, 'X-Dregg-Admin': tok };
+      let q = '?limit=20';
+      if (before) q += '&before=' + before;
+      const r = await fetch(origin() + '/v1/admin/withdraws' + q, { headers, cache: 'no-store' });
+      const j = await r.json().catch(() => ({}));
+      const body = document.getElementById('withdraws');
+      if (!r.ok) {
+        document.getElementById('out-err').textContent = j.error || ('withdraws ' + r.status);
+        return;
+      }
+      body.replaceChildren();
+      const rows = j.withdraws || [];
+      for (const row of rows) {
+        const tr = document.createElement('tr');
+        const cells = [whenText(row.at), row.zat ?? '—', row.fee ?? '—', row.status || '—'];
+        for (const cell of cells) {
+          const td = document.createElement('td');
+          td.textContent = cell;
+          tr.append(td);
+        }
+        const tx = document.createElement('td');
+        tx.append(explorerLink(row.txid, 'zec'));
+        tr.append(tx);
+        const note = document.createElement('td');
+        note.textContent = row.note || '';
+        tr.append(note);
+        body.append(tr);
+      }
+      if (!rows.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 6;
+        td.textContent = 'No withdraws to the grant address yet.';
+        tr.append(td);
+        body.append(tr);
+      }
+      withdrawBefore = j.next || null;
+      const older = document.getElementById('wd-older');
+      if (older) older.disabled = !j.next;
+    }
+    async function loadSessions(tok, before) {
+      const headers = { Authorization: 'Bearer ' + tok, 'X-Dregg-Admin': tok };
+      const q = before ? ('?limit=100&before=' + before) : '?limit=100';
+      const r = await fetch(origin() + '/v1/admin/sessions' + q, { headers, cache: 'no-store' });
+      const j = await r.json().catch(() => ({}));
+      const body = document.getElementById('sessions');
+      if (!r.ok) {
+        document.getElementById('out-err').textContent = j.error || ('sessions ' + r.status);
+        return;
+      }
+      body.replaceChildren();
+      const rows = j.sessions || [];
+      coRows = rows;
+      watchedDeposit = rows.filter((r) => r.phase === 'mempool' || r.phase === 'entitled' || r.phase === 'deposited').reduce((a, r) => a + (Number(r.zat) || 0), 0);
+      paintBalanceLine();
+      const counts = { awaiting: 0, paid: 0, attention: 0, resolved: 0 };
+      for (const row of rows) counts[coStage(row)]++;
+      document.querySelectorAll('#co-tabs .co-tab').forEach((t) => { t.querySelector('.n').textContent = String(counts[t.dataset.stage] || 0); t.classList.toggle('on', t.dataset.stage === coTab); t.setAttribute('aria-selected', String(t.dataset.stage === coTab)); });
+      document.getElementById('co-legend').textContent = CO_LEGEND[coTab];
+      const shown = rows.filter((r) => coStage(r) === coTab);
+      for (const row of shown) {
+        const tr = document.createElement('tr');
+        for (const cell of [whenText(row.at), shortAddr(row.terp), row.phase || '—', row.zat ?? '—']) {
+          const td = document.createElement('td');
+          td.textContent = cell;
+          tr.append(td);
+        }
+        const tx = document.createElement('td');
+        const minted = row.phase === 'minted' || row.phase === 'settled';
+        tx.append(explorerLink(row.txid, (row.terp_tx || minted) ? 'terp' : 'zec'));
+        tr.append(tx);
+        tr.append(rowActions(row));
+        body.append(tr);
+      }
+      if (!shown.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 6;
+        td.textContent = rows.length ? 'Nothing in this tab on this page.' : 'No checkouts yet.';
+        tr.append(td);
+        body.append(tr);
+      }
+      sessionBefore = j.next ? sessionBefore.concat([j.next]) : sessionBefore;
+      document.getElementById('sess-older').disabled = !j.next;
+    }
+    async function loadStats(tok) {
+      out.className = 'dl';
+      document.getElementById('out-err').textContent = '';
+      const headers = { Authorization: 'Bearer ' + tok, 'X-Dregg-Admin': tok };
+      let r = await fetch(origin() + '/v1/admin/info', { headers });
+      if (r.status === 404) {
+        r = await fetch(origin() + '/v1/admin/stats', { headers });
+      }
+      const t = await r.text();
+      let j;
+      try { j = JSON.parse(t); } catch { j = t; }
+      if (!r.ok) {
+        document.getElementById('out-err').textContent = r.status + ' ' + (j.error || '');
+        return;
+      }
+      if (j && typeof j === 'object') {
+        const grant = (j.withdraw_to && j.withdraw_to[0]) || '';
+        const grantEl = document.getElementById('grant-addr');
+        if (grantEl) grantEl.textContent = grant || 'No grant address in this reply';
+        dl(out, [
+          ['Pending', j.pending],
+          ['Mempool', j.mempool],
+          ['Minted', j.minted],
+          ['Remaining', j.remaining_supply],
+          ['Ready', j.checkout_ready ? 'yes' : 'no'],
+          ['Reasons', (j.reasons || []).join(', ') || 'none'],
+        ]);
+        void loadSessions(tok);
+        void loadWithdraws(tok);
+        paintZecWallet(j.zec_wallet);
+        if (Array.isArray(j.withdraw_to) && j.withdraw_to[0]) withdrawTo = j.withdraw_to[0];
+        paintIncoming(j);
+      }
+    }
+
+    document.getElementById('wd').onclick = async () => {
+      const tok = tokEl.value.trim();
+      const zat = Number(document.getElementById('zat').value);
+      out.className = '';
+      out.textContent = '…';
+      try {
+        if (!Number.isFinite(zat) || zat < 1) throw new Error('zat required');
+        const k = window.keplr;
+        if (!k) throw new Error('Keplr must sign this recover (ADR-036). Token cannot spend.');
+        await k.enable('morocco-1');
+        const key = await k.getKey('morocco-1');
+        const signer = key.bech32Address;
+        lastSigner = signer;
+        if (!withdrawTo) {
+          await loadStats(tok);
+        }
+        const ua = withdrawTo;
+        if (!ua || !String(ua).startsWith('u1')) throw new Error('donation UA missing from info (sign in first)');
+        const ch = await fetch(origin() + '/v1/admin/challenge').then((r) => r.json());
+        if (!ch.challenge) throw new Error(ch.error || 'no challenge');
+        const statement = 'permissionless.money withdraw ' + zat + ' zat to ' + ua + ' ' + ch.challenge;
+        const data = new TextEncoder().encode(statement);
+        const signed = await k.signArbitrary('morocco-1', signer, data);
+        const headers = { 'Content-Type': 'application/json' };
+        if (tok) headers.Authorization = 'Bearer ' + tok;
+        const r = await fetch(origin() + '/v1/admin/withdraw', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            rail: 'zec',
+            zat,
+            kind: 'adr36',
+            chain_id: 'morocco-1',
+            signer,
+            challenge: ch.challenge,
+            pub_key: signed.pub_key,
+            signature: signed.signature,
+          }),
+        });
+        const t = await r.text();
+        out.className = r.ok ? '' : 'err';
+        out.textContent = t;
+        if (r.ok && tok) await loadStats(tok);
+      } catch (e) {
+        out.className = 'err';
+        out.textContent = String(e);
+      }
+    };
+
+    document.getElementById('go').onclick = async () => {
+      who.textContent = '';
+      try {
+        await loadInfo();
+        await loadStats(tokEl.value.trim());
+      } catch (e) {
+        out.className = 'err';
+        out.textContent = String(e);
+      }
+    };
+
+    document.getElementById('wd-older').onclick = () => {
+      const tok = tokEl.value.trim();
+      if (tok && withdrawBefore) void loadWithdraws(tok, withdrawBefore);
+    };
+    document.getElementById('wd-newer').onclick = () => {
+      const tok = tokEl.value.trim();
+      withdrawBefore = null;
+      if (tok) void loadWithdraws(tok);
+    };
+    async function signCheckout(action) {
+      if (!selectedTerp) { document.getElementById('act-out').textContent = 'Select a checkout first.'; return; }
+      const tok = tokEl.value.trim();
+      const k = window.keplr;
+      if (!k) { document.getElementById('act-out').textContent = 'Keplr must sign this (ADR-036).'; return; }
+      try {
+        await k.enable('morocco-1');
+        const key = await k.getKey('morocco-1');
+        const signer = key.bech32Address;
+        const ch = await fetch(origin() + '/v1/admin/challenge', { cache: 'no-store' }).then((r) => r.json());
+        if (!ch.challenge) throw new Error(ch.error || 'no challenge');
+        const statement = 'permissionless.money ' + action + ' ' + selectedTerp + ' ' + ch.challenge;
+        const data = new TextEncoder().encode(statement);
+        const signed = await k.signArbitrary('morocco-1', signer, data);
+        const headers = { 'Content-Type': 'application/json' };
+        if (tok) {
+          headers.Authorization = 'Bearer ' + tok;
+          headers['X-Dregg-Admin'] = tok;
+        }
+        const r = await fetch(origin() + '/v1/admin/checkout', {
+          method: 'POST',
+          headers,
+          cache: 'no-store',
+          body: JSON.stringify({
+            terp: selectedTerp,
+            action: action,
+            kind: 'adr36',
+            chain_id: 'morocco-1',
+            signer: signer,
+            challenge: ch.challenge,
+            pub_key: signed.pub_key,
+            signature: signed.signature,
+          }),
+        });
+        const j = await r.json().catch(() => ({}));
+        document.getElementById('act-out').textContent = (j.phase ? j.phase + ' · ' : '') + (j.error || (r.ok ? 'authorized' : r.status));
+        if (tok) void loadSessions(tok);
+      } catch (e) {
+        document.getElementById('act-out').textContent = String(e);
+      }
+    }
+    const ACTION_LABEL = { 'mint-to': 'Mint to', refund: 'Refund', resolve: 'Mark resolved', 'withdraw-zec': 'Withdraw ZEC' };
+    function rowActions(row) {
+      const td = document.createElement('td');
+      const btns = document.createElement('div');
+      btns.className = 'row';
+      btns.style.margin = '0';
+      const status = document.createElement('div');
+      status.style.fontSize = '0.75rem';
+      const closed = ['minted', 'settled', 'refunded', 'resolved'].includes(row.phase);
+      for (const action of ['mint-to', 'refund', 'resolve']) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = action === 'mint-to' ? '' : 'ghost';
+        b.textContent = ACTION_LABEL[action];
+        b.style.padding = '0.15rem 0.5rem';
+        b.disabled = closed;
+        b.onclick = () => { void runRowAction(row, action, btns, status); };
+        btns.append(b);
+      }
+      td.append(btns, status);
+      return td;
+    }
+    async function runRowAction(row, action, btns, status) {
+      const paid = row.phase === 'entitled' || row.phase === 'deposited' || row.phase === 'mempool';
+      let comp = false;
+      if (action === 'mint-to') {
+        const msg = paid
+          ? 'Mint ' + (row.qty || 1) + ' NFT to ' + row.terp + ' now? This sends a Terp transaction.'
+          : 'No payment is recorded for this checkout. Mint ' + (row.qty || 1) + ' NFT to ' + row.terp + ' as a comp anyway? This sends a Terp transaction.';
+        if (!window.confirm(msg)) return;
+        comp = !paid;
+      } else if (action === 'refund') {
+        if (!window.confirm('Mark this checkout refunded? Send the ZEC back yourself; this only records it.')) return;
+      } else if (!window.confirm('Mark this checkout resolved with no chain action?')) return;
+      for (const b of btns.querySelectorAll('button')) b.disabled = true;
+      status.className = '';
+      status.textContent = action === 'mint-to' ? 'Minting on Terp… this can take up to a minute' : 'Saving…';
+      try {
+        const { r, j } = await adminPost('/v1/admin/checkout', { terp: row.terp, id: row.id, action, comp });
+        status.replaceChildren();
+        const line = document.createElement('span');
+        line.className = r.ok && j.ok ? 'ok' : 'err';
+        line.textContent = r.ok && j.ok ? (ACTION_LABEL[action] + ' done · ' + (j.phase || '')) : (ACTION_LABEL[action] + ' failed · ' + (j.error || ('status ' + r.status)));
+        status.append(line);
+        if (j.tx) { status.append(' '); const a = explorerLink(j.tx, 'terp'); a.textContent = 'View tx ' + shortAddr(j.tx); status.append(a); }
+        if (r.ok && j.ok) { const tok = tokEl.value.trim(); if (tok) setTimeout(() => { void loadSessions(tok); }, 4000); }
+        else for (const b of btns.querySelectorAll('button')) b.disabled = false;
+        void loadActions();
+      } catch (e) {
+        status.className = 'err';
+        status.textContent = 'Request failed: ' + (e.message || e);
+        for (const b of btns.querySelectorAll('button')) b.disabled = false;
+      }
+    }
+    async function loadActions() {
+      const tok = tokEl.value.trim();
+      const body = document.getElementById('actions');
+      if (!tok) { body.replaceChildren(); return; }
+      const r = await fetch(origin() + '/v1/admin/actions?limit=200', { headers: { Authorization: 'Bearer ' + tok, 'X-Dregg-Admin': tok }, cache: 'no-store' }).catch(() => null);
+      const j = r ? await r.json().catch(() => ({})) : {};
+      body.replaceChildren();
+      const rows = (j.actions || []).filter((a) => a.terp);
+      if (!r || !r.ok || !rows.length) {
+        const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 6;
+        td.textContent = !r || !r.ok ? ('Could not read the action log' + (j.error ? ': ' + j.error : '')) : 'No manual actions yet.';
+        tr.append(td); body.append(tr); return;
+      }
+      for (const a of rows) {
+        const tr = document.createElement('tr');
+        const res = a.ok ? ('done' + (a.phase ? ' · ' + a.phase : '')) : ('failed' + (a.error ? ' · ' + a.error : ''));
+        for (const cell of [whenText(a.at), shortAddr(a.terp), (ACTION_LABEL[a.action] || a.action) + (a.comp ? ' (comp)' : ''), shortAddr(a.admin), res]) {
+          const td = document.createElement('td'); td.textContent = cell; tr.append(td);
+        }
+        const tx = document.createElement('td');
+        if (a.tx) tx.append(explorerLink(a.tx, 'terp')); else tx.textContent = '—';
+        tr.append(tx); body.append(tr);
+      }
+    }
+    function showTab(ma) {
+      document.getElementById('pane-co').hidden = ma;
+      document.getElementById('pane-ma').hidden = !ma;
+      document.getElementById('tab-co').className = ma ? 'ghost' : '';
+      document.getElementById('tab-ma').className = ma ? '' : 'ghost';
+      document.getElementById('tab-co').setAttribute('aria-selected', String(!ma));
+      document.getElementById('tab-ma').setAttribute('aria-selected', String(ma));
+      if (ma) void loadActions();
+    }
+    document.getElementById('tab-co').onclick = () => showTab(false);
+    document.getElementById('tab-ma').onclick = () => showTab(true);
+    document.getElementById('ma-refresh').onclick = () => { void loadActions(); };
+    document.getElementById('act-flush').onclick = async () => {
+      const yes = window.confirm('Export the mint record and clear it? This can run once for the current record.');
+      if (!yes) return;
+      const { r, j } = await adminPost('/v1/admin/mints/flush', {});
+      if (!r.ok) { document.getElementById('act-out').textContent = j.error || r.status; return; }
+      const blob = new Blob([JSON.stringify(j.sessions || [], null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'mint-record.json';
+      a.click();
+      document.getElementById('act-out').textContent = 'Exported ' + (j.flushed || 0) + ' rows. The desk record is now empty.';
+      const tok = tokEl.value.trim();
+      if (tok) void loadSessions(tok);
+    };
+    document.getElementById('sess-older').onclick = () => {
+      const tok = tokEl.value.trim();
+      const before = sessionBefore[sessionBefore.length - 1];
+      if (tok && before) void loadSessions(tok, before);
+    };
+    document.getElementById('sess-newer').onclick = () => {
+      const tok = tokEl.value.trim();
+      sessionBefore = [];
+      if (tok) void loadSessions(tok);
+    };
+    document.getElementById('reload-info').onclick = () => {
+      void loadInfo();
+      const tok = tokEl.value.trim();
+      if (tok) void loadStats(tok);
+      if (!window.__payReachedPoll) {
+        window.__payReachedPoll = setInterval(() => {
+          const live = tokEl.value.trim();
+          if (live) void loadStats(live);
+        }, 12000);
+      }
+    };
+
+    void loadInfo();
+    setInterval(() => { void loadInfo(); }, 15000);
+
+    document.getElementById('keplr').onclick = async () => {
+      who.textContent = '';
+      out.className = '';
+      out.textContent = '…';
+      try {
+        const k = window.keplr;
+        if (!k) throw new Error('Keplr is not installed');
+        await k.enable('morocco-1');
+        const key = await k.getKey('morocco-1');
+        const signer = key.bech32Address;
+        const ch = await fetch(origin() + '/v1/admin/challenge').then((r) => r.json());
+        if (!ch.challenge) throw new Error(ch.error || 'no challenge');
+        const data = Uint8Array.from(ch.challenge.match(/.{1,2}/g).map((b) => parseInt(b, 16)));
+        const signed = await k.signArbitrary('morocco-1', signer, data);
+        const sess = await fetch(origin() + '/v1/admin/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            kind: 'adr36',
+            chain_id: 'morocco-1',
+            signer,
+            challenge: ch.challenge,
+            pub_key: signed.pub_key,
+            signature: signed.signature,
+          }),
+        }).then((r) => r.json());
+        if (!sess.ok || !sess.token) {
+          out.className = 'err';
+          out.textContent = sess.error || 'Sign-in was refused';
+          return;
+        }
+        tokEl.value = sess.token;
+        lastSigner = signer;
+        who.textContent = 'Keplr ' + signer.slice(0, 12) + '…' + signer.slice(-6);
+        await loadStats(sess.token);
+      } catch (e) {
+        out.className = 'err';
+        out.textContent = String(e);
+      }
+    };
+
+    document.getElementById('zid').onclick = async () => {
+      who.textContent = '';
+      out.className = '';
+      out.textContent = '…';
+      try {
+        const zid = await import('https://esm.sh/@zafu/zid');
+        const d = await zid.detect();
+        if (!d.installed) {
+          out.className = 'err';
+          out.textContent = 'zafu wallet is not installed. Use the backup token, or install zafu.';
+          return;
+        }
+        if (!d.compatible) {
+          out.className = 'err';
+          out.textContent = 'Update zafu — this desk needs a compatible zid.';
+          return;
+        }
+        const ch = await fetch(origin() + '/v1/admin/challenge').then((r) => r.json());
+        if (!ch.challenge) throw new Error(ch.error || 'no challenge');
+        const wallet = await zid.requireWallet();
+        const { signature, publicKey } = await zid.sign(
+          wallet,
+          ch.challenge,
+          ch.statement || 'Sign in to permissionless.money desk',
+        );
+        const sess = await fetch(origin() + '/v1/admin/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ challenge: ch.challenge, publicKey, signature }),
+        }).then((r) => r.json());
+        if (!sess.ok || !sess.token) {
+          out.className = 'err';
+          out.textContent = sess.error || 'Sign-in was refused';
+          return;
+        }
+        tokEl.value = sess.token;
+        who.textContent = 'Signed in as ' + (sess.pubkey || publicKey).slice(0, 16) + '…';
+        await loadStats(sess.token);
+      } catch (e) {
+        out.className = 'err';
+        out.textContent = String(e);
+      }
+    };
+  
+  // Designated admin (public terp1) from the challenge reply. Truncated, full value on copy.
+  (function designatedAdmin() {
+    const el = document.getElementById('admin-addr');
+    const btn = document.getElementById('admin-copy');
+    let full = '';
+    const short = (a) => a.slice(0, 10) + '…' + a.slice(-6);
+    async function load() {
+      try {
+        const o = (document.getElementById('origin').value || '').trim().replace(/\/$/, '') || location.origin;
+        const ch = await fetch(o + '/v1/admin/challenge', { cache: 'no-store' }).then((r) => r.json());
+        const list = Array.isArray(ch.designated_admins) ? ch.designated_admins.filter((x) => typeof x === 'string' && x.startsWith('terp1'))
+          : (typeof ch.designated_admin === 'string' && ch.designated_admin.startsWith('terp1') ? [ch.designated_admin] : []);
+        full = list.join('\n');
+        el.textContent = list.length ? list.map(short).join(' · ') : 'No admin is configured. Sign-in is closed.';
+        el.title = list.join('\n');
+        btn.hidden = !list.length;
+      } catch { el.textContent = 'Desk unreachable'; btn.hidden = true; }
+    }
+    btn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(full); btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1400); } catch { btn.textContent = 'Copy failed'; }
+    });
+    load();
+  })();
+    // ── Minter authz panel: live network status + Grant / Extend / Revoke signed by Keplr in this browser.
+  (function minterAuthz() {
+    const CHAIN = 'morocco-1', LCD = 'https://api.terp.network', RPC = 'https://rpc.terp.network';
+    const GRANTER = 'terp122xnz0c6e529qnns8prf5997eup4wauklffsvy';
+    const GRANTEE = 'terp1z4zc83jvff6w5d6dap23nl75ah9f5s828na3z8';
+    const TYPES = ['/cosmos.feegrant.v1beta1.MsgGrantAllowance', '/cosmos.feegrant.v1beta1.MsgRevokeAllowance'];
+    const GAS_PRICE = 0.025, DENOM = 'uthiol';
+    const $a = (id) => document.getElementById(id);
+    const te = new TextEncoder();
+    const short = (a) => a.slice(0, 10) + '…' + a.slice(-6);
+    const label = (t) => t.split('.').pop().replace(/^Msg/, '');
+    const thiol = (u) => (Number(u || 0) / 1e6).toLocaleString('en-US', { maximumFractionDigits: 6 }) + ' THIOL';
+    // protobuf
+    function vint(n) { const o = []; let v = BigInt(n); while (v > 0x7fn) { o.push(Number(v & 0x7fn) | 0x80); v >>= 7n; } o.push(Number(v)); return o; }
+    const cat = (ps) => { const out = new Uint8Array(ps.reduce((n, p) => n + p.length, 0)); let i = 0; for (const p of ps) { out.set(p, i); i += p.length; } return out; };
+    const ld = (f, b) => Uint8Array.from([...vint((f << 3) | 2), ...vint(b.length), ...b]);
+    const vi = (f, n) => Uint8Array.from([...vint(f << 3), ...vint(n)]);
+    const str = (f, s) => ld(f, te.encode(s));
+    const any = (url, b) => cat([str(1, url), ld(2, b)]);
+    const b64 = (u) => { let s = ''; for (const c of u) s += String.fromCharCode(c); return btoa(s); };
+    const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+    function msgGrant(type, expSecs) {
+      const auth = any('/cosmos.authz.v1beta1.GenericAuthorization', str(1, type));
+      const grant = cat([ld(1, auth), ld(2, vi(1, expSecs))]);
+      return any('/cosmos.authz.v1beta1.MsgGrant', cat([str(1, GRANTER), str(2, GRANTEE), ld(3, grant)]));
+    }
+    function msgRevoke(type) {
+      return any('/cosmos.authz.v1beta1.MsgRevoke', cat([str(1, GRANTER), str(2, GRANTEE), str(3, type)]));
+    }
+    const getJ = async (p) => { const r = await fetch(LCD + p, { cache: 'no-store' }); return r.json(); };
+    async function account(addr) {
+      const j = await getJ('/cosmos/auth/v1beta1/accounts/' + addr);
+      const a = j.account?.base_account || j.account || {};
+      if (!a.account_number) throw new Error('That account is not on chain yet. Fund it first.');
+      return { an: BigInt(a.account_number), seq: BigInt(a.sequence || 0) };
+    }
+    function txParts(anys, pub, seq, gas, fee) {
+      const body = cat(anys.map((m) => ld(1, m)).concat([str(2, 'minter authz · ops desk')]));
+      const pk = any('/cosmos.crypto.secp256k1.PubKey', ld(1, pub));
+      const signer = cat([ld(1, pk), ld(2, ld(1, vi(1, 1))), vi(3, seq)]);
+      const feeB = cat([ld(1, cat([str(1, DENOM), str(2, String(fee))])), vi(2, gas)]);
+      return { body, auth: cat([ld(1, signer), ld(2, feeB)]) };
+    }
+    async function keplrKey() {
+      const k = window.keplr;
+      if (!k) throw new Error('Keplr is not installed in this browser');
+      try { await k.enable(CHAIN); } catch {
+        await k.experimentalSuggestChain({
+          chainId: CHAIN, chainName: 'Terp Network', rpc: RPC, rest: LCD,
+          bip44: { coinType: 118 },
+          bech32Config: { bech32PrefixAccAddr: 'terp', bech32PrefixAccPub: 'terppub', bech32PrefixValAddr: 'terpvaloper', bech32PrefixValPub: 'terpvaloperpub', bech32PrefixConsAddr: 'terpvalcons', bech32PrefixConsPub: 'terpvalconspub' },
+          currencies: [{ coinDenom: 'TERP', coinMinimalDenom: 'uterp', coinDecimals: 6 }, { coinDenom: 'THIOL', coinMinimalDenom: 'uthiol', coinDecimals: 6 }],
+          stakeCurrency: { coinDenom: 'TERP', coinMinimalDenom: 'uterp', coinDecimals: 6 },
+          feeCurrencies: [{ coinDenom: 'THIOL', coinMinimalDenom: 'uthiol', coinDecimals: 6, gasPriceStep: { low: 0.01, average: 0.025, high: 0.04 } }],
+          features: [],
+        });
+        await k.enable(CHAIN);
+      }
+      const key = await k.getKey(CHAIN);
+      if (key.bech32Address !== GRANTER) throw new Error('Switch Keplr to ' + short(GRANTER) + ' (now ' + short(key.bech32Address) + ')');
+      if (key.isNanoLedger) throw new Error('Ledger cannot sign these messages in direct mode. Use a hot Keplr account.');
+      return key;
+    }
+    async function simulate(anys, key) {
+      const { seq } = await account(GRANTER);
+      const { body, auth } = txParts(anys, key.pubKey, seq, 0, 0);
+      const tx = cat([ld(1, body), ld(2, auth), ld(3, new Uint8Array(0))]);
+      const r = await fetch(LCD + '/cosmos/tx/v1beta1/simulate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tx_bytes: b64(tx) }) });
+      const j = await r.json();
+      if (!j.gas_info) throw new Error('Simulation failed: ' + String(j.message || 'unknown').slice(0, 240));
+      return Number(j.gas_info.gas_used);
+    }
+    async function signSend(anys, what) {
+      const out = $a('authz-out');
+      out.className = ''; out.textContent = 'Checking with the network…';
+      try {
+        const key = await keplrKey();
+        const used = await simulate(anys, key);
+        const gas = Math.ceil(used * 1.4) + 5000;
+        const fee = Math.ceil(gas * GAS_PRICE);
+        if (!confirm(`${what}\n\nSimulation passed (gas ${used.toLocaleString()}). Fee ${thiol(fee)}. Keplr will ask you to sign.`)) { out.textContent = 'Nothing was sent.'; return; }
+        const { an, seq } = await account(GRANTER);
+        const { body, auth } = txParts(anys, key.pubKey, seq, gas, fee);
+        const signed = await window.keplr.signDirect(CHAIN, GRANTER, { bodyBytes: body, authInfoBytes: auth, chainId: CHAIN, accountNumber: an });
+        const raw = cat([ld(1, signed.signed.bodyBytes), ld(2, signed.signed.authInfoBytes), ld(3, unb64(signed.signature.signature))]);
+        out.textContent = 'Broadcasting…';
+        const r = await fetch(LCD + '/cosmos/tx/v1beta1/txs', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tx_bytes: b64(raw), mode: 'BROADCAST_MODE_SYNC' }) });
+        const j = await r.json();
+        const tr = j.tx_response || {};
+        if (tr.code) throw new Error('Rejected: ' + String(tr.raw_log || tr.code).slice(0, 240));
+        out.className = 'ok'; out.textContent = 'Sent. Tx ' + short(tr.txhash || '') + '. Refreshing…';
+        setTimeout(load, 7000);
+      } catch (e) { out.className = 'err'; out.textContent = e.message || String(e); }
+    }
+    function expiryFromInput() {
+      const v = $a('authz-exp').value;
+      const d = v ? new Date(v + 'T00:00:00Z') : new Date(Date.now() + 365 * 864e5);
+      if (!(d > new Date())) throw new Error('Pick a future expiry date');
+      return Math.floor(d.getTime() / 1000);
+    }
+    async function load() {
+      const list = $a('authz-list');
+      list.textContent = 'Reading the network…';
+      try {
+        const [g, bal, iss] = await Promise.all([
+          getJ(`/cosmos/authz/v1beta1/grants?granter=${GRANTER}&grantee=${GRANTEE}`),
+          getJ(`/cosmos/bank/v1beta1/balances/${GRANTEE}`),
+          getJ(`/cosmos/feegrant/v1beta1/issued/${GRANTER}`).catch(() => ({})),
+        ]);
+        const grants = g.grants || [];
+        list.textContent = '';
+        for (const t of TYPES) {
+          const hit = grants.find((x) => x.authorization?.msg === t);
+          const li = document.createElement('li');
+          li.textContent = label(t) + ': ' + (hit ? ('allowed until ' + (hit.expiration ? new Date(hit.expiration).toUTCString().replace(' GMT', ' UTC') : 'no expiry')) : 'not granted');
+          li.className = hit ? 'ok' : 'err';
+          list.appendChild(li);
+        }
+        const th = (bal.balances || []).find((b) => b.denom === DENOM);
+        $a('authz-bal').textContent = thiol(th?.amount || 0);
+        let thr = 5000000n, mode = null;
+        try {
+          const tok = (document.getElementById('tok').value || '').trim();
+          if (tok) {
+            const base = ((document.getElementById('origin').value || '').trim().replace(/\/$/, '')) || window.location.origin;
+            const sp = await fetch(base + '/v1/admin/sponsor', { headers: { Authorization: 'Bearer ' + tok, 'X-Dregg-Admin': tok }, cache: 'no-store' }).then((r) => r.ok ? r.json() : null).catch(() => null);
+            if (sp && sp.direct_min_uthiol) { thr = BigInt(sp.direct_min_uthiol); mode = sp.mode; }
+          }
+        } catch {}
+        if (!mode) mode = BigInt(th?.amount || 0) >= thr ? 'direct' : 'authz-failover';
+        $a('authz-mode').textContent = mode === 'direct'
+          ? 'Direct — the minter grants from its own balance (threshold ' + thiol(thr) + ')'
+          : 'Authz failover — balance under ' + thiol(thr) + ', grants come from ' + short(GRANTER);
+        $a('authz-mode').className = mode === 'direct' ? 'ok' : 'err';
+        const n = (iss.allowances || []).length;
+        $a('authz-issued').textContent = n ? `${n} active fee allowance${n === 1 ? '' : 's'} from ${short(GRANTER)}` : 'No fee allowances issued yet';
+      } catch (e) { list.textContent = 'Network read failed: ' + (e.message || e); }
+    }
+    $a('authz-granter').textContent = short(GRANTER);
+    $a('authz-grantee').textContent = short(GRANTEE);
+    $a('authz-exp').value = new Date(Date.now() + 365 * 864e5).toISOString().slice(0, 10);
+    $a('authz-refresh').onclick = load;
+    $a('authz-grant').onclick = () => { try { const e = expiryFromInput(); signSend(TYPES.map((t) => msgGrant(t, e)), `Authorize the minter to grant and revoke fee allowances until ${new Date(e * 1000).toUTCString().slice(5, 16)}.`); } catch (err) { $a('authz-out').className = 'err'; $a('authz-out').textContent = err.message; } };
+    $a('authz-extend').onclick = () => { try { const e = expiryFromInput(); signSend(TYPES.map((t) => msgGrant(t, e)), `Extend the minter authorization to ${new Date(e * 1000).toUTCString().slice(5, 16)}.`); } catch (err) { $a('authz-out').className = 'err'; $a('authz-out').textContent = err.message; } };
+    $a('authz-revoke').onclick = () => signSend(TYPES.map(msgRevoke), 'Revoke the minter authorization. Sponsored passkey registrations stop until you grant again.');
+    load();
+  })();
+  </script>
+</body>
+</html>

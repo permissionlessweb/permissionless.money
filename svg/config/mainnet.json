@@ -1,0 +1,461 @@
+{
+  "_note": "MAINNET (morocco-1) for the permissionless.money /svg pages. Filled 2026-10-27 from the morocco-1 deploy (codes 88-99; factory + first three collections); 2026-10-30 adds the fractal and the 13 interchain logos (cw721_svg 98 via factory 99). Every address the pages use is listed here; nothing is discovered at runtime. Do not point these pages at the legacy cw721_svg (83) / cw-svg-minter (72) state.json keys. allowTestKey must stay false. No preview or loopback endpoints, no test keys.",
+  "network": "mainnet",
+  "chain": {
+    "chainId": "morocco-1",
+    "rpc": "https://terp.network/rpc",
+    "lcd": "https://terp.network/lcd",
+    "_endpoints_note": "chain.json (networks/chain-registry/terpnetwork) lists the public endpoints below; probed 2026-10-18: terp.network/rpc and terp.network/lcd answered 200 (same backends as rpc./api.terp.network), the chain.json ones were 404/unreachable/502 except nodex (HTML page). See PREFLIGHT.md.",
+    "rpcPublic": [
+      "https://rpc-mainnet.terp.network:443",
+      "https://terp-mainnet-rpc.itrocket.net:443",
+      "https://terp.rpc.nodex.one:443"
+    ],
+    "lcdPublic": [
+      "https://api-mainnet.terp.network.io:443",
+      "https://terp-mainnet-api.itrocket.net:443",
+      "https://terp.api.nodex.one:443",
+      "https://terp.api.m.stavr.tech"
+    ],
+    "bech32Prefix": "terp",
+    "sdkVersion": "sdk47",
+    "gasPrice": {
+      "amount": "0.05",
+      "denom": "uthiol"
+    },
+    "explorerTx": "https://ping.pub/terp/tx/{hash}",
+    "explorerContract": "https://ping.pub/terp/account/{addr}"
+  },
+  "allowTestKey": false,
+  "ipfsGateway": "https://s3.terp.network/static/svg-collections/cas/{cid}.html",
+  "ipfsGateways": [
+    "https://s3.terp.network/static/svg-collections/cas/{cid}.html"
+  ],
+  "codeIds": {
+    "_note": "morocco-1 store-code, 2026-10-27.",
+    "cw721Svg": 98,
+    "svgAuction": null,
+    "minter": 99
+  },
+  "codeId": 98,
+  "minterCodeId": 99,
+  "collections": {
+    "_note": "Static, all of them (morocco-1). fractal and interchainLogos added 2026-10-30, verified on chain (code 98, created by the factory).",
+    "marain": "terp163t2m8aa64d430stzddftqhpk464vzm88j8le9c8dn4gc6jk2m7sppfga0",
+    "latentBenders": {
+      "2026-10-27": "terp14h3nj95tatr4f6fc4hqtc7xdhhmkl938smx7cm4d08tsxj82wt2qelc8kv",
+      "2026-10-28": "terp13acw7eezjqnv2zru428lgg3dfx5l88lw6st5aemljvnu85c3xqqswlqpud",
+      "2026-10-29": "terp16prlc0v4vtu58djdypvmjsfnx4y2e3g2gjnw2m65qrun4sayufxqrn9j93",
+      "2026-10-30": "terp1y2nfyahzl55tf8jkzz5refqlkhmnflvr8adhk6pch77jrkr6accshgr0wp",
+      "2026-10-31": "terp1cy8jtf0uyz899q5hlh3g2tne4uwctqzhahk7qpyrehw8gtlna0ms4aewjg",
+      "2026-11-01": "terp10cs62fsjpjjsfwmwxzg3rlp0vjv0a067ndqxftf4x5mfeqvcfmwq6awdzt",
+      "2026-11-02": "terp1j4z4qexqh2j0juqy6h08yl6x4z9hgksh3frj7ywp9l867gj4pw6q5vearz",
+      "2026-11-03": "terp14slyqlhfknq6vz2twvv83ge22emjp56wlc3gs8l0jmwrssglu04q2hjdhf",
+      "2026-11-04": "terp15zgzyn0k7nahe5jyzc0tdstsyn9xn86dvelgv2ytppnmz5vw809qn4qaag",
+      "2026-11-05": "terp1ls8c8gvdlu769j3r79tgetpxjgxr4dtm8g3p3cmeaevsmwrt6hrsyy809t"
+    },
+    "yijing": "terp12zz8jsjkx0l26334k0kmuk8tywgqy9ndswgkr6kl2f294mqxa65qpntqzu",
+    "fractal": "terp15anc99l7lvk2v2pzjusnmylr3lw3xnpxg89xv8uh0fj6pwrumrksqwzs6x",
+    "interchainLogos": {
+      "penumbra": "terp1yldtf5nsychkasyz3gddemqy45fvl2fxpmc8jrsqvt5fv7ggghysektnqk",
+      "osmosis": "terp12ye4vqzm6fmtatc3q87l2mde3ymajh4mlq0ut2ll8lkf8c9r6qzqmsvx8t",
+      "cardano": "terp1jdjrrf00grgvcgusf36juf7y9gsr962he7wp9c3pfpk27g0ulfmqs4jpvm",
+      "bcna": "terp1fmkfazecjn2pmdxxywksaqsxp69jprsframqeg5da4l3emrx004surkf44",
+      "cosmos": "terp1q3algj0h80vpyx3xelwql9umwmyvl7gzm4nuly3lseqlqg89tresc364de",
+      "terp": "terp12v7q75xl7zm8vjzvxenyyyx4ktfye9a92u93kjrk4rppdyvj0wjspzpa6z",
+      "bitcoin": "terp1sdu5qxlpydhpn0a8g4v3jehzn9lhf96rqalc5mj6d6u4ss3jq47susr279",
+      "akash": "terp18xca496njd5v7vw0vcl0ddqvsw2s554npxhztrtz7t0x6djd7eyq6qdlez",
+      "bitsong": "terp1l6wlwe5kysukwcln9c9rf9en5x6xzx8lzj5hfa5py8svzt78s8tswkutuz",
+      "dao": "terp1tf2jp6qll2x936s2g9f0h7m63dyua7827wcezsc6gsfwgq550n6ss9dtcu",
+      "eth": "terp1a9rkeulfskj7arn8qagvu2ykkp4l664n5zj2jxwm6vfqwudnk7kqht5lnx",
+      "monero": "terp1nphx5lmx4az8ptra2c6n04csa5u3ugcp3stcvq0n5ayw8xupyg7svlgc4t",
+      "zec": "terp1q3kgl2rnx30f88t5hdfym7s7ugkll9rtvtx2slaq6rd2p5gc50jq0rh3er"
+    }
+  },
+  "market": null,
+  "marketKind": null,
+  "_market_note": "DEFERRED: the marketplace is a later phase. market stays null, so the pages keep the market UI off (no listings, no resale or royalty UI).",
+  "marainFont": "vendor/marain-font/Marain.ttf",
+  "donate": {
+    "_note": "Donate modal routes (links only; the modal never sends a transaction). dev stays null until the team publishes an address.",
+    "psychedex": {
+      "url": "https://psychedex.org/support",
+      "email": "contact@psychedex.org",
+      "verified": "2026-10-17"
+    },
+    "maps": {
+      "url": "https://www.every.org/maps",
+      "verified": "2026-10-17"
+    },
+    "dev": null
+  },
+  "preflight": {
+    "_note": "The pages refuse to render wallet/mint actions while any of these is empty. The market is deferred, so it is not required.",
+    "required": [
+      "codeIds.cw721Svg",
+      "factory",
+      "collections.marain",
+      "collections.latentBenders.*",
+      "collections.yijing",
+      "collections.fractal",
+      "collections.interchainLogos.*"
+    ]
+  },
+  "factory": "terp1wg5z9rcwpw5kvrl4g78ees2l9ejptrhrx4t2k56nq6t27uly87zssujm80",
+  "series": {
+    "marain": "marain-orbs",
+    "latentBenders": "latent-benders",
+    "interchainLogos": "interchain-logos"
+  },
+  "fractalPayWhitelist": "terp1k5vz89g9z2w0yhg4yfgwwza5d2gg0l9396sjqh27wfck4957pkvq2at0z7",
+  "loansRaffles": {
+    "_note": "Loans & raffles page (loans-raffles.html). Currencies offered for principal and tickets.",
+    "denoms": [
+      {
+        "denom": "ibc/422FAC8ED757E2DEA4C475B86684ED037C6F3DC0211647D83C92EE54EC072E4E",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      {
+        "denom": "uthiol",
+        "symbol": "THIOL",
+        "decimals": 6
+      }
+    ]
+  },
+  "loans": {
+    "_note": "nftfi nft-loan 'terp-nft-loan' (terp-rs feat/mint-desk-v98 contracts/nfts/nft-loan), mainnet 2026-11-04. fee_rate 0.04 to the Foundation DAO treasury; listing_fee_coins [] = no listing fee.",
+    "codeId": 95,
+    "contract": "terp1tpvtaalm9njfwrp7ctj4y8y94qc04pssnvulvs5y5svthvv4d4kqldxjsy",
+    "listingFee": null,
+    "feeRate": "0.04"
+  },
+  "raffles": {
+    "_note": "nftfi-raffle 'Terp Raffles' (terp-rs feat/mint-desk-v98 contracts/nfts/raffle), mainnet 2026-11-04. raffle_fee 0.04; randomness = callback from terp-beacon (code 107). creation_coins [] = free to start.",
+    "codeId": 94,
+    "contract": "terp1wwpepd34quxkn8hxfsa9ss5lgp5lyh0emghyhu92h0evmhcpvsxsw7p3k2",
+    "creationFee": null,
+    "feeRate": "0.04",
+    "name": "Terp Raffles",
+    "randomnessReady": true,
+    "beacon": "terp13t68qn7dlu30rw9rdevwh6a3a97ym454t4rq2vfjycn3kya934nqlyh609",
+    "drandApi": [
+      "https://api.drand.sh",
+      "https://drand.cloudflare.com"
+    ]
+  },
+  "auction": {
+    "_note": "reserve-auction (code 92). Set auction.contract to the instantiated address; nothing else changes. Denom is USDC.inj over Terp channel-17.",
+    "codeId": 92,
+    "contract": "terp1slpz5656zy2ghajmpc09dw2fd2mcm66g8z5c4vxpl2wl0436tw8qn8ua0h",
+    "rpc": "https://rpc.terp.network",
+    "lcd": "https://api.terp.network",
+    "denom": "ibc/422FAC8ED757E2DEA4C475B86684ED037C6F3DC0211647D83C92EE54EC072E4E",
+    "decimals": 6,
+    "symbol": "USDC",
+    "lots": [
+      {
+        "collection": "terp1vansx03g9sxntv86y2f38zu28ddyjc36ful8a3fapdrl7xrmtsmq0jv4jv",
+        "collectionName": "Touch Vinyls",
+        "token_id": "AAA_TVL_00",
+        "title": "Touch Vinyl 00",
+        "token_uri": "ipfs://QmcNvPjo2QU2Gt6NCgAuQjkknKodQhJSA5N91dmpYA6Qq7",
+        "reservePrice": "1000000",
+        "durationSeconds": 604800,
+        "instantSale": false
+      },
+      {
+        "collection": "terp1vansx03g9sxntv86y2f38zu28ddyjc36ful8a3fapdrl7xrmtsmq0jv4jv",
+        "collectionName": "Touch Vinyls",
+        "token_id": "AAA_TVL_001",
+        "title": "Touch Vinyl 001",
+        "token_uri": "ipfs://QmQxoiHv1KGpNS2fVrVDWwdgf7Xtoh4KXg7FpSSk9QuJwk",
+        "reservePrice": "1000000",
+        "durationSeconds": 604800,
+        "instantSale": false
+      },
+      {
+        "collection": "terp1vansx03g9sxntv86y2f38zu28ddyjc36ful8a3fapdrl7xrmtsmq0jv4jv",
+        "collectionName": "Touch Vinyls",
+        "token_id": "AAA_TVL_002",
+        "title": "Touch Vinyl 002",
+        "token_uri": "ipfs://QmY5p9T4QixjCHSVXDjBmNBgUJ2sfuQo9qaH5R8MXcXorJ",
+        "reservePrice": "1000000",
+        "durationSeconds": 604800,
+        "instantSale": false
+      }
+    ],
+    "terms": {
+      "_note": "Decided 2026-11-02 (live test): bidding, 1 USDC reserve, 7 days from first bid, 0% fee, 100% to AAA DAO.",
+      "reservePrice": "1000000",
+      "durationSeconds": 604800,
+      "instantSale": false,
+      "payout": "terp1j6yclnqvmm2l5kghduc0ag7zzssvurwzhct0zxfq82jfglkckc7qxs7dd5",
+      "payoutName": "AAA DAO"
+    }
+  },
+  "usdc": {
+    "suggestAmount": 1,
+    "target": {
+      "chain": "terp",
+      "symbol": "USDC",
+      "decimals": 6,
+      "lcd": "https://api.terp.network",
+      "base": "erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a",
+      "denom": "ibc/422FAC8ED757E2DEA4C475B86684ED037C6F3DC0211647D83C92EE54EC072E4E"
+    },
+    "chains": {
+      "terp": {
+        "name": "Terp",
+        "short": "TERP",
+        "chainId": "morocco-1",
+        "wallet": "keplr"
+      },
+      "injective": {
+        "name": "Injective",
+        "short": "INJ",
+        "chainId": "injective-1",
+        "wallet": "keplr",
+        "lcd": "https://injective-rest.publicnode.com",
+        "rpc": "https://injective-rpc.publicnode.com:443",
+        "gasPrice": {
+          "amount": "160000000",
+          "denom": "inj"
+        },
+        "estGas": 290000
+      },
+      "osmosis": {
+        "name": "Osmosis",
+        "short": "OSMO",
+        "chainId": "osmosis-1",
+        "wallet": "keplr",
+        "lcd": "https://osmosis-rest.publicnode.com",
+        "rpc": "https://osmosis-rpc.publicnode.com:443",
+        "gasPrice": {
+          "amount": "0.025",
+          "denom": "uosmo"
+        },
+        "gasPriceLcd": "/osmosis/txfees/v1beta1/cur_eip_base_fee",
+        "estGas": 270000
+      },
+      "noble": {
+        "name": "Noble",
+        "short": "NBL",
+        "chainId": "noble-1",
+        "wallet": "keplr"
+      },
+      "avalanche": {
+        "name": "Avalanche",
+        "short": "AVAX",
+        "chainId": "43114",
+        "wallet": "evm"
+      },
+      "penumbra": {
+        "name": "Penumbra",
+        "short": "UM",
+        "chainId": "penumbra-1",
+        "wallet": "zafu"
+      }
+    },
+    "routes": [
+      {
+        "id": "injective",
+        "tab": "Injective",
+        "status": "verified",
+        "signatures": 1,
+        "estTime": "about 1 minute",
+        "gas": "INJ",
+        "denomTraceIn": "erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a",
+        "denomIn": "erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a",
+        "summary": "Your USDC is already on Injective. One IBC transfer sends it to your Terp address.",
+        "hops": [
+          {
+            "from": "injective",
+            "to": "terp",
+            "mechanism": "ibc-transfer",
+            "label": "IBC",
+            "channel": "channel-504",
+            "counterpartyChannel": "channel-17"
+          }
+        ],
+        "mockSender": "inj1mocksender000000000000000000000000mock",
+        "timeoutMinutes": 20
+      },
+      {
+        "id": "osmosis",
+        "tab": "Osmosis",
+        "status": "caveats",
+        "signatures": 1,
+        "estTime": "1\u20133 minutes",
+        "gas": "OSMO",
+        "denomTraceIn": "transfer/channel-122/erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a",
+        "denomIn": "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138",
+        "summary": "Your USDC (from Injective) sits on Osmosis. One transfer sends it back to Injective, and Injective forwards it straight on to Terp.",
+        "caveat": "Injective forwards it to Terp; if that fails, it returns to Osmosis.",
+        "hops": [
+          {
+            "from": "osmosis",
+            "to": "injective",
+            "mechanism": "ibc-transfer",
+            "label": "IBC + forward memo",
+            "channel": "channel-122",
+            "counterpartyChannel": "channel-8"
+          },
+          {
+            "from": "injective",
+            "to": "terp",
+            "mechanism": "pfm-forward",
+            "label": "forward",
+            "signer": false,
+            "channel": "channel-504",
+            "counterpartyChannel": "channel-17",
+            "timeout": "10m",
+            "retries": 2
+          }
+        ],
+        "mockSender": "osmo1mocksender0000000000000000000000mock",
+        "timeoutMinutes": 20
+      },
+      {
+        "id": "noble",
+        "tab": "Osmosis (Noble USDC)",
+        "status": "unverified",
+        "signatures": 2,
+        "estTime": "about 3 minutes, then 1 minute",
+        "gas": "OSMO, then INJ",
+        "denomTraceIn": "transfer/channel-750/uusdc",
+        "denomIn": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
+        "buildFirst": true,
+        "summary": "Your USDC is Noble USDC on Osmosis. It returns to Noble and is burned on arrival, Circle mints it on Avalanche, and the same Avalanche transaction issues USDC on Injective. A last IBC transfer brings it to Terp.",
+        "hops": [
+          {
+            "from": "osmosis",
+            "to": "noble",
+            "mechanism": "ibc-transfer",
+            "label": "IBC + burn memo",
+            "channel": "channel-750",
+            "counterpartyChannel": "channel-1",
+            "receiver": "noble15xt7kx5mles58vkkfxvf0lq78sw04jajvfgd4d",
+            "orbiter": {
+              "protocolId": "PROTOCOL_CCTP",
+              "destinationDomain": 1
+            }
+          },
+          {
+            "from": "noble",
+            "to": "avalanche",
+            "mechanism": "orbiter-cctp",
+            "label": "Circle",
+            "signer": false,
+            "wallet": "evm",
+            "denomOut": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"
+          },
+          {
+            "from": "avalanche",
+            "to": "injective",
+            "mechanism": "cctp",
+            "label": "Circle",
+            "signer": false,
+            "denomOut": "erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a"
+          },
+          {
+            "from": "injective",
+            "to": "terp",
+            "mechanism": "ibc-transfer",
+            "label": "IBC",
+            "channel": "channel-504",
+            "counterpartyChannel": "channel-17"
+          }
+        ],
+        "timeoutMinutes": 20,
+        "sign": false,
+        "needs": "evm",
+        "caveat": "Signing is off for this route. The tested path relies on a relayer and fee that a route service quotes for each amount, and this page doesn't call one.",
+        "steps": [
+          "Sign once on Osmosis: the transfer returns your USDC to Noble and its memo burns it via Circle (CCTP) to Avalanche.",
+          "Claim on Avalanche, then bring USDC to Injective and use the Injective tab."
+        ],
+        "mockSender": "osmo1mocksender0000000000000000000000mock",
+        "mockMintRecipient": "0x000000000000000000000000000000000000dEaD"
+      },
+      {
+        "id": "penumbra",
+        "tab": "Penumbra",
+        "status": "unverified",
+        "signatures": 1,
+        "estTime": "1\u20133 minutes",
+        "gas": "UM",
+        "denomTraceIn": "transfer/channel-18/erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a",
+        "buildFirst": false,
+        "summary": "Your USDC is shielded in Penumbra. Connect Zafu (or Prax) and sign one withdrawal; Injective forwards it to Terp.",
+        "beta": true,
+        "caveat": "Penumbra withdrawals are in beta. The Zafu signing step may not finish yet.",
+        "steps": [
+          "No wallet connection? Copy the forwarding note and use it as the memo of an IBC withdrawal to Injective."
+        ],
+        "hops": [
+          {
+            "from": "penumbra",
+            "to": "injective",
+            "mechanism": "ibc-transfer",
+            "label": "withdraw + forward",
+            "channel": "channel-18",
+            "counterpartyChannel": "channel-494"
+          },
+          {
+            "from": "injective",
+            "to": "terp",
+            "mechanism": "pfm-forward",
+            "label": "forward",
+            "signer": false,
+            "channel": "channel-504",
+            "counterpartyChannel": "channel-17",
+            "timeout": "10m",
+            "retries": 2
+          }
+        ],
+        "denomDisplayIn": "transfer/channel-18/USDC",
+        "wallets": [
+          "zafu",
+          "prax"
+        ],
+        "timeoutHours": 48,
+        "timeoutMinutes": 20
+      }
+    ]
+  },
+  "art": {
+    "blossomBase": "https://s3.terp.network/bud",
+    "overrides": {
+      "AAA_TVL_00": {
+        "image": "https://s3.terp.network/bud/c86dd4429db6fc871833fae074db20945135c9100b29b5772bab362ace808d0f.png",
+        "preview": "https://s3.terp.network/bud/137944e409a2f26a532b693933bb174bc9e822b8974b0a69eef00c46b5be90f4.webp",
+        "metadata": "https://s3.terp.network/bud/2438120b87c3e06d496a967ab278b7b6c66e0b690a15ad05b7afa043c23ae164.json"
+      },
+      "AAA_TVL_001": {
+        "image": "https://s3.terp.network/bud/50126f4a42357dc11d41e0648ca40827f0b8301162e325f4b0d7910d613ba145.png",
+        "preview": "https://s3.terp.network/bud/a1f870e0d7cd74520308ce05f2799374df1ea4a06d824fddfc4360df66cd6a90.webp",
+        "metadata": "https://s3.terp.network/bud/a9665ba710fddb3f6024f850034200beb21addc361d6f50a228a6ffae5f59b45.json"
+      },
+      "AAA_TVL_002": {
+        "image": "https://s3.terp.network/bud/0b59121d5cbdfe9159d1b15ff91a5c9b5c35745243462a4f1ec2bb4d9df37bea.png",
+        "preview": "https://s3.terp.network/bud/a1d058365574761fdefe7980be03a0ea2a456eed10a6df32a5aae758e05a9dc4.webp",
+        "metadata": "https://s3.terp.network/bud/497de7e5ee8166abdad6fbff861752b4f99c6f4d84c36a6dd44a2b4a61914d16.json"
+      }
+    }
+  },
+  "marketplace": {
+    "_note": "revenue-marketplace code 91, instantiated at block 24362707. Trade denom follows collection_denom (null -> default uthiol).",
+    "codeId": 91,
+    "contract": "terp1gta5uet52ltxtr9ajjnf5ynuxtges2d4er9wjkxdqvlg7mkawzgq8hnlg8",
+    "protocolFeeBps": 400,
+    "defaultDenom": "uthiol",
+    "denoms": {
+      "thiol": "uthiol",
+      "usdc": "ibc/422FAC8ED757E2DEA4C475B86684ED037C6F3DC0211647D83C92EE54EC072E4E"
+    },
+    "contractPending": false,
+    "instantiatedHeight": 24362707,
+    "feeManager": "terp14w2qva6dx6wcsmq5fvplh7cr7nvptejznyvpe5hp5mtyqhxxjamsz3kw2w"
+  }
+}
