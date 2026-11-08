@@ -18,16 +18,26 @@
   <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #08090d;
-      --text: #f8f8f2;
-      --muted: #6272a4;
-      --teal: #b1ebeb;
-      --purple: #bd93f9;
-      --green: #50fa7b;
-      --red: #ff5555;
+      --bg: #07080b;
+      --panel: #0c0e12;
+      --text: #ecece8;
+      --muted: #8a8a82;
+      --line: rgba(255,255,255,0.1);
+      --teal: #c8ecec;
+      --green: #9dba9a;
+      --red: #c97a76;
+      --fs: 0.8125rem;
+      --fs-sm: 0.75rem;
+      --fs-xs: 0.6875rem;
+      --lh: 1.45;
     }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    html, body {
+      height: 100%; background: var(--bg); color: var(--text);
+      font-family: "Satoshi", system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 16px; font-weight: 400; letter-spacing: 0.01em;
+    }
     body { overflow: hidden; }
+    button, input { font-family: inherit; }
 
     #fractal-preview {
       position: fixed; inset: 0; width: 100%; height: 100%;
@@ -37,320 +47,660 @@
 
     .chrome {
       position: fixed; top: 0; left: 0; right: 0; z-index: 2;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0.85rem 1.25rem;
-      background: linear-gradient(to bottom, rgba(8,9,13,0.75), transparent);
+      display: flex; align-items: baseline; justify-content: space-between;
+      padding: 1rem 1.25rem;
       pointer-events: none;
     }
     .chrome a, .chrome button { pointer-events: auto; }
     .brand {
-      color: var(--teal); text-decoration: none; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.04em;
+      color: var(--text); text-decoration: none; font-weight: 500;
+      font-size: var(--fs-sm); letter-spacing: 0.08em; text-transform: lowercase;
     }
-    .nav { display: flex; gap: 1rem; align-items: center; }
-    .nav a { color: var(--muted); text-decoration: none; font-size: 0.8rem; font-weight: inherit; font-family: inherit; }
+    .nav { display: flex; gap: 1.25rem; align-items: baseline; }
+    .nav a {
+      color: var(--muted); text-decoration: none;
+      font-size: var(--fs-sm); font-weight: 400;
+    }
     .nav a:hover, .nav a.on { color: var(--text); }
 
     .dock {
       position: fixed; z-index: 80;
-      left: 50%; bottom: max(0.85rem, env(safe-area-inset-bottom));
+      left: 50%; bottom: max(0.75rem, env(safe-area-inset-bottom));
       transform: translateX(-50%);
-      width: min(440px, calc(100vw - 1.25rem));
-      padding: 0.7rem 0.85rem 0.8rem;
-      background: rgba(8, 9, 13, 0.78);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      max-height: min(52vh, 480px);
-      display: flex;
-      flex-direction: column;
-      gap: 0.45rem;
-      pointer-events: auto;
-      overflow: hidden;
+      width: min(22.5rem, calc(100vw - 1.5rem));
+      padding: 0.85rem 1rem 0.95rem;
+      background: #0c0e12;
+      opacity: 1;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+      max-height: min(56vh, 32rem);
+      display: flex; flex-direction: column; gap: 0.65rem;
+      pointer-events: auto; overflow: hidden;
     }
     .crumbs {
-      display: flex; gap: 0.15rem; flex-wrap: nowrap; overflow-x: auto;
-      -webkit-overflow-scrolling: touch; scrollbar-width: none;
-      flex: 0 0 auto; min-height: 1.55rem; width: 100%;
+      display: flex; gap: 0; flex-wrap: nowrap; overflow-x: auto;
+      -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+      scrollbar-color: var(--line) transparent;
+      flex: 0 0 auto; width: 100%;
+      border-bottom: 1px solid var(--line);
     }
-    .crumbs::-webkit-scrollbar { display: none; }
+    .crumbs::-webkit-scrollbar { height: 2px; }
+    .crumbs::-webkit-scrollbar-thumb { background: var(--line); }
     .crumbs button {
       flex: 1 0 auto; border: 0; background: transparent; color: var(--muted);
-      font: inherit; font-size: 0.68rem; font-weight: 650; letter-spacing: 0.03em;
-      padding: 0.22rem 0.18rem; cursor: pointer; white-space: nowrap;
+      font: inherit; font-size: var(--fs-xs); font-weight: 500;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 0.35rem 0.4rem 0.5rem; cursor: pointer; white-space: nowrap;
+      border-bottom: 1px solid transparent; margin-bottom: -1px;
     }
-    .crumbs button.on { color: var(--teal); }
+    .crumbs button.on { color: var(--text); border-bottom-color: var(--text); }
     .dock-top, .dock-foot { flex: 0 0 auto; }
-    .step { display: none; min-height: 0; overflow: auto; }
+    .step {
+      display: none; min-height: 0; overflow: auto;
+      scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+    }
     .step.on { display: block; flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
-    .dock-foot { flex: 0 0 auto; }
-    .dock-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.55rem; }
-    .variant { font-size: 0.78rem; color: var(--teal); letter-spacing: 0.06em; text-transform: uppercase; }
-    .price { font-size: 0.78rem; color: var(--green); }
-    .price.paid { color: var(--text); }
-    .lede { font-size: 0.78rem; color: var(--muted); line-height: 1.4; margin-bottom: 0.7rem; }
-    .mode-row { display: flex; gap: 2px; padding: 2px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; margin-bottom: 0.55rem; }
+    .step::-webkit-scrollbar { width: 3px; }
+    .step::-webkit-scrollbar-thumb { background: var(--line); }
+
+    .tok {
+      display: inline-flex; flex-direction: column; gap: 0.25rem;
+      min-width: 4.4rem; padding: 0.4rem 0.35rem; margin: 0;
+      border: 1px solid var(--line); border-radius: 0; cursor: pointer;
+      background: transparent; color: var(--text); text-align: left;
+    }
+    .tok b { font-size: var(--fs-sm); font-weight: 500; color: var(--text); }
+    .tok img, .tok svg { width: 3.4rem; height: 3.4rem; object-fit: contain; display: block; }
+    .tok .sec { font-size: var(--fs-xs); color: var(--muted); font-weight: 400; }
+    .tok.on { border-color: var(--text); }
+    .engine-docs { margin-top: 0.75rem; font-size: var(--fs-sm); color: var(--muted); line-height: var(--lh); }
+    .engine-docs summary { cursor: pointer; color: var(--text); font-size: var(--fs-sm); list-style: none; }
+    .engine-docs summary::-webkit-details-marker { display: none; }
+    .todo-strip { font-size: var(--fs-xs); color: var(--muted); margin-top: 0.5rem; line-height: var(--lh); }
+    .dock-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0; cursor: grab; touch-action: none; user-select: none; }
+    .variant { font-size: var(--fs-xs); color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; }
+    .price { font-size: var(--fs-sm); color: var(--text); font-variant-numeric: tabular-nums; }
+    .price.paid { color: var(--muted); }
+    .lede { font-size: var(--fs); color: var(--muted); line-height: var(--lh); margin-bottom: 0.75rem; }
+
+    .mode-row {
+      display: flex; gap: 0; padding: 0;
+      background: transparent; border-bottom: 1px solid var(--line); margin-bottom: 0.65rem;
+    }
     .mode {
-      flex: 1; border-radius: 4px; cursor: pointer; font: inherit; font-size: 0.7rem;
-      padding: 0.35rem 0.4rem; background: transparent; color: var(--muted);
-      border: 0;
+      flex: 1; border-radius: 0; cursor: pointer; font: inherit; font-size: var(--fs-sm);
+      padding: 0.4rem 0.2rem 0.5rem; background: transparent; color: var(--muted);
+      border: 0; border-bottom: 1px solid transparent; margin-bottom: -1px;
     }
-    .mode.on { color: #08090d; background: var(--teal); }
+    .mode.on { color: var(--text); background: transparent; border-bottom-color: var(--text); }
+
     .vars {
-      margin-bottom: 0.75rem;
-      padding: 0.55rem 0.6rem 0.6rem;
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 10px;
+      margin-bottom: 0.75rem; padding: 0.5rem 0 0.15rem;
+      border: 0; border-radius: 0;
     }
-    .forms { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.55rem; }
+    .forms { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.55rem; }
     .form-tab {
-      border-radius: 6px; cursor: pointer; font: inherit; font-size: 0.65rem;
-      padding: 0.28rem 0.45rem; background: transparent; color: var(--muted);
-      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 0; cursor: pointer; font: inherit; font-size: var(--fs-xs);
+      padding: 0.22rem 0.4rem; background: transparent; color: var(--muted);
+      border: 1px solid var(--line);
     }
-    .form-tab.on { color: var(--teal); border-color: rgba(177,235,235,0.35); background: rgba(177,235,235,0.08); }
-    .coords { display: grid; gap: 0.28rem; position: relative; z-index: 2; pointer-events: auto; }
-    .coords label { display: grid; grid-template-columns: 2.1rem 1fr; gap: 0.4rem; align-items: center; font-size: 0.68rem; color: var(--muted); pointer-events: auto; }
+    .form-tab.on { color: var(--text); border-color: var(--text); }
+    .coords { display: grid; gap: 0.35rem; position: relative; z-index: 2; pointer-events: auto; }
+    .coords label {
+      display: grid; grid-template-columns: 1.75rem 1fr; gap: 0.5rem; align-items: center;
+      font-size: var(--fs-xs); color: var(--muted); pointer-events: auto;
+    }
     .coords input[type=range] {
-      width: 100%; accent-color: var(--teal);
+      width: 100%; accent-color: var(--text);
       pointer-events: auto; touch-action: none; position: relative; z-index: 3;
     }
-    .vars.sealed { opacity: 0.35; pointer-events: none; }
+    .vars.sealed { opacity: 0.4; pointer-events: none; }
 
-    .actions { display: flex; gap: 0.5rem; }
+    .actions { display: flex; gap: 0.4rem; }
     .btn {
-      flex: 1; border: 0; border-radius: 8px; cursor: pointer;
-      font-family: inherit; font-size: 0.88rem; font-weight: 600;
-      padding: 0.72rem 0.8rem; transition: opacity 0.15s;
+      flex: 1; border: 0; border-radius: 0; cursor: pointer;
+      font-family: inherit; font-size: var(--fs); font-weight: 500;
+      padding: 0.7rem 0.75rem; letter-spacing: 0.02em;
     }
     .btn:disabled { opacity: 0.35; cursor: not-allowed; }
     .btn-ghost {
-      background: transparent; color: var(--teal);
-      border: 1px solid rgba(177,235,235,0.28);
+      background: transparent; color: var(--text);
+      border: 1px solid var(--line);
     }
-    .btn-primary {
-      background: var(--teal); color: var(--bg);
-    }
-    .btn:hover:not(:disabled) { opacity: 0.88; }
-    .btn:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+    .btn-primary { background: var(--text); color: var(--bg); }
+    .btn:hover:not(:disabled) { opacity: 0.85; }
+    .btn:focus-visible { outline: 1px solid var(--text); outline-offset: 2px; }
 
-    .status { min-height: 1.1rem; margin-top: 0.55rem; font-size: 0.72rem; color: var(--muted); }
+    .status { min-height: 1.15rem; margin-top: 0.5rem; font-size: var(--fs-sm); color: var(--muted); line-height: var(--lh); }
     .status.err { color: var(--red); }
     .status.ok { color: var(--green); }
 
-    .more-body { display: flex; flex-direction: column; gap: 0.45rem; }
-    .qty-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; color: var(--muted); }
-    #mint-qty-row { padding: 0.2rem 0.1rem 0.15rem; }
+    .more-body { display: flex; flex-direction: column; gap: 0.5rem; }
+    .tier-line { margin: .2rem 0 0; font-size: var(--fs-sm); color: var(--muted); }
+    .tier-line b { color: var(--ink, inherit); font-weight: 500; }
+    .qty-row { display: flex; align-items: center; justify-content: space-between; font-size: var(--fs-sm); color: var(--muted); }
+    #mint-qty-row { padding: 0.15rem 0; }
     .qty-row input {
-      width: 3.2rem; text-align: center; background: transparent;
-      border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;
-      color: var(--text); font: inherit; padding: 0.25rem;
+      width: 3rem; text-align: center; background: transparent;
+      border: 1px solid var(--line); border-radius: 0;
+      color: var(--text); font: inherit; padding: 0.28rem;
     }
-    .qty-ctrl { display: flex; align-items: center; gap: 0.28rem; }
+    .qty-ctrl { display: flex; align-items: center; gap: 0.25rem; }
     .qty-btn {
-      width: 1.7rem; height: 1.7rem; border-radius: 6px; cursor: pointer;
-      border: 1px solid rgba(177,235,235,0.28); background: transparent;
-      color: var(--teal); font: inherit; font-size: 1rem; line-height: 1;
+      width: 1.65rem; height: 1.65rem; border-radius: 0; cursor: pointer;
+      border: 1px solid var(--line); background: transparent;
+      color: var(--text); font: inherit; font-size: 1rem; line-height: 1;
     }
     .pay-total {
-      font-size: 0.8rem; color: var(--green); margin: 0.35rem 0 0.15rem;
-      letter-spacing: 0.02em; text-align: center; font-weight: 650;
+      font-size: var(--fs-sm); color: var(--text); margin: 0.4rem 0 0.1rem;
+      letter-spacing: 0.02em; text-align: left; font-weight: 500;
+      font-variant-numeric: tabular-nums;
     }
-    .pk-list { display: flex; flex-direction: column; gap: 0.35rem; max-height: 9rem; overflow: auto; margin-top: 0.45rem; }
+
+    .pk-list { display: flex; flex-direction: column; gap: 0.25rem; max-height: 9rem; overflow: auto; margin-top: 0.45rem; }
     .pk-list[hidden] { display: none; }
     .pk-row {
-      display: flex; align-items: center; gap: 0.4rem; font-size: 0.68rem;
-      width: 100%; text-align: left; border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(0,0,0,0.22); border-radius: 8px; padding: 0.38rem 0.5rem;
+      display: flex; align-items: center; gap: 0.4rem; font-size: var(--fs-sm);
+      width: 100%; text-align: left; border: 1px solid var(--line);
+      background: transparent; border-radius: 0; padding: 0.4rem 0.5rem;
       font: inherit; color: var(--muted);
     }
     .pk-use {
       flex: 1; min-width: 0; border: 0; background: transparent; text-align: left;
       cursor: pointer; color: inherit; font: inherit; padding: 0;
     }
-    .pk-row b { color: var(--text); font-weight: 650; display: block; }
-    .pk-row .pk-sub { color: var(--muted); font-size: 0.6rem; }
-    .pk-row.on { color: var(--teal); border-color: rgba(177,235,235,0.4); }
-    .pk-row .btn { flex: 0 0 auto; font-size: 0.62rem; font-weight: 500; padding: 0.28rem 0.45rem; }
+    .pk-row b { color: var(--text); font-weight: 500; display: block; }
+    .pk-row .pk-sub { color: var(--muted); font-size: var(--fs-xs); }
+    .pk-row.on { color: var(--text); border-color: var(--text); }
+    .pk-row .btn { flex: 0 0 auto; font-size: var(--fs-xs); font-weight: 500; padding: 0.28rem 0.4rem; }
     .pk-row .btn-danger {
       background: transparent; color: var(--red);
-      border: 1px solid rgba(255,85,85,0.35);
+      border: 1px solid rgba(201,122,118,0.4);
     }
     .pk-add { width: 100%; }
     .pk-row input {
       flex: 1; min-width: 0; background: transparent;
-      border: 1px solid rgba(177,235,235,0.22); border-radius: 6px;
-      color: var(--text); font: inherit; padding: 0.32rem 0.45rem;
+      border: 1px solid var(--line); border-radius: 0;
+      color: var(--text); font: inherit; padding: 0.3rem 0.4rem;
     }
-    .pk-row input:focus { outline: none; border-color: var(--teal); }
-    .tokens { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-    .tok {
-      font-size: 0.68rem; color: var(--teal); cursor: pointer;
-      border: 1px solid rgba(177,235,235,0.2); border-radius: 999px; padding: 0.15rem 0.45rem;
+    .pk-row input:focus { outline: none; border-color: var(--text); }
+    .tokens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+    .tokens .empty { grid-column: 1 / -1; color: var(--muted); font-size: var(--fs-sm); padding: 0.4rem 0; }
+    #owned-preview {
+      position: fixed; inset: 0; z-index: 1; display: none;
+      align-items: center; justify-content: center; background: #07080b;
+      padding: 3.5rem 1rem 8rem; pointer-events: none;
     }
-    .tok.on { background: rgba(177,235,235,0.12); border-color: rgba(177,235,235,0.45); }
+    #owned-preview.on { display: flex; }
+
+    #collection-stage {
+      position: fixed; inset: 0; z-index: 1; display: none;
+      flex-direction: column; align-items: stretch; justify-content: flex-start;
+      background: #07080b;
+      padding: 3.75rem 1.25rem 9.5rem;
+      overflow: auto; -webkit-overflow-scrolling: touch;
+      pointer-events: auto;
+    }
+    #collection-stage.on { display: flex; }
+    #collection-stage .stage-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 0.75rem; margin-bottom: 0.85rem; flex: 0 0 auto;
+    }
+    #collection-stage .stage-title {
+      font-size: var(--fs-sm); font-weight: 500; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text);
+    }
+    #collection-stage .stage-meta { font-size: var(--fs-xs); color: var(--muted); }
+    #collection-stage .stage-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+      gap: 0.65rem; flex: 1 1 auto; align-content: start;
+    }
+    #collection-stage .stage-tok {
+      display: flex; flex-direction: column; gap: 0.35rem;
+      padding: 0.45rem; margin: 0; border: 1px solid var(--line);
+      border-radius: 0; background: transparent; color: var(--text);
+      cursor: pointer; text-align: left; font: inherit; min-height: 8.5rem;
+    }
+    #collection-stage .stage-tok:hover, #collection-stage .stage-tok.on {
+      border-color: var(--text);
+    }
+    #collection-stage .stage-tok .art {
+      aspect-ratio: 1; width: 100%; display: flex; align-items: center;
+      justify-content: center; background: #000; overflow: hidden;
+    }
+    #collection-stage .stage-tok .art img,
+    #collection-stage .stage-tok .art svg {
+      width: 100%; height: 100%; object-fit: contain; display: block;
+    }
+    #collection-stage .stage-tok b {
+      font-size: var(--fs-sm); font-weight: 500;
+    }
+    #collection-stage .stage-empty,
+    #collection-stage .stage-loading {
+      grid-column: 1 / -1; color: var(--muted); font-size: var(--fs);
+      padding: 2rem 0.25rem; line-height: var(--lh);
+    }
+    #fractal-preview.dimmed { opacity: 0; }
+    body.collection-on #reveal-veil { display: none !important; }
+    #post-walk .w-sub { display: none; }
+    /* Collection view: hide steps panel entirely (no dim bleed-through) */
+    body.collection-on .mint-side, body.collection-on #mint-side { display: none !important; visibility: hidden; }
+    body.collection-on #variant-label { visibility: hidden; }
+    #collection-stage .stage-tools {
+      display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;
+      margin-bottom: 0.75rem; flex: 0 0 auto;
+    }
+    #collection-stage .filter-toggle {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      border: 1px solid var(--line); background: transparent; color: var(--muted);
+      font: inherit; font-size: var(--fs-xs); letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 0.28rem 0.55rem; cursor: pointer; border-radius: 0;
+    }
+    #collection-stage .filter-toggle.on { color: var(--text); border-color: var(--text); }
+    #collection-stage .page-row {
+      display: flex; align-items: center; gap: 0.4rem; margin-top: 0.75rem;
+      flex: 0 0 auto;
+    }
+    #collection-stage .page-row button {
+      border: 1px solid var(--line); background: transparent; color: var(--text);
+      font: inherit; font-size: var(--fs-xs); padding: 0.28rem 0.55rem; cursor: pointer; border-radius: 0;
+    }
+    #collection-stage .page-row button:disabled { opacity: 0.35; cursor: not-allowed; }
+    #collection-stage .page-row .page-meta { font-size: var(--fs-xs); color: var(--muted); }
+    #collection-stage .stage-tok .own-pill {
+      font-size: var(--fs-xs); color: var(--green); letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    #collection-stage .stage-tok .ask-pill {
+      font-size: var(--fs-xs); color: var(--teal); letter-spacing: 0.04em;
+    }
+    /* Token modal — square edges */
+    #tok-scrim {
+      position: fixed; inset: 0; z-index: 120; display: none;
+      align-items: center; justify-content: center;
+      background: rgba(7,8,11,0.78); padding: 1rem;
+    }
+    #tok-scrim.on { display: flex; }
+    #tok-modal {
+      width: min(28rem, calc(100vw - 1.5rem)); max-height: min(88vh, 40rem);
+      background: #0c0e12; border: 1px solid var(--line); border-radius: 0;
+      display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 20px 48px rgba(0,0,0,0.55);
+    }
+    #tok-modal header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 0.5rem; padding: 0.85rem 1rem; border-bottom: 1px solid var(--line); flex: 0 0 auto;
+    }
+    #tok-modal header h2 { font-size: var(--fs); font-weight: 500; margin: 0; letter-spacing: 0.04em; }
+    #tok-modal .tok-close {
+      border: 0; background: transparent; color: var(--muted); font: inherit;
+      font-size: 1.1rem; cursor: pointer; padding: 0.1rem 0.35rem;
+    }
+    #tok-modal .tok-body {
+      padding: 0.85rem 1rem 1rem; overflow: auto; display: flex; flex-direction: column; gap: 0.75rem;
+    }
+    #tok-modal .tok-art {
+      width: 100%; aspect-ratio: 1; background: #000; display: flex;
+      align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--line);
+    }
+    #tok-modal .tok-art img, #tok-modal .tok-art svg { max-width: 100%; max-height: 100%; display: block; }
+    #tok-modal .tok-meta { font-size: var(--fs-sm); color: var(--muted); line-height: var(--lh); }
+    #tok-modal .tok-meta b { color: var(--text); font-weight: 500; }
+    #tok-modal .mkt-block { border-top: 1px solid var(--line); padding-top: 0.75rem; display: flex; flex-direction: column; gap: 0.55rem; }
+    #tok-modal .mkt-block h3 { font-size: var(--fs-sm); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; margin: 0; }
+    #tok-modal .mkt-row { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+    #tok-modal .mkt-row input, #tok-modal .mkt-row select {
+      background: transparent; border: 1px solid var(--line); border-radius: 0;
+      color: var(--text); font: inherit; font-size: var(--fs-sm); padding: 0.35rem 0.45rem;
+    }
+    #tok-modal .mkt-row input { width: 6.5rem; }
+    #tok-modal .mkt-note { font-size: var(--fs-xs); color: var(--muted); line-height: var(--lh); }
+    #tok-modal .offer-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+    #tok-modal .offer-list li {
+      display: flex; justify-content: space-between; gap: 0.5rem; align-items: center;
+      font-size: var(--fs-sm); color: var(--muted); border: 1px solid var(--line); padding: 0.35rem 0.45rem;
+    }
+    #tok-modal .offer-list b { color: var(--text); font-weight: 500; }
+
+
+    #owned-preview img, #owned-preview svg {
+      max-width: min(78vw, 70vh); max-height: min(70vh, 78vw);
+      display: block;
+    }
+
     #reveal-veil {
       position: fixed; inset: 0; z-index: 1; pointer-events: none;
       display: none; align-items: center; justify-content: center;
-      background: rgba(8,9,13,0.72);
-      color: var(--teal); font-size: 0.95rem; letter-spacing: 0.04em; text-align: center;
+      background: rgba(7,8,11,0.72);
+      color: var(--muted); font-size: var(--fs); letter-spacing: 0.04em; text-align: center;
       padding: 2rem;
     }
     #reveal-veil.on { display: flex; }
 
-    .toast {
-      position: fixed; bottom: calc(48vh + 0.5rem); left: 50%; transform: translateX(-50%) translateY(12px);
-      z-index: 5; opacity: 0; pointer-events: none;
-      padding: 0.45rem 0.75rem; border-radius: 8px; font-size: 0.75rem;
-      background: rgba(20,22,30,0.95); border: 1px solid rgba(255,255,255,0.1); color: var(--text);
-      transition: opacity 0.2s, transform 0.2s;
-    }
-    .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .toast.err { color: var(--red); }
-    .toast.ok { color: var(--green); }
 
+    .mint-side {
+      position: fixed; z-index: 70;
+      top: 4.4rem; right: 0.75rem;
+      width: min(18rem, calc(100vw - 1.5rem));
+      max-height: calc(100vh - 5.4rem);
+      overflow: auto;
+      background: #0c0e12;
+      border: 1px solid var(--line);
+      padding: 0.85rem 0.9rem;
+    }
+    /* Status toasts: top-right stack, square-edged, closable */
+    #toast-stack {
+      position: fixed; z-index: 120;
+      top: 4.4rem; right: 0.75rem;
+      width: min(22.5rem, calc(100vw - 1.5rem));
+      display: flex; flex-direction: column; gap: 0.4rem;
+      pointer-events: none;
+    }
+    #toast-stack .toast-item {
+      pointer-events: auto;
+      background: #0c0e12;
+      border: 1px solid #ecece8;
+      border-radius: 0;
+      padding: 0.65rem 0.7rem 0.65rem 0.85rem;
+      font-size: var(--fs-sm);
+      line-height: 1.35;
+      color: #ecece8;
+      display: flex; align-items: flex-start; gap: 0.55rem;
+    }
+    #toast-stack .toast-item.err { border-color: #c97a76; }
+    #toast-stack .toast-item.ok { border-color: #9dba9a; }
+    #toast-stack .toast-item .toast-msg { flex: 1 1 auto; word-break: break-word; }
+    #toast-stack .toast-item .toast-x {
+      flex: 0 0 auto; border: 0; background: transparent; color: var(--muted);
+      cursor: pointer; font: inherit; font-size: 1rem; line-height: 1;
+      padding: 0 0.15rem; border-radius: 0;
+    }
+    #toast-stack .toast-item .toast-x:hover { color: var(--text); }
     @media (max-width: 720px) {
-      html, body { height: 100%; overflow: hidden; }
-      .chrome { padding: 0.55rem 0.75rem; padding-top: max(0.55rem, env(safe-area-inset-top)); }
-      .nav { gap: 0.65rem; }
-      .nav a { font-size: 0.72rem; }
-      .dock {
-        width: calc(100vw - 0.7rem);
-        max-height: min(68dvh, 620px);
-        border-radius: 16px 16px 12px 12px;
-        padding-bottom: max(0.7rem, env(safe-area-inset-bottom));
-      }
-      .crumbs button { font-size: 0.6rem; letter-spacing: 0.02em; padding: 0.2rem 0.08rem; }
-      .pay-qr { width: min(200px, 58vw); height: auto; }
-      .lede { font-size: 0.72rem; margin-bottom: 0.45rem; }
-      .btn { padding: 0.62rem 0.7rem; font-size: 0.82rem; }
+      .mint-side { top: 3.2rem; right: 0.4rem; left: 0.4rem; width: auto; max-height: 24vh; }
+      #toast-stack { top: 3.4rem; right: 0.4rem; width: min(22.5rem, calc(100vw - 0.8rem)); }
     }
-    .unlock-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 0.55rem; }
+    .toast { display: none !important; }
+    .action-banner { display: none !important; }
+    #what-scrim {
+      position: fixed; inset: 0; z-index: 130;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(7,8,11,0.72); padding: 1rem;
+    }
+    #what-scrim.on { display: flex; }
+    #what-modal {
+      width: min(28rem, calc(100vw - 1.5rem));
+      max-height: min(80vh, 36rem);
+      background: #0c0e12; border: 1px solid #ecece8; border-radius: 0;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    #what-modal header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.5rem; padding: 0.85rem 1rem; border-bottom: 1px solid var(--line); flex: 0 0 auto;
+    }
+    #what-modal header h2 {
+      margin: 0; font-size: var(--fs-xs); letter-spacing: 0.1em;
+      text-transform: uppercase; font-weight: 500; color: var(--text);
+    }
+    #what-modal .what-body {
+      padding: 0.85rem 1rem 1rem; overflow: auto;
+      font-size: var(--fs-sm); color: var(--muted); line-height: var(--lh);
+      display: flex; flex-direction: column; gap: 0.55rem;
+    }
+    #what-modal .what-body p { margin: 0; }
+    #what-modal .what-body b { color: var(--text); font-weight: 500; }
+    #what-modal .what-actions {
+      padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+      display: flex; justify-content: flex-end; gap: 0.45rem;
+    }
+    #tok-modal .tok-art:has(canvas) { flex-shrink: 0; display: block; }
+    #tok-modal .tok-art canvas { width: 100%; height: auto; aspect-ratio: 1; display: block; image-rendering: pixelated; }
+    #tok-modal .tok-variants { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+    #tok-modal .tok-variants .vz { font-size: var(--fs-xs); color: var(--muted); width: 100%; font-variant-numeric: tabular-nums; }
+    .denom-seg { display: inline-flex; }
+    .denom-seg .form-tab + .form-tab { border-left: 0; }
+    #tok-modal .md-group { display: flex; flex-direction: column; gap: 0.35rem; }
+    #tok-modal .md-group + .md-group { margin-top: 0.6rem; }
+    #tok-modal .md-h { font-size: var(--fs-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    #tok-modal .md-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--line); border-right: 0; border-bottom: 0; }
+    #tok-modal .md-grid.md-2 { grid-template-columns: 1fr 2fr; }
+    #tok-modal .md-cell { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.4rem 0.5rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); min-width: 0; }
+    #tok-modal .md-k { font-size: var(--fs-xs); color: var(--muted); letter-spacing: 0.04em; }
+    #tok-modal .md-v { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--fs-sm); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #tok-modal .tok-coords {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: var(--fs-xs); color: var(--muted); line-height: 1.45;
+      border: 1px solid var(--line); padding: 0.45rem 0.55rem; border-radius: 0;
+      word-break: break-word;
+    }
+    #tok-modal .tok-coords b { color: var(--text); font-weight: 500; }
+
+    .unlock-opts { display: flex; flex-direction: column; gap: 0; margin-bottom: 0.65rem; border: 1px solid var(--line); }
     .unlock-opt {
-      text-align: center; border-radius: 10px; cursor: pointer; font: inherit;
-      padding: 0.55rem 0.5rem; border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(0,0,0,0.28); color: var(--text);
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      min-height: 4.35rem;
+      text-align: left; border-radius: 0; cursor: pointer; font: inherit;
+      padding: 0.65rem 0.7rem; border: 0; border-bottom: 1px solid var(--line);
+      background: transparent; color: var(--text);
+      display: flex; flex-direction: column; align-items: flex-start;
+      min-height: 0;
     }
-    .unlock-opt.on { border-color: rgba(177,235,235,0.45); background: rgba(177,235,235,0.08); }
-    .unlock-opt b { display: block; font-size: 0.78rem; color: var(--teal); }
-    .unlock-opt span { display: block; font-size: 0.62rem; color: var(--muted); margin-top: 0.22rem; line-height: 1.35; font-weight: 400; }
+    .unlock-opt:last-child { border-bottom: 0; }
+    .unlock-opt.on { background: rgba(255,255,255,0.04); }
+    .unlock-opt b { display: block; font-size: var(--fs); color: var(--text); font-weight: 500; }
+    .unlock-opt span { display: block; font-size: var(--fs-xs); color: var(--muted); margin-top: 0.2rem; line-height: var(--lh); font-weight: 400; }
     .unlock-opts.locked { pointer-events: none; }
-    .unlock-opts.locked .unlock-opt { opacity: 0.38; }
+    .unlock-opts.locked .unlock-opt { opacity: 0.4; }
+    .unlock-opt.unlock-off { opacity: 0.45; text-decoration: none; color: inherit; display: flex; align-items: baseline; justify-content: space-between; }
+    .unlock-opt.unlock-off .off-note { font-size: var(--fs-xs); color: var(--muted); }
+    .unlock-opt:disabled { opacity: 0.4; cursor: not-allowed; }
+    .rail-gate { font-size: var(--fs-xs); color: var(--muted); line-height: var(--lh); margin: 0.4rem 0 0; }
     .unlock-opts.locked .unlock-opt.on { opacity: 1; }
+
     .sess-card {
-      border: 1px solid rgba(177,235,235,0.16); border-radius: 10px;
-      padding: 0.55rem 0.65rem; background: rgba(0,0,0,0.35);
+      border: 1px solid var(--line); border-radius: 0;
+      padding: 0.6rem 0.7rem; background: transparent;
     }
-    .sess-kicker { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.28rem; }
+    .sess-kicker {
+      font-size: var(--fs-xs); letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 0.3rem; font-weight: 500;
+    }
     .sess-addr {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.7rem; line-height: 1.45; color: var(--teal);
+      font-size: var(--fs-sm); line-height: var(--lh); color: var(--text);
       overflow-wrap: anywhere; word-break: break-all;
     }
     #pay-detail { cursor: pointer; }
     .sess-addr.empty { color: var(--muted); font-family: inherit; word-break: normal; }
-    .pay-note {
-      font-size: 0.72rem; color: var(--muted); line-height: 1.4; margin: 0;
+    .desk-info {
+      margin-top: 0.55rem; border: 1px solid var(--line); padding: 0.45rem 0.55rem;
     }
-    .pay-field { margin-top: 0.4rem; }
+    .desk-info summary {
+      cursor: pointer; font-size: var(--fs-xs); letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted); font-weight: 500;
+    }
+    .desk-info pre {
+      margin: 0.4rem 0 0; max-height: 10rem; overflow: auto;
+      font: inherit; color: var(--muted);
+      white-space: pre-wrap; word-break: break-word;
+    }
+    #pay-countdown {
+      display: block; margin: 0.35rem 0 0;
+      font-size: var(--fs); font-weight: 500; color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    #pay-countdown[hidden] { display: none; }
+    .pay-note { font-size: var(--fs-sm); color: var(--muted); line-height: var(--lh); margin: 0; }
+    .pay-field { margin-top: 0.45rem; }
     .pay-field[hidden], .pay-note[hidden] { display: none; }
-    .pay-note { text-align: center; }
-    #pay-card { text-align: center; }
-    #pay-card .sess-kicker { text-align: center; }
+    .pay-note { text-align: left; }
+    #pay-card { text-align: left; }
+    #pay-card .sess-kicker { text-align: left; }
     #pay-qr-wrap:not([hidden]) {
-      display: flex; flex-direction: column; align-items: center;
-      padding: 0.7rem 0.45rem 0.8rem; margin-top: 0.5rem;
-      background: rgba(255,255,255,0.04); border-radius: 12px;
+      display: flex; flex-direction: column; align-items: center; gap: 1rem;
+      padding: 1.25rem 0.75rem 1.35rem; margin: 0.85rem 0 0.35rem;
+      background: transparent; border-radius: 0; text-align: center;
     }
-    #pay-qr-wrap .sess-kicker { margin-bottom: 0.5rem; }
+    #pay-qr-wrap .sess-kicker { margin-bottom: 0.55rem; text-align: center; width: 100%; }
     .pay-qr {
-      display: block; width: min(220px, 70vw); height: auto; aspect-ratio: 1;
-      background: #fff; border-radius: 10px; margin: 0 auto;
+      display: block; width: min(12.5rem, 62vw); height: auto; aspect-ratio: 1;
+      background: #fff; border-radius: 0; margin: 0.35rem auto;
       image-rendering: pixelated;
       box-shadow: 0 0 0 10px #fff;
       cursor: pointer;
     }
     .pay-qr[hidden] { display: none; }
-    #pay-to-wrap:not([hidden]) { text-align: center; }
+    .walk { display: grid; gap: 0.55rem; margin-top: 1rem; }
+    .walk li { border: 1px solid var(--line, #2a2a2a); padding: 0.65rem 0.75rem; }
+    .walk li.on { border-color: var(--text, #eee); }
+    .walk li.done { border-color: var(--green, #9dba9a); }
+    #pay-to-wrap:not([hidden]) { text-align: left; }
     #pay-detail {
-      font-size: 0.58rem; line-height: 1.4; max-height: 3.4rem; overflow: auto;
-      text-align: left; padding: 0.4rem 0.45rem; border-radius: 6px;
-      background: rgba(0,0,0,0.28);
+      font-size: var(--fs-xs); line-height: var(--lh); max-height: 3.5rem; overflow: auto;
+      text-align: left; padding: 0.4rem 0.45rem; border-radius: 0;
+      background: transparent; border: 1px solid var(--line);
     }
     .pay-wallets:not([hidden]) {
-      display: flex; flex-direction: column; gap: 0.4rem; width: min(100%, 260px);
-      margin: 0.65rem auto 0.15rem; text-align: center;
+      display: flex; flex-direction: column; gap: 0.35rem; width: 100%;
+      margin: 0.55rem 0 0.1rem; text-align: left;
     }
-    .pay-wallets .btn { width: 100%; padding: 0.62rem 0.7rem; font-size: 0.82rem; }
+    .pay-wallets .btn { width: 100%; padding: 0.62rem 0.7rem; font-size: var(--fs); }
     .pay-wallets-get {
-      display: flex; justify-content: center; gap: 0.85rem;
-      font-size: 0.65rem; margin-top: 0.15rem;
+      display: flex; justify-content: flex-start; gap: 1rem;
+      font-size: var(--fs-xs); margin-top: 0.2rem;
     }
     .pay-wallets-get a { color: var(--muted); }
-    .pay-wallets-get a:hover { color: var(--teal); }
+    .pay-wallets-get a:hover { color: var(--text); }
     .pay-field .sess-kicker { margin-bottom: 0.18rem; }
+
     .pay-track {
-      display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.15rem;
-      list-style: none; margin: 0 0 0.55rem; padding: 0;
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+      list-style: none; margin: 0 0 0.65rem; padding: 0;
+      border-bottom: 1px solid var(--line);
     }
     .pay-track li {
-      text-align: center; font-size: 0.58rem; letter-spacing: 0.04em; text-transform: uppercase;
-      color: var(--muted); position: relative; padding-top: 0.85rem;
+      text-align: left; font-size: var(--fs-xs); letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--muted); position: relative; padding: 0 0.15rem 0.5rem;
+      border-bottom: 1px solid transparent; margin-bottom: -1px;
     }
-    .pay-track li::before {
-      content: ''; position: absolute; top: 0.18rem; left: 50%; transform: translateX(-50%);
-      width: 0.42rem; height: 0.42rem; border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.22); background: transparent;
-    }
-    .pay-track li.on { color: var(--teal); }
-    .pay-track li.on::before { background: var(--teal); border-color: var(--teal); }
+    .pay-track li::before { content: none; }
+    .pay-track li.on { color: var(--text); border-bottom-color: var(--text); }
     .pay-track li.done { color: var(--green); }
-    .pay-track li.done::before { background: var(--green); border-color: var(--green); }
+
+    .walk {
+      list-style: none; margin: 0.75rem 0 0; padding: 0;
+      border-top: 1px solid var(--line);
+    }
+    .walk li {
+      display: grid; grid-template-columns: 1.1rem 1fr; gap: 0.55rem;
+      align-items: start; padding: 0.55rem 0;
+      border-bottom: 1px solid var(--line);
+      font-size: var(--fs-sm); color: var(--muted);
+    }
+    .walk li:last-child { border-bottom: 0; }
+    .walk .dot {
+      width: 0.55rem; height: 0.55rem; margin-top: 0.28rem;
+      border: 1px solid var(--line); background: transparent;
+    }
+    .walk li.on { color: var(--text); }
+    .walk li.on .dot { background: var(--text); border-color: var(--text); }
+    .walk li.done { color: var(--green); }
+    .walk li.done .dot { background: var(--green); border-color: var(--green); }
+    .walk li.err { color: var(--red); }
+    .walk li.err .dot { background: var(--red); border-color: var(--red); }
+    .walk .w-title { font-weight: 500; color: inherit; }
+    .walk .w-sub { display: block; font-size: var(--fs-xs); color: var(--muted); margin-top: 0.12rem; font-weight: 400; }
+
+    .modal-scrim {
+      display: none; position: fixed; inset: 0; z-index: 120;
+      background: rgba(7,8,11,0.72); align-items: flex-end; justify-content: center;
+      padding: 0.75rem;
+    }
+    .modal-scrim.on { display: flex; }
+    .modal {
+      width: min(22.5rem, 100%); background: var(--panel);
+      border: 1px solid var(--line); padding: 1rem 1rem 0.9rem;
+    }
+    .modal h2 {
+      font-size: var(--fs-xs); letter-spacing: 0.1em; text-transform: uppercase;
+      font-weight: 500; margin-bottom: 0.4rem;
+    }
+    .modal p { font-size: var(--fs); color: var(--muted); line-height: var(--lh); margin-bottom: 0.85rem; }
+    .modal.err h2 { color: var(--red); }
+
     .vault-row { display: none; margin-top: 0.45rem; }
     .vault-row.on { display: block; }
-    .vault-row span { display: block; font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.2rem; }
+    .vault-row span { display: block; font-size: var(--fs-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.2rem; }
     .vault-row input {
-      width: 100%; background: transparent; color: var(--teal);
-      border: 1px solid rgba(177,235,235,0.22); border-radius: 6px;
-      font: inherit; font-size: 0.68rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      padding: 0.32rem 0.45rem;
+      width: 100%; background: transparent; color: var(--text);
+      border: 1px solid var(--line); border-radius: 0;
+      font: inherit; font-size: var(--fs-sm); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      padding: 0.35rem 0.45rem;
     }
-    .vault-row input:focus { outline: none; border-color: var(--teal); }
+    .vault-row input:focus { outline: none; border-color: var(--text); }
+
     .consent {
       display: none; flex-direction: column; gap: 0.45rem;
-      padding: 0.55rem 0.15rem 0.15rem;
-      border-top: 1px solid rgba(177,235,235,0.16);
+      padding: 0.65rem 0 0.15rem;
+      border-top: 1px solid var(--line);
     }
     .consent.on { display: flex; }
-    .consent-title { font-size: 0.72rem; color: var(--teal); letter-spacing: 0.04em; text-transform: uppercase; }
-    .consent p { font-size: 0.72rem; color: var(--muted); line-height: 1.45; margin: 0; white-space: pre-wrap; }
+    .consent-title { font-size: var(--fs-xs); color: var(--text); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; }
+    .consent p { font-size: var(--fs-sm); color: var(--muted); line-height: var(--lh); margin: 0; white-space: pre-wrap; }
     .lede-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
     .lede-row .lede { flex: 1; margin-bottom: 0.55rem; }
     .info-link {
       flex: 0 0 auto; border: 0; background: transparent; cursor: pointer;
-      font: inherit; font-size: 0.65rem; font-weight: 650; color: var(--teal);
-      letter-spacing: 0.02em; padding: 0.12rem 0; text-decoration: underline;
-      text-underline-offset: 0.18em;
+      font: inherit; font-size: var(--fs-xs); font-weight: 500; color: var(--text);
+      letter-spacing: 0.04em; padding: 0.12rem 0; text-decoration: none;
+      border-bottom: 1px solid var(--line);
     }
     .info-link[hidden] { display: none; }
-    .you-info-body { font-size: 0.7rem; color: var(--muted); line-height: 1.45; overflow: auto; max-height: 28vh; }
+    .you-info-body { font-size: var(--fs-sm); color: var(--muted); line-height: var(--lh); overflow: auto; max-height: 28vh; }
     .you-info-body p { margin: 0 0 0.55rem; white-space: normal; }
-    .you-info-body ol { margin: 0 0 0.55rem; padding-left: 1.15rem; }
-    .you-info-body li { margin: 0 0 0.4rem; }
-    .you-info-body b { color: var(--text); font-weight: 650; }
-    @media (max-width: 720px) {
-      .unlock-opts { grid-template-columns: 1fr; }
-      .sess-addr { font-size: 0.65rem; }
-    }
+    .you-info-body ol { margin: 0 0 0.55rem; padding-left: 1.1rem; }
+    .you-info-body li { margin: 0 0 0.35rem; }
+    .you-info-body b { color: var(--text); font-weight: 500; }
 
+    @media (max-width: 720px) {
+      html, body { height: 100%; overflow: hidden; }
+      .chrome { padding: 0.7rem 0.85rem; padding-top: max(0.7rem, env(safe-area-inset-top)); }
+      .nav { gap: 0.85rem; }
+      .dock {
+        width: calc(100vw - 0.85rem);
+        max-height: min(70dvh, 36rem);
+        border-radius: 0;
+        padding-bottom: max(0.85rem, env(safe-area-inset-bottom));
+      }
+      .crumbs button { font-size: 0.625rem; padding: 0.3rem 0.28rem 0.45rem; }
+      .pay-qr { width: min(10.5rem, 52vw); }
+      .lede { font-size: var(--fs-sm); margin-bottom: 0.5rem; }
+      .btn { padding: 0.65rem 0.7rem; }
+      .toast { width: calc(100vw - 0.85rem); bottom: calc(min(70dvh, 36rem) + 1.1rem); }
+    }
   </style>
 </head>
 <body>
 
 <canvas id="fractal-preview" aria-label="Hopalong attractor preview"></canvas>
-<div id="reveal-veil">Preview hidden. The real picture comes from the token after you mint.</div>
+<div id="owned-preview" aria-label="Minted SVG"></div>
+<div id="collection-stage" aria-label="Your collection" hidden>
+  <div class="stage-head">
+    <div class="stage-title">Collection</div>
+    <div class="stage-meta" id="collection-stage-meta"></div>
+  </div>
+  <div class="stage-tools">
+    <button type="button" class="filter-toggle on" id="filter-owned" aria-pressed="true">Owned</button>
+    <button type="button" class="filter-toggle" id="filter-all" aria-pressed="false">All</button>
+  </div>
+  <div class="stage-grid" id="collection-stage-grid"></div>
+  <div class="page-row" id="collection-page-row" hidden>
+    <button type="button" id="collection-prev" disabled>Prev</button>
+    <span class="page-meta" id="collection-page-meta"></span>
+    <button type="button" id="collection-next" disabled>Next</button>
+  </div>
+</div>
+
+<div id="reveal-veil">Preview hidden until mint. The token is the picture.</div>
 <header class="chrome">
   <a class="brand" href="/">permissionless.money</a>
   <nav class="nav">
@@ -358,20 +708,39 @@
     <a href="/#donate">Donate</a>
   </nav>
 </header>
+<aside class="mint-side" id="mint-side">
+  <div class="sess-kicker">Steps</div>
+  <ol class="pay-track" id="pay-track" aria-label="Payment progress">
+    <li data-track="you">Wallet</li>
+    <li data-track="desk">Pay</li>
+    <li data-track="send">Send</li>
+    <li data-track="seen">Incoming</li>
+    <li data-track="yours">Collection</li>
+  </ol>
+  <ol class="walk" id="post-walk" aria-label="After you send">
+    <li data-w="pay"><span class="dot"></span><span><span class="w-title">1 · Send</span><span class="w-sub" data-wsub="pay">Scan the code, then send</span></span></li>
+    <li data-w="mint"><span class="dot"></span><span><span class="w-title">2 · Mint</span><span class="w-sub" data-wsub="mint">Starts as soon as your payment is seen</span></span></li>
+    <li data-w="gas"><span class="dot"></span><span><span class="w-title">Passkey gas</span><span class="w-sub" data-wsub="gas">Only if you minted with a passkey</span></span></li>
+    <li data-w="done"><span class="dot"></span><span><span class="w-title">Collection</span><span class="w-sub" data-wsub="done">Open the piece on this address</span></span></li>
+  </ol>
+  <div class="status" id="mint-status"></div>
+</aside>
 <aside class="dock" id="dock">
   <nav class="crumbs" id="crumbs" aria-label="Mint steps">
     <button type="button" data-step="play" class="on">Play</button>
-    <button type="button" data-step="unlock">You</button>
+    <button type="button" data-step="unlock">Wallet</button>
     <button type="button" data-step="mint">Pay</button>
-    <button type="button" data-step="watch">Watch</button>
-    <button type="button" data-step="tokens">Yours</button>
+    <button type="button" data-step="watch">Status</button>
+    <button type="button" data-step="tokens">Collection</button>
   </nav>
   <div class="dock-top">
-    <div class="variant" id="variant-label">Classic</div>
+    <div class="variant-row" style="display:flex;align-items:baseline;gap:0.45rem;flex-wrap:wrap;">
+      <div class="variant" id="variant-label">Classic</div>
+    </div>
     <div class="price" id="price-line">Play</div>
+    <p id="pay-countdown" hidden></p>
   </div>
   <section class="step on" data-step-panel="play">
-    <p class="lede" id="lede">These are variants of the same piece. Pick one, then randomize or nudge the sliders. The minted token is what you own — not this preview.</p>
     <div class="forms" id="form-tabs" role="tablist" aria-label="Variants"></div>
     <div class="vars" id="vars">
       <div class="coords" id="coord-panel">
@@ -387,29 +756,30 @@
   </section>
   <section class="step" data-step-panel="unlock">
     <div class="lede-row">
-      <p class="lede" id="unlock-lede">This device uses two short-lived keys plus a passkey. The account’s first key is not kept in the browser. Name the passkey so you can find it next time. Keplr is the other path.</p>
+      <p class="lede" id="unlock-lede" hidden>Wallet</p>
       <button type="button" class="info-link" id="btn-you-info">Why two keys?</button>
     </div>
     <div class="unlock-opts" role="tablist" aria-label="How you hold the mint">
       <button type="button" class="unlock-opt on" id="opt-session">
         <b>This device</b>
-        <span>Two secp256k1 keys + a passkey. The onboard key is thrown away. Disconnects Keplr.</span>
       </button>
       <button type="button" class="unlock-opt" id="opt-keplr">
         <b>Keplr</b>
-        <span>Keplr holds the address and signs. No passkey and no smart-account authenticator.</span>
       </button>
+      <a class="unlock-opt unlock-off" id="opt-zafu-link" href="https://zafu.pro" target="_blank" rel="noopener noreferrer" aria-disabled="true" title="Zafu support is paused. It will return as a Zcash payment wallet.">
+        <b>Zafu</b><span class="off-note">paused · zafu.pro</span>
+      </a>
     </div>
     <div class="sess-card">
       <div class="sess-kicker" id="sess-kicker">No address yet</div>
-      <div class="sess-addr empty" id="sess-addr">Choose how you’ll hold the mint</div>
+      <div class="sess-addr empty" id="sess-addr">Pick a wallet to continue</div>
       <div class="pk-list" id="holder-list" hidden></div>
     </div>
   </section>
   <section class="step" data-step-panel="mint">
-    <p class="lede" id="mint-lede">Pay with Zcash (ZIP-321 — save the QR for Zodl, open Vizor, or scan) or on Terp. ETH, Base, and Bitcoin are parked — no live house watchers.</p>
+    <p class="lede" id="mint-lede" hidden></p>
     <div class="unlock-opts" id="rail-opts" role="tablist" aria-label="How you pay">
-      <!-- parked: no live house watchers
+      <!--
       <button type="button" class="unlock-opt" id="opt-eth" data-rail="eth">
         <b>Ethereum</b>
         <span id="rail-eth-amt"></span>
@@ -425,13 +795,14 @@
       -->
       <button type="button" class="unlock-opt on" id="opt-zec" data-rail="zec">
         <b>Zcash · ZIP-321</b>
-        <span id="rail-zec-amt">Scan QR at checkout</span>
+        <span id="rail-zec-amt" hidden></span>
       </button>
       <button type="button" class="unlock-opt" id="opt-native" data-rail="native">
         <b>TERP / THIOL</b>
-        <span id="rail-native-amt"></span>
+        <span id="rail-native-amt" hidden></span>
       </button>
     </div>
+    <p class="rail-gate" id="rail-gate-note" hidden></p>
     <div class="qty-row" id="mint-qty-row">
       <span>Pieces</span>
       <div class="qty-ctrl">
@@ -443,30 +814,26 @@
     <p class="pay-total" id="pay-total"></p>
   </section>
   <section class="step" data-step-panel="watch">
-    <p class="lede" id="watch-lede">This checkout is locked. Keep this tab open — the mint desk watches for the payment. Cancel only if you have not sent it.</p>
-    <ol class="pay-track" id="pay-track" aria-label="Payment progress">
-      <li data-track="you">You</li>
-      <li data-track="desk">Desk</li>
-      <li data-track="send">Send</li>
-      <li data-track="seen">Seen</li>
-      <li data-track="yours">Yours</li>
-    </ol>
+    <p class="lede" id="watch-lede" hidden></p>
     <div class="sess-card" id="pay-card">
       <div class="sess-kicker" id="pay-kicker">Waiting on the desk</div>
       <p class="pay-note" id="pay-note">Pick how you’ll pay, then lock it in.</p>
       <div class="pay-field" id="pay-to-wrap" hidden>
-        <div class="sess-kicker">Send to</div>
-        <div class="sess-addr" id="pay-detail"></div>
+        <button type="button" class="btn btn-ghost" id="btn-pay-details">Details</button>
+        <div id="pay-detail-box" hidden>
+          <div class="sess-kicker">Send to</div>
+          <div class="sess-addr" id="pay-detail"></div>
+        </div>
       </div>
       <div class="pay-field" id="pay-qr-wrap" hidden>
-        <div class="sess-kicker" id="pay-qr-kicker">Scan with Zodl or Vizor</div>
+        <div class="sess-kicker" id="pay-qr-kicker">Scan with Zodl</div>
         <canvas id="pay-qr" class="pay-qr" width="240" height="240" hidden></canvas>
         <div class="pay-wallets" id="pay-wallets" hidden>
           <button type="button" class="btn btn-primary" id="btn-open-zodl">Save QR for Zodl</button>
-          <button type="button" class="btn btn-ghost" id="btn-open-vizor">Open in Vizor</button>
+
           <div class="pay-wallets-get">
             <a id="get-zodl" href="https://zodl.com/" target="_blank" rel="noopener">Get Zodl</a>
-            <a id="get-vizor" href="https://vizor.cash/get" target="_blank" rel="noopener">Get Vizor</a>
+            <a id="get-zafu" href="https://zafu.pro" target="_blank" rel="noopener">Get Zafu</a>
           </div>
         </div>
       </div>
@@ -475,14 +842,24 @@
         <div class="sess-addr" id="pay-memo"></div>
       </div>
     </div>
-    <div class="status" id="mint-status"></div>
   </section>
+  <div class="modal-scrim" id="result-scrim" hidden>
+    <div class="modal" id="result-modal">
+      <h2 id="result-title">Minted</h2>
+      <p id="result-body"></p>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="result-ok">Continue</button>
+      </div>
+    </div>
+  </div>
   <section class="step" data-step-panel="tokens">
-    <p class="lede">Pieces minted to your address. Tap one to look up its on-chain picture.</p>
     <div class="tokens" id="collection-grid"></div>
+    <div id="owned-trust"></div>
     <div class="qty-row"><span>Minted</span><span id="stat-minted">—</span></div>
+    <pre id="desk-info-json" hidden></pre>
   </section>
   <div class="dock-foot actions" id="dock-foot">
+    <button class="btn btn-ghost" type="button" id="btn-what">What is this</button>
     <button class="btn btn-ghost" type="button" id="btn-wallet">Use this device</button>
     <button class="btn btn-ghost" type="button" id="btn-cancel" hidden>Cancel checkout</button>
     <button class="btn btn-primary" type="button" id="btn-mint" disabled>Pay</button>
@@ -495,10 +872,12 @@
       <button type="button" class="btn btn-primary" id="consent-yes">Continue</button>
     </div>
   </div>
-  <div class="consent" id="you-info" hidden>
+
+    <!-- what-info -> #what-scrim -->
+<div class="consent" id="you-info" hidden>
     <div class="consent-title">How this device holds the mint</div>
     <div class="you-info-body">
-      <p>This path needs <b>two ephemeral secp256k1 keys</b> and a <b>passkey</b>. Keplr does not use this.</p>
+      <p>This path uses <b>two short-lived keys</b> and a <b>passkey</b>. Keplr does not.</p>
       <ol>
         <li><b>Base key</b> — creates the on-chain account. It signs the one-time onboard message (HashMerchant covers the fee with a feegrant) that registers the custom authenticator. After that signature, this key is destroyed. It is not left in the browser.</li>
         <li><b>Browser key</b> — a second secp256k1 key that stays in this tab. It is used <b>together with your passkey</b> in an AllOf authenticator. Day-to-day signing is passkey + this browser key, not the account’s original key.</li>
@@ -508,7 +887,44 @@
     <button type="button" class="btn btn-primary" id="you-info-ok">Got it</button>
   </div>
 </aside>
-<div class="toast" id="toast"></div>
+
+<div id="tok-scrim" aria-hidden="true">
+  <div class="modal" id="tok-modal" role="dialog" aria-modal="true" aria-labelledby="tok-title">
+    <header>
+      <h2 id="tok-title">Token</h2>
+      <button type="button" class="tok-close" id="tok-close" aria-label="Close">×</button>
+    </header>
+    <div class="tok-body">
+      <div class="tok-art" id="tok-art" aria-hidden="true"></div>
+      <div class="tok-variants" id="tok-variants" hidden></div>
+      <div class="tok-meta" id="tok-meta"></div>
+      <div class="mkt-block" id="tok-mkt">
+        <h3>Marketplace</h3>
+        <p class="mkt-note" id="tok-mkt-note" hidden>Marketplace is not reachable right now.</p>
+        <div id="tok-mkt-body"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-stack" aria-live="polite" aria-relevant="additions"></div>
+<div id="what-scrim" aria-hidden="true">
+  <div id="what-modal" role="dialog" aria-modal="true" aria-labelledby="what-title">
+    <header>
+      <h2 id="what-title">What is this</h2>
+      <button type="button" class="tok-close" id="what-close" aria-label="Close">×</button>
+    </header>
+    <div class="what-body">
+      <p><b>Permissionless Fractals</b> — a live Hopalong attractor. Tuning the sliders changes the piece you see; each mint stores its randomly selected coordinates on chain.</p>
+      <p>Pay with shielded Zcash (ZIP-321) or TERP / THIOL. Hold the mint with a passkey on this device or Keplr.</p>
+      <p><b>100 THIOL</b> through #1,000, then 500 through #5,000, then 1,000 through #10,000.</p>
+      <p>Open <b>Collection</b> after mint to see pieces on this address. Select one to view coordinates and the 8-bit hopalong render.</p>
+    </div>
+    <div class="what-actions">
+      <button type="button" class="btn btn-primary" id="what-info-ok">Got it</button>
+    </div>
+  </div>
+</div>
 
 <script>
 (function () {
@@ -596,7 +1012,10 @@
     let registerPasskey, authenticatePasskey, connectKeplr, disconnectKeplr, useDeviceSession, isLoopbackIp;
     let listPasskeys, getActivePasskey, bindAccount, renamePasskey;
     let ensureBrowserWallet, listBrowserWallets;
-    let CHAINS, detectMintChainId, loadTerpState, resolveCollection, querySmart, queryOwnerTokens, mintSvgNft;
+    let CHAINS, detectMintChainId, loadTerpState, resolveCollection, querySmart, queryOwnerTokens, mintSvgNft, svgFromNft;
+    let attachPasskeyWithGrant;
+    let svgFilter = null; // /lib/svg-sanitize.js (shared with terp.network)
+    let marketplaceMod = null; // /lib/marketplace.js (revenue-marketplace code 91)
 
     function isTerp1(addr) {
       return typeof addr === 'string' && /^terp1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{38,58}$/.test(addr);
@@ -615,7 +1034,7 @@
     }
     async function ensureZecWallets() {
       if (zecWallets) return zecWallets;
-      zecWallets = await import('/lib/zec-wallets.js');
+      zecWallets = await import('/lib/zec-wallets.js?v=20261107a');
       return zecWallets;
     }
 
@@ -677,7 +1096,7 @@
       if (rail === 'native') {
         const unit = Number(dreggPrices?.native?.display);
         if (!Number.isFinite(unit)) return '';
-        return `${unit * q} TERP / THIOL for ${q} piece${q === 1 ? '' : 's'}`;
+        return `${unit * q} THIOL for ${q} piece${q === 1 ? '' : 's'}`;
       }
       return '';
     }
@@ -706,11 +1125,12 @@
     async function loadMintLibs() {
       if (libsReady) return libsReady;
       libsReady = (async () => {
-        const [auth, pks, bw, svg] = await Promise.all([
-          import('/lib/auth.js'),
-          import('/lib/passkeys.js'),
-          import('/lib/browser-wallet.js'),
-          import('/lib/mint-svg.js'),
+        const [auth, pks, bw, svg, ob] = await Promise.all([
+          import('/lib/auth.js?v=20261107a'),
+          import('/lib/passkeys.js?v=20261107a'),
+          import('/lib/browser-wallet.js?v=20261107a'),
+          import('/lib/mint-svg.js?v=20261108a'),
+          import('/lib/onboard-client.js?v=20261108a'),
         ]);
         registerPasskey = auth.registerPasskey;
         authenticatePasskey = auth.authenticatePasskey;
@@ -730,7 +1150,16 @@
         resolveCollection = svg.resolveCollection;
         querySmart = svg.querySmart;
         queryOwnerTokens = svg.queryOwnerTokens;
+        svgFromNft = svg.svgFromNft;
         mintSvgNft = svg.mintSvgNft;
+        attachPasskeyWithGrant = ob.attachPasskeyWithGrant;
+        svgFilter = await import('/lib/svg-sanitize.js?v=20261107a').catch((e) => {
+          console.warn('svg filter', e);
+          return null;
+        });
+        marketplaceMod = await import('/lib/marketplace.js?v=20261108a').catch(() => null);
+        hopalongLive = await import('/lib/hopalong-live.js?v=20261107a').catch((e) => { console.warn('hopalong-live', e); return null; });
+        hopalongArt = await import('/lib/hopalong-art.js?v=20261107a').catch((e) => { console.warn('hopalong-art', e); return null; });
         if (typeof loadTerpState === 'function') {
           try { await loadTerpState(); } catch (e) { console.warn('terp-state', e); }
         }
@@ -759,11 +1188,16 @@
     let chain = {
       chainId: 'morocco-1',
       chainName: 'Terp Network',
-      rpc: 'https://rpc.terp.network',
-      rest: 'https://api.terp.network',
+      rpc: (typeof location !== 'undefined' && (location.hostname === '127.0.0.1' || location.hostname === 'localhost'))
+        ? `${location.origin}/chain-rpc`
+        : ((typeof location !== 'undefined' && /permissionless\.money$/.test(location.hostname)) ? 'https://terp.network/rpc' : 'https://rpc.terp.network'),
+      rest: (typeof location !== 'undefined' && (location.hostname === '127.0.0.1' || location.hostname === 'localhost'))
+        ? `${location.origin}/chain-api` : 'https://api.terp.network',
       denom: 'uthiol',
-      collection: 'terp1vp7smemrv846hpsyqrzlnqapmu3sv7hyygf4rrnw3ls26ezk864qupr5zt',
-      minter: 'terp188jpppxtfpf0vvt5gypdj52hk2xuswwcn38auczzxv20fcxz3kss9fhlru',
+      // Permissionless Fractals, cw721_svg code 98 (static).
+      collection: 'terp15anc99l7lvk2v2pzjusnmylr3lw3xnpxg89xv8uh0fj6pwrumrksqwzs6x',
+      // svg factory, code 99
+      minter: 'terp1wg5z9rcwpw5kvrl4g78ees2l9ejptrhrx4t2k56nq6t27uly87zssujm80',
     };
     let CHAIN_ID = chain.chainId;
     let RPC = chain.rpc;
@@ -781,13 +1215,56 @@
     let ownedCount = 0;
     let unlockHow = 'session';
     let payRail = 'zec';
+    try { sessionStorage.removeItem('zafuAddress'); } catch { /* ignore */ }
+    let nativeBlocked = false;
+    let nativeGateFor = '';
+    const NATIVE_FEE_RESERVE = 20000n; // uthiol: 450k gas × 0.025 ≈ 11250, plus headroom
+    function nativeNeed() {
+      try {
+        const unit = BigInt(String(dreggPrices?.native?.amount || 0));
+        return unit * BigInt(getQty()) + NATIVE_FEE_RESERVE;
+      } catch { return null; }
+    }
+    async function refreshNativeGate() {
+      const opt = $('opt-native');
+      const note = $('rail-gate-note');
+      const inBrowser = session?.source === 'session-hd' && unlockHow !== 'keplr';
+      if (!inBrowser || !isTerp1(session?.address)) {
+        nativeBlocked = false;
+        if (opt) opt.disabled = false;
+        if (note) note.hidden = true;
+        return;
+      }
+      const need = nativeNeed();
+      let have = null;
+      try {
+        const r = await fetch(`${String(REST).replace(/\/$/, '')}/cosmos/bank/v1beta1/balances/${session.address}/by_denom?denom=uthiol`, { cache: 'no-store' });
+        const j = await r.json();
+        have = BigInt(String(j?.balance?.amount || '0'));
+      } catch { have = null; }
+      nativeGateFor = session.address;
+      nativeBlocked = have == null || need == null || have < need;
+      if (opt) opt.disabled = nativeBlocked;
+      if (note) {
+        note.hidden = !nativeBlocked;
+        const fmt = (v) => (Number(v) / 1e6).toLocaleString('en-US', { maximumFractionDigits: 6 });
+        note.textContent = have == null
+          ? 'Couldn’t read this device account’s THIOL balance, so TERP / THIOL pay is off. Pay with Zcash (ZIP-321).'
+          : `This device account has ${fmt(have)} THIOL and needs ${fmt(need)} (price + fee). TERP / THIOL pay is off. Pay with Zcash (ZIP-321).`;
+      }
+      if (nativeBlocked && payRail === 'native' && !railLocked) highlightRail('zec');
+    }
+    setInterval(() => { void refreshNativeGate(); }, 20000);
     const LIVE_RAILS = ['zec', 'native']; // parked: eth, base, btc — no live house watchers
     let railLocked = false;
     let checkoutTargets = null;
     let checkoutFor = null;
     let lastTargets = null;
     let lastPhase = 'waiting';
+    let zecMintSent = false;
+    let zecMintAsked = false;
     let watchStartedAt = 0;
+    let lastHealth = null;
     let statusPoll = null;
     let dreggHealthy = false;
     let dreggPrices = null;
@@ -796,7 +1273,7 @@
     let checkoutInflightFor = null;
     let checkoutGen = 0;
     const WATCH_KEY = 'pm-mint-watch';
-    const PHASE_RANK = { waiting: 0, Deposited: 1, Entitled: 2, Settled: 3 };
+    const PHASE_RANK = { waiting: 0, Mempool: 1, Deposited: 2, Entitled: 3, Settled: 4 };
 
     const $ = (id) => document.getElementById(id);
     const STEPS = ['play', 'unlock', 'mint', 'watch', 'tokens'];
@@ -815,16 +1292,7 @@
       const el = $('unlock-lede');
       const info = $('btn-you-info');
       if (info) info.hidden = unlockHow === 'keplr';
-      if (!el) return;
-      if (unlockHow === 'keplr') {
-        el.textContent = 'Keplr holds the mint address and signs on Terp. No passkey, and no smart-account authenticator — Keplr is the signer.';
-        return;
-      }
-      if (loopbackNow()) {
-        el.textContent = 'You’re on a local address, so this tab will make a mint address here. A passkey needs a real site name. Two keys + passkey still apply on the live site. Keplr does not use a passkey.';
-        return;
-      }
-      el.textContent = 'This device uses two short-lived secp256k1 keys plus a passkey. The account’s first key is destroyed after onboard. Name the passkey so you can find it next time.';
+      if (el) { el.hidden = true; el.textContent = ''; }
     }
 
     function setYouInfoOpen(on) {
@@ -844,6 +1312,13 @@
       }
       if (!STEPS.includes(name)) name = 'play';
       mintStep = name;
+      if (name !== 'tokens') {
+        hideOwnedSvg();
+        setCollectionStage(false);
+      } else {
+        setCollectionStage(true);
+        void loadUserTokens();
+      }
       document.querySelectorAll('#crumbs [data-step]').forEach((b) => {
         b.classList.toggle('on', b.dataset.step === name);
       });
@@ -901,7 +1376,7 @@
       let step = b.dataset.step;
       if (step === 'tokens' && railLocked && lastPhase !== 'Settled') step = 'watch';
       if ((step === 'mint' || step === 'watch') && !railLocked && !holderReady()) {
-        showToast(unlockHow === 'keplr' ? 'Connect Keplr first' : 'Register or unlock a passkey first', 'error');
+        showToast(unlockHow === 'zafu' ? 'Connect Zafu first' : unlockHow === 'keplr' ? 'Connect Keplr first' : 'Register or unlock a passkey first', 'error');
       }
       setMintStep(step);
     });
@@ -923,10 +1398,44 @@
     }
 
     function noteCheckoutReady(health) {
+      lastHealth = health || lastHealth;
       const open = dreggMod && dreggMod.payOpenFromHealth
         ? dreggMod.payOpenFromHealth(health)
         : (health?.checkout_ready === true && health?.zec_tip?.ok !== false);
       checkoutReady = open === true;
+      paintDeskInfo(health);
+    }
+
+    function pendingTtlMs() {
+      const s = Number(lastHealth?.pending_ttl_secs);
+      return (Number.isFinite(s) && s > 0 ? s : 600) * 1000;
+    }
+
+    function paintDeskInfo(health) {
+      // Desk health stays off the product surface (no raw JSON). Kept for watch logic only.
+      lastHealth = health || lastHealth;
+      const el = $('desk-info-json');
+      if (el) el.textContent = '';
+    }
+
+    let payClockTimer = null;
+    function paintPayCountdown() {
+      const el = $('pay-countdown');
+      if (!el) return;
+      const unpaid = (PHASE_RANK[lastPhase] || 0) < PHASE_RANK.Mempool;
+      const show = payRail === 'zec' && unpaid && !!watchStartedAt && (mintStep === 'mint' || mintStep === 'watch');
+      if (!show) {
+        el.hidden = true;
+        el.textContent = '';
+        return;
+      }
+      const left = Math.max(0, watchStartedAt + pendingTtlMs() - Date.now());
+      const sec = Math.ceil(left / 1000);
+      const mm = Math.floor(sec / 60);
+      const ss = sec % 60;
+      el.hidden = false;
+      el.textContent = 'Time left ' + String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+      if (!payClockTimer) payClockTimer = setInterval(paintPayCountdown, 1000);
     }
 
     async function refreshDesk() {
@@ -946,6 +1455,7 @@
         dreggHealthy = false;
         dreggPrices = null;
         checkoutReady = false;
+        paintDeskInfo({ ok: false, error: e.message || String(e) });
       }
       paintRailLabels();
       paintZecRail(checkoutTargets);
@@ -974,19 +1484,56 @@
     }
     window.updatePrice = updatePrice;
 
+    const TOAST_DISMISS_KEY = "pm-mint-toast-dismissed";
+    function toastDismissed() {
+      try { return new Set(JSON.parse(sessionStorage.getItem(TOAST_DISMISS_KEY) || "[]")); } catch { return new Set(); }
+    }
+    function rememberToastDismiss(id) {
+      try {
+        const s = toastDismissed();
+        s.add(id);
+        sessionStorage.setItem(TOAST_DISMISS_KEY, JSON.stringify([...s].slice(-40)));
+      } catch { /* ignore */ }
+    }
     function setStatus(text, kind) {
-      const el = $('mint-status');
-      el.textContent = text || '';
-      el.className = 'status' + (kind === 'err' ? ' err' : kind === 'ok' ? ' ok' : '');
+      const el = $("mint-status");
+      if (el) {
+        el.textContent = text || "";
+        el.className = "status" + (kind === "err" ? " err" : kind === "ok" ? " ok" : "");
+      }
+      if (text) showToast(text, kind === "err" ? "error" : kind === "ok" ? "success" : "info", kind === "err" ? 8000 : 4200);
     }
 
     function showToast(msg, type, ms) {
-      const el = $('toast');
-      el.textContent = msg;
-      el.className = 'toast on' + (type === 'error' ? ' err' : type === 'success' ? ' ok' : '');
-      if (type === 'error') console.error('[mint]', msg);
-      clearTimeout(el._t);
-      el._t = setTimeout(() => { el.className = 'toast'; }, ms || 3200);
+      const stack = $("toast-stack");
+      if (!stack) return;
+      const text = String(msg || "");
+      if (!text) return;
+      const id = text.slice(0, 160);
+      if (toastDismissed().has(id)) return;
+      // Dedupe identical visible toasts (setStatus + showToast often pair).
+      for (const el of stack.querySelectorAll(".toast-msg")) {
+        if (el.textContent === text) return;
+      }
+      if (type === "error") console.error("[mint]", text);
+      const item = document.createElement("div");
+      item.className = "toast-item" + (type === "error" ? " err" : type === "success" ? " ok" : "");
+      const body = document.createElement("div");
+      body.className = "toast-msg";
+      body.textContent = text;
+      const x = document.createElement("button");
+      x.type = "button";
+      x.className = "toast-x";
+      x.setAttribute("aria-label", "Dismiss");
+      x.textContent = "×";
+      const remove = () => { item.remove(); };
+      x.addEventListener("click", () => { rememberToastDismiss(id); remove(); });
+      item.appendChild(body);
+      item.appendChild(x);
+      stack.appendChild(item);
+      const ttl = ms || (type === "error" ? 8000 : 4200);
+      const t = setTimeout(remove, ttl);
+      item.addEventListener("mouseenter", () => clearTimeout(t), { once: true });
     }
 
     function walletErr(err) {
@@ -1195,7 +1742,7 @@
           mint.textContent = lastPhase === 'Entitled' ? 'Minting…' : 'Payment seen';
         } else if (payRail === 'zec') {
           mint.disabled = !ready;
-          mint.textContent = isMobileZec() ? 'Open in Zodl / Vizor' : 'Open ZIP-321';
+          mint.textContent = isMobileZec() ? 'Save QR for Zodl' : 'Open ZIP-321';
         } else {
           mint.disabled = true;
           mint.textContent = 'Watching';
@@ -1217,6 +1764,7 @@
     function walletButtonLabel() {
       if (session?.address && (holderReady() || unlockHow === 'keplr')) return shortLabel(session.address);
       if (unlockHow === 'keplr') return 'Connect Keplr';
+      if (unlockHow === 'zafu') return 'Connect Zafu';
       if (loopbackNow()) return 'Use this device';
       if (typeof listPasskeys === 'function' && listPasskeys().length) return 'Unlock passkey';
       return 'Register passkey';
@@ -1234,17 +1782,27 @@
       }
     }
 
+    let lastPaidC = '';
+
     async function maybeAttachPasskey(result, _w) {
-      // Keplr signs as a normal account. Do not attach a passkey authenticator.
       if (unlockHow === 'keplr' || session?.source === 'extension') {
         return { skipped: true, reason: 'keplr-signer' };
       }
-      // Never fetch HashMerchant from this page. POST /onboard/v1/passkey-grant
-      // from permissionless.money preflights OPTIONS with no ACAO.
       if (result?.deviceOnly || !result?.credentialId) return { skipped: true };
       const rec = result.record || (typeof getActivePasskey === 'function' ? getActivePasskey() : null);
       if (rec?.grantAt && rec?.pendingAttach === false) return { granted: true, skipped: true };
-      return { granted: false, skipped: true, reason: 'hm-cors' };
+      const c = lastPaidC || '';
+      if (!c) return { skipped: true, reason: 'await-paid-c' };
+      if (typeof attachPasskeyWithGrant !== 'function') {
+        return { skipped: true, reason: 'no-onboard' };
+      }
+      return attachPasskeyWithGrant({
+        address: session?.address,
+        wallet: session?.signer,
+        chain,
+        passkey: rec || result,
+        c,
+      });
     }
 
     async function finishPasskey(result, created, opts = {}) {
@@ -1256,6 +1814,9 @@
         prefix: 'terp',
         address: have ? prefer : undefined,
         forceNew: !!opts.forceNew || (!!prefer && !have),
+        prfKey: result?.prfKey || null,
+        credentialId: result?.credentialId || '',
+        passkeyPub: result?.publicKeyUncompressed || result?.record?.publicKeyUncompressed || result?.publicKey || '',
       });
       session = {
         address: w.address,
@@ -1320,7 +1881,7 @@
         btn.disabled = true;
         btn.textContent = '…';
         await loadMintLibs();
-        if (unlockHow === 'keplr') {
+        if (unlockHow === 'keplr' || unlockHow === 'zafu') {
           await connectExtension();
           return;
         }
@@ -1365,11 +1926,31 @@
     function markUnlockOpt(which) {
       $('opt-session').classList.toggle('on', which === 'session');
       $('opt-keplr').classList.toggle('on', which === 'keplr');
+      document.getElementById('opt-zafu')?.classList.toggle('on', which === 'zafu');
       paintUnlockCopy();
       if (which === 'keplr') setYouInfoOpen(false);
     }
     $('btn-you-info')?.addEventListener('click', () => setYouInfoOpen(true));
     $('you-info-ok')?.addEventListener('click', () => setYouInfoOpen(false));
+    function setWhatInfoOpen(on) {
+      const scrim = $("what-scrim");
+      if (!scrim) return;
+      scrim.classList.toggle("on", !!on);
+      scrim.setAttribute("aria-hidden", on ? "false" : "true");
+    }
+    $("btn-what")?.addEventListener("click", () => setWhatInfoOpen(true));
+    $("what-info-ok")?.addEventListener("click", () => setWhatInfoOpen(false));
+    $("what-close")?.addEventListener("click", () => setWhatInfoOpen(false));
+    $("what-scrim")?.addEventListener("click", (e) => { if (e.target === $("what-scrim")) setWhatInfoOpen(false); });
+
+    $('filter-owned')?.addEventListener('click', () => setCollectionFilter('owned'));
+    $('filter-all')?.addEventListener('click', () => setCollectionFilter('all'));
+    $('collection-prev')?.addEventListener('click', () => { collectionPage -= 1; paintCollectionPage(); });
+    $('collection-next')?.addEventListener('click', () => { collectionPage += 1; paintCollectionPage(); });
+    $('tok-close')?.addEventListener('click', () => closeTokModal());
+    $('tok-scrim')?.addEventListener('click', (e) => { if (e.target === $('tok-scrim')) closeTokModal(); });
+
+
     $('opt-session').addEventListener('click', () => {
       unlockHow = 'session';
       markUnlockOpt('session');
@@ -1447,6 +2028,14 @@
       paintPasskeys();
       $('btn-wallet').textContent = walletButtonLabel();
     });
+    const optZafu = document.getElementById('opt-zafu');
+    if (optZafu) optZafu.addEventListener('click', () => {
+      unlockHow = 'zafu';
+      if (session?.source === 'session-hd') session = null;
+      markUnlockOpt('zafu');
+      paintPasskeys();
+      $('btn-wallet').textContent = walletButtonLabel();
+    });
     const TRACK = ['you', 'desk', 'send', 'seen', 'yours'];
     function setPayTrack(current) {
       const idx = TRACK.indexOf(current);
@@ -1454,6 +2043,43 @@
         const i = TRACK.indexOf(el.getAttribute('data-track'));
         el.classList.toggle('done', idx > i && i >= 0);
         el.classList.toggle('on', i === idx);
+      });
+    }
+
+    const WALK = ['pay', 'mint', 'gas', 'done'];
+    function setWalk(current, extras = {}) {
+      const idx = WALK.indexOf(current);
+      document.querySelectorAll('#post-walk [data-w]').forEach((el) => {
+        const k = el.getAttribute('data-w');
+        const i = WALK.indexOf(k);
+        el.classList.toggle('done', idx > i && i >= 0);
+        el.classList.toggle('on', i === idx);
+        el.classList.toggle('err', extras.err === k);
+      });
+      Object.entries(extras.sub || {}).forEach(([k, txt]) => {
+        const n = document.querySelector(`#post-walk [data-wsub="${k}"]`);
+        if (n && txt) n.textContent = txt;
+      });
+    }
+
+    function showResult({ title, body, err }) {
+      const scrim = $('result-scrim');
+      const box = $('result-modal');
+      if (!scrim || !box) return Promise.resolve();
+      $('result-title').textContent = title || (err ? 'Something broke' : 'Minted');
+      $('result-body').textContent = body || '';
+      box.classList.toggle('err', !!err);
+      scrim.hidden = false;
+      scrim.classList.add('on');
+      return new Promise((resolve) => {
+        const ok = $('result-ok');
+        const done = () => {
+          scrim.classList.remove('on');
+          scrim.hidden = true;
+          if (ok) ok.onclick = null;
+          resolve();
+        };
+        if (ok) ok.onclick = done;
       });
     }
 
@@ -1503,14 +2129,29 @@
       }
       showToast('QR saved. Open that picture in Zodl (import image).', 'success', 6200);
     }
-    async function openVizorWithUri(uri) {
-      const W = await ensureZecWallets();
-      const { launched } = await W.openVizorWallet(uri);
-      if (launched) {
-        showToast('Opening Vizor. Scan this QR — Vizor does not take zcash: links (that is why Zodl was opening).', 'success', 5600);
-      } else {
-        showToast('ZIP-321 copied. Open Vizor yourself and scan this QR. Vizor has no zcash: handler, so we will not send you to Zodl.', 'success', 6200);
+    async function openZafuWithUri(uri) {
+      const z = window.zafu;
+      const names = ['experimentalRequestZcashPayment', 'requestZcashPayment', 'requestPayment'];
+      if (z) {
+        for (const name of names) {
+          if (typeof z[name] === 'function') {
+            try {
+              await z[name](uri);
+              showToast('Zafu has this payment. Approve it there.', 'success', 4200);
+              return;
+            } catch (e) {
+              showToast((e && e.message) || 'Zafu did not open this payment.', 'error', 5200);
+              return;
+            }
+          }
+        }
       }
+      const W = await ensureZecWallets();
+      const copied = await W.copyText(uri);
+      showToast(copied
+        ? 'ZIP-321 copied. In Zafu, paste the address, amount, and note. Scanning this QR there drops the note.'
+        : 'Zafu is not in this browser.',
+        copied ? 'success' : 'error', 6200);
     }
     function paintZecQr(uri) {
       const wrap = $('pay-qr-wrap');
@@ -1524,7 +2165,7 @@
       if (wallets) wallets.hidden = !ok;
       const k = $('pay-qr-kicker');
       if (k) k.textContent = isMobileZec()
-        ? 'Save the QR for Zodl, open Vizor, or scan'
+        ? 'Save the QR for Zodl, or copy it for Zafu'
         : 'Scan, or save the QR as a picture for Zodl';
       wrap.dataset.zip321 = ok ? uri : '';
     }
@@ -1538,7 +2179,7 @@
         paintPayCard({
           kicker: uri ? 'Zcash · ZIP-321' : 'Zcash · waiting on the desk',
           note: uri
-            ? `Pay ${payTotalText('zec') || 'the ZIP-321 amount'}. On a phone, open Zodl or Vizor with this request — or scan the QR. Memo shows as hex, not your Terp address.`
+            ? `Pay ${payTotalText('zec') || 'the ZIP-321 amount'}. On a phone, save the QR for Zodl. Zafu’s scanner keeps only the address, so paste the address, amount, and note there. The note shows as hex, not your Terp address.`
             : `ZIP-321 total ${payTotalText('zec') || 'is unit × pieces'}. Checkout asks the desk for a zcash: URI. Native still mints if there is no URI yet.`,
           to: uri || '',
         });
@@ -1548,6 +2189,8 @@
 
     function highlightRail(which) {
       if (!LIVE_RAILS.includes(which)) which = 'native';
+      if (which === 'native' && nativeBlocked) which = 'zec';
+      if (session?.address && nativeGateFor !== session.address) queueMicrotask(() => { void refreshNativeGate(); });
       payRail = which;
       LIVE_RAILS.forEach((r) => {
         $('opt-' + r)?.classList.toggle('on', r === which);
@@ -1561,6 +2204,10 @@
     function selectRail(which) {
       if (railLocked) return;
       if (!LIVE_RAILS.includes(which)) return;
+      if (which === 'native' && nativeBlocked) {
+        showToast($('rail-gate-note')?.textContent || 'TERP / THIOL pay is off for this device account. Pay with Zcash.', 'error');
+        return;
+      }
       highlightRail(which);
       if (which === 'zec' && isTerp1(session?.address) && !railLocked) {
         void loadCheckout(session.address);
@@ -1568,6 +2215,11 @@
     }
     LIVE_RAILS.forEach((r) => {
       $('opt-' + r)?.addEventListener('click', () => selectRail(r));
+    });
+    $('btn-pay-details')?.addEventListener('click', () => {
+      const box = $('pay-detail-box');
+      if (!box) return;
+      box.hidden = !box.hidden;
     });
     $('pay-detail')?.addEventListener('click', async () => {
       const uri = $('pay-detail')?.textContent || '';
@@ -1628,7 +2280,8 @@
         remainingSupply = health?.remaining_supply != null ? Number(health.remaining_supply) : remainingSupply;
         noteCheckoutReady(health);
         if (health.error || checkoutReady !== true) {
-          setStatus('Pay desk is closed. ZEC QR and native mint are hidden.', 'err');
+          const why = health.error || (health.reasons && health.reasons.join(', ')) || 'Pay is closed right now.';
+          setStatus(why, 'err');
           paintZecRail(null);
           updateMintButton();
           return null;
@@ -1639,19 +2292,26 @@
           t = D.applyQtyToTargets ? D.applyQtyToTargets(t, dreggPrices, wantQty, remainingSupply) : t;
         } catch (e) {
           console.warn('pay-targets', e);
-          setStatus('Couldn’t open a Zcash desk. TERP/THIOL still mints.', 'err');
+          const why = (e && e.message) ? e.message : String(e);
+          setStatus(why, 'err');
+          showToast(why, 'error');
           paintZecRail(null);
           updateMintButton();
           return null;
         }
         if (gen !== checkoutGen || railLocked) return checkoutTargets;
         lastTargets = t;
+        lastPaidC = String(t.memo_hex || t.memo_commit || '').trim();
         checkoutTargets = t;
         checkoutFor = recipient;
         paintZecRail(t);
         paintBaseRail(t);
         if (zecPayUri(t)) {
           setStatus('Zcash is on this checkout. TERP/THIOL still mints.');
+        } else if (payRail === 'zec') {
+          const why = zecUriGap(t);
+          setStatus(why, 'err');
+          showToast(why, 'error');
         }
         updateMintButton();
         return t;
@@ -1744,6 +2404,25 @@
       try {
         const st = peekWatch();
         if (!st?.locked) return false;
+        const rank = PHASE_RANK[st.phase] || 0;
+        const expired = !!(st.at && Date.now() - st.at > pendingTtlMs());
+        if (expired && rank >= PHASE_RANK.Mempool && rank < PHASE_RANK.Settled) {
+          clearWatchState();
+          setStatus('That payment was seen, but the checkout ended before the mint finished. You can keep shopping and start a new checkout. The old one will not finish on its own.', 'err');
+          return false;
+        }
+        if (expired && rank < PHASE_RANK.Deposited) {
+          void expireStaleWatch(st.address);
+          return false;
+        }
+        if (rank < PHASE_RANK.Mempool) {
+          const addr = st.address;
+          clearWatchState();
+          if (isTerp1(addr)) {
+            void ensureDregg().then((D) => D.cancelCheckout && D.cancelCheckout(addr)).catch(() => {});
+          }
+          return false;
+        }
         if (st.address !== session?.address) {
           if (checkoutFor && checkoutFor !== session?.address) {
             railLocked = false;
@@ -1780,7 +2459,7 @@
       return ({ eth: 'Ethereum', base: 'Base', btc: 'Bitcoin', zec: 'Zcash', native: 'Terp' })[rail] || rail;
     }
 
-    function startWatch() {
+    async function startWatch() {
       if (!railLocked) return;
       if (checkoutFor && session?.address && checkoutFor !== session.address) return;
       const net = railNetName(payRail);
@@ -1793,33 +2472,50 @@
         ? 'yours'
         : lastPhase === 'Deposited' || lastPhase === 'Entitled' ? 'seen' : 'send';
       setPayTrack(track);
+      setWalk(lastPhase === 'Settled' ? 'done' : lastPhase === 'Deposited' || lastPhase === 'Entitled' ? 'mint' : lastPhase === 'Mempool' ? 'mint' : 'pay');
       updateMintButton();
       saveWatchState();
       const recipient = session?.address;
       if (!isTerp1(recipient)) return;
       if (!watchStartedAt) watchStartedAt = Date.now();
       stopStatusPoll();
+      if (window.__mintWatch) { window.__mintWatch.close(); window.__mintWatch = null; }
+      const D = await ensureDregg();
+      const origin = D.dreggBase();
       void pollMintStatus(recipient);
-      statusPoll = setInterval(() => pollMintStatus(recipient), 6000);
+      try {
+        const es = new EventSource(origin + '/v1/watch?recipient=' + encodeURIComponent(recipient));
+        window.__mintWatch = es;
+        es.onmessage = () => { void pollMintStatus(recipient); };
+      } catch (e) { console.warn('watch open', e); }
+      statusPoll = setInterval(() => pollMintStatus(recipient), 5000);
+    }
+    function extensionApi() {
+      if (unlockHow === 'zafu') {
+        const z = window.zafu;
+        if (!z?.enable || !z?.getKey) throw new Error('Zafu isn’t in this browser. Install the Zafu extension, or use Keplr.');
+        return z;
+      }
+      if (!window.keplr) throw new Error('Keplr isn’t in this browser. Use this device, or Zafu.');
+      return window.keplr;
     }
     async function connectExtension() {
-      if (!window.keplr) {
-        throw new Error('Keplr isn’t in this browser. Use this device instead.');
-      }
+      const api = extensionApi();
+      const label = unlockHow === 'zafu' ? 'Zafu' : 'Keplr';
       const ok = await askConsent({
-        title: 'Keplr will ask next',
-        body: 'Keplr will ask to connect to Terp and share the address we should mint to. Nothing is paid yet. Approve only if that’s the account you want.',
-        yes: 'Open Keplr',
+        title: label + ' will ask next',
+        body: label + ' will ask to connect to Terp and share the address we should mint to. Nothing is paid yet.',
+        yes: 'Continue',
       });
       if (!ok) return;
       try {
         try {
-          await window.keplr.enable(CHAIN_ID);
+          await api.enable(CHAIN_ID);
         } catch (enableErr) {
-          if (typeof window.keplr.experimentalSuggestChain !== 'function') {
-            throw new Error('Keplr needs Terp added first. Try again, or use this device.');
+          if (typeof api.experimentalSuggestChain !== 'function') {
+            throw new Error(label + ' needs Terp added first. Try again, or use this device.');
           }
-          await window.keplr.experimentalSuggestChain({
+          await api.experimentalSuggestChain({
             chainId: CHAIN_ID,
             chainName: chain.chainName,
             rpc: RPC,
@@ -1837,17 +2533,21 @@
             feeCurrencies: [{ coinDenom: 'THIOL', coinMinimalDenom: 'uthiol', coinDecimals: 6, gasPriceStep: { low: 0.01, average: 0.025, high: 0.04 } }],
             stakeCurrency: { coinDenom: 'TERP', coinMinimalDenom: 'uterp', coinDecimals: 6 },
           });
-          await window.keplr.enable(CHAIN_ID);
+          await api.enable(CHAIN_ID);
           void enableErr;
         }
-        const { address } = await connectKeplr(CHAIN_ID);
+        const key = await api.getKey(CHAIN_ID);
+        const address = key.bech32Address || key.address;
+        if (!isTerp1(address)) throw new Error(label + ' did not return a terp1 address');
         session = {
           address,
-          signer: window.keplr.getOfflineSigner(CHAIN_ID),
+          signer: typeof api.getOfflineSigner === 'function' ? api.getOfflineSigner(CHAIN_ID) : null,
           source: 'extension',
+          wallet: unlockHow === 'zafu' ? 'zafu' : 'keplr',
           unlock: 'none',
         };
-        showToast('Keplr is connected — that’s your mint address. No passkey.', 'success');
+        try { sessionStorage.setItem(unlockHow === 'zafu' ? 'zafuAddress' : 'keplrAddress', address); } catch { /* ignore */ }
+        showToast(label + ' is connected — that’s your mint address.', 'success');
         await afterConnect();
         if (restoreWatchState()) return;
         setMintStep('mint');
@@ -1857,32 +2557,227 @@
       }
     }
 
+    // Extension account switch (Keplr / Leap / Cosmostation / Zafu / EVM): rebuild from the
+    // new address without a page reload. Passkey (session-hd) sessions are not extension
+    // accounts, so they are left alone. Anything mid-sign for the old address is cancelled.
+    let switchEpoch = 0;
+    async function onExtensionSwitch() {
+      if (session?.source !== 'extension') return;
+      const epoch = ++switchEpoch;
+      const prev = session.address;
+      let api, next = null;
+      try { api = extensionApi(); const k = await api.getKey(CHAIN_ID); next = k.bech32Address || k.address || null; } catch { next = null; }
+      if (epoch !== switchEpoch) return; // a newer switch is already running
+      if (next && next === prev) return;  // chainChanged or a duplicate event
+      if (consentWait) consentWait(false); // close any open "will ask next" / sign prompt
+      stopStatusPoll();
+      checkoutReady = false; checkoutTargets = null; checkoutFor = null;
+      const how = session.wallet === 'zafu' ? 'zafu' : 'keplr';
+      if (!isTerp1(next)) {
+        session = null;
+        try { sessionStorage.removeItem(how === 'zafu' ? 'zafuAddress' : 'keplrAddress'); } catch { /* ignore */ }
+        $('btn-wallet').textContent = walletButtonLabel();
+        updateMintButton(); paintPasskeys();
+        showToast('Wallet locked or switched off Terp. Connect again to continue.', 'info');
+        return;
+      }
+      session = { address: next, signer: typeof api.getOfflineSigner === 'function' ? api.getOfflineSigner(CHAIN_ID) : null, source: 'extension', wallet: how, unlock: 'none' };
+      try { sessionStorage.setItem(how === 'zafu' ? 'zafuAddress' : 'keplrAddress', next); } catch { /* ignore */ }
+      ownedCount = 0;
+      await afterConnect(); // re-reads owned tokens, passkeys, price for the new address
+      if (epoch !== switchEpoch) return;
+      showToast('Wallet account changed to ' + shortLabel(next) + '.', 'info');
+    }
+    import('/lib/wallet-account-watch.js?v=20261107a').then((w) => w.onAccountSwitch(onExtensionSwitch)).catch((e) => console.warn('wallet watch', e));
+
     function stopStatusPoll() {
       if (statusPoll) { clearInterval(statusPoll); statusPoll = null; }
     }
+    async function expireStaleWatch(dest) {
+      stopStatusPoll();
+      const rec = dest || session?.address;
+      try {
+        const D = await ensureDregg();
+        if (D.cancelCheckout && isTerp1(rec)) await D.cancelCheckout(rec);
+      } catch (e) {
+        console.warn('expire cancel', e);
+      }
+      clearWatchState();
+      paintPayCard({
+        kicker: 'Checkout expired',
+        note: 'The unpaid request cleared after 10 minutes. Do not pay the old QR.',
+      });
+      setStatus('This checkout expired after 10 minutes. Do not pay the old QR. Pay again for a new request.', 'err');
+      showToast('Checkout expired', 'error');
+      setMintStep('mint');
+    }
+
+
+
+    function landedMint(result) {
+      const code = result && result.code;
+      if (code) {
+        const why = (result.rawLog || result.log || 'Mint was rejected');
+        throw new Error(String(why).slice(0, 280));
+      }
+      const hash = (result && (result.transactionHash || result.txhash)) || '';
+      if (!/^[0-9A-Fa-f]{64}$/.test(hash)) {
+        throw new Error('Mint did not return a transaction id. The checkout stays entitled.');
+      }
+      return hash;
+    }
+    async function mintAfterZec(recipient, fromClick) {
+      if (zecMintSent || payRail !== 'zec') return;
+      if (zecMintAsked && !fromClick) return;
+      zecMintAsked = true;
+      if (!session?.signer) {
+        setWalk('mint', { sub: { mint: 'Connect the same wallet to mint' } });
+        const btn = $('btn-mint');
+        if (btn) btn.textContent = 'Mint';
+        return;
+      }
+      const passkey = session?.unlock === 'passkey';
+      const ok = await askConsent({
+        title: passkey ? 'Register passkey, then mint' : 'Minting',
+        body: passkey
+          ? 'Payment is in a block. First this passkey registers on the smart account. HashMerchant’s feegrant pays that fee. Then this wallet mints the piece. Nothing is signed until you approve.'
+          : 'Payment is in a block. This wallet will mint the piece on Terp. Nothing is signed until you approve.',
+        yes: passkey ? 'Register and mint' : 'Mint',
+      });
+      if (!ok) {
+        setStatus('Mint is ready. Press Mint when you want to sign.', 'ok');
+        const btn = $('btn-mint');
+        if (btn) btn.textContent = 'Mint';
+        return;
+      }
+      zecMintSent = true;
+      try {
+        if (passkey) {
+          setWalk('gas', { sub: { gas: 'Registering this passkey. Feegrant pays the fee.', mint: 'Mint is next' } });
+          if ($('watch-lede')) $('watch-lede').textContent = 'Registering this passkey with the feegrant, then minting.';
+          const g = await maybeAttachPasskey(
+            { credentialId: getActivePasskey?.()?.credentialId, record: getActivePasskey?.() },
+            session.signer,
+          );
+          if (g?.granter) session.granter = g.granter;
+          if (g && g.granted === false && !g.skipped && g.error) {
+            throw new Error(g.error);
+          }
+        }
+        setWalk('mint', { sub: { pay: 'In a block', mint: 'Minting now', gas: passkey ? 'Passkey registered' : 'No passkey step' } });
+        const result = await mintSvgNft({
+          chain,
+          collection: CONTRACT_ADDRESS,
+          address: recipient,
+          wallet: session.signer,
+          amount: getQty(),
+          bogo: false,
+          funds: [],
+          feeGranter: session.granter || '',
+        });
+        const hash = landedMint(result);
+        lastPhase = 'Settled';
+        setPayTrack('yours');
+        setWalk('done', { sub: { pay: 'Paid', mint: 'Minted', gas: passkey ? 'Passkey registered' : 'No passkey step', done: 'Open collection' } });
+        setStatus('Mint is in a Terp transaction.', 'ok');
+        showToast(hash, 'success');
+        stopStatusPoll();
+        await loadUserTokens();
+        setMintStep('tokens');
+      } catch (e) {
+        zecMintSent = false;
+        let msg = (e && e.message) || 'Mint failed';
+        if ((e && e.name === 'AbortError') || /abort/i.test(msg)) {
+          msg = 'Feegrant or mint was cut off before it finished. Nothing was confirmed. Press Try mint again.';
+        }
+        setWalk('mint', { err: 'mint', sub: { mint: msg } });
+        setStatus(msg, 'err');
+        showToast(msg, 'error', 8000);
+        const btn = $('btn-mint');
+        if (btn) btn.textContent = 'Try mint again';
+      }
+    }
+
     async function pollMintStatus(recipient) {
       try {
-        if (watchStartedAt && Date.now() - watchStartedAt > 20 * 60 * 1000
-          && (PHASE_RANK[lastPhase] || 0) < PHASE_RANK.Deposited) {
-          stopStatusPoll();
-          setStatus('We have not seen the payment yet. Keep this tab — the desk is one-time.');
-          saveWatchState();
+        paintPayCountdown();
+        if (watchStartedAt && Date.now() - watchStartedAt > pendingTtlMs()
+          && (PHASE_RANK[lastPhase] || 0) < PHASE_RANK.Mempool) {
+          await expireStaleWatch(recipient);
           return;
         }
         const st = await (await ensureDregg()).fetchMintStatus(recipient);
         const phase = bumpPhase(st.phase || lastPhase || 'waiting');
         const human = {
-          waiting: 'Waiting for your payment to show up.',
-          Deposited: 'Payment seen. The mint is queued.',
-          Entitled: 'You’re in. The mint is going through.',
-          Settled: 'Minted. It’s yours.',
+          waiting: 'Looking for the payment.',
+          Mempool: 'Payment received. Minting after the next block.',
+          Deposited: 'In a block. Mint is next.',
+          Entitled: 'Minting now.',
+          Settled: 'The piece is on this address.',
         }[phase] || ('Status: ' + phase);
-        setStatus(human, phase === 'Settled' || phase === 'Entitled' || phase === 'Deposited' ? 'ok' : '');
-        if (phase === 'Deposited' || phase === 'Entitled') setPayTrack('seen');
+        setStatus(human, phase === 'Settled' || phase === 'Entitled' || phase === 'Deposited' || phase === 'Mempool' ? 'ok' : '');
+        if (phase === 'waiting') setWalk('pay', { sub: { pay: 'Scan the code and send. This page updates when the payment is seen.' } });
+        if (phase === 'Mempool') {
+          setPayTrack('seen');
+          setMintStep('watch');
+          const pay = 'Payment received. Minting after the next block.';
+          const title = document.querySelector('#post-walk [data-w="mint"] .w-title');
+          if (title) title.textContent = '2 · Minting';
+          setWalk('mint', { sub: { pay: 'Payment received', mint: 'Minting after this block' } });
+          setStatus(pay, 'ok');
+          if ($('watch-lede')) $('watch-lede').textContent = pay;
+        }
+        if (phase === 'Deposited' || phase === 'Entitled') {
+          setPayTrack('seen');
+          setMintStep('watch');
+          const minting = phase === 'Entitled' ? 'Minting now' : 'In a block. Mint is next.';
+          const title = document.querySelector('#post-walk [data-w="mint"] .w-title');
+          if (title) title.textContent = '2 · Minting';
+          setWalk('mint', { sub: { pay: 'In a block', mint: minting } });
+          setStatus(minting, 'ok');
+          if ($('watch-lede')) $('watch-lede').textContent = minting;
+          const btn = $('btn-mint');
+          if (btn) btn.textContent = 'Minting';
+          void mintAfterZec(recipient, false);
+        }
         if (phase === 'Settled') {
           setPayTrack('yours');
           stopStatusPoll();
-          showToast(human, 'success');
+          setWalk('gas', { sub: { pay: 'Paid', mint: 'Minted' } });
+          const passkey = session?.unlock === 'passkey';
+          let gasOk = !passkey;
+          let gasErr = '';
+          if (passkey && lastPaidC) {
+            try {
+              const g = await maybeAttachPasskey(
+                { credentialId: getActivePasskey?.()?.credentialId, record: getActivePasskey?.() },
+                session.signer,
+              );
+              gasOk = !!(g?.granted || g?.skipped);
+              if (g?.granted) setWalk('done', { sub: { gas: '1 THIOL for this passkey', done: 'Open collection' } });
+              else if (g?.skipped) setWalk('done', { sub: { gas: g.reason === 'keplr-signer' ? 'Keplr — no extra gas step' : 'Skipped', done: 'Open collection' } });
+            } catch (e) {
+              gasOk = false;
+              gasErr = e.message || String(e);
+              setWalk('gas', { err: 'gas', sub: { gas: gasErr } });
+            }
+          } else {
+            setWalk('done', { sub: { gas: passkey ? 'Waiting for payment id (c)' : 'Keplr — no extra gas step', done: 'Open collection' } });
+          }
+          if (!gasOk && gasErr) {
+            await showResult({
+              err: true,
+              title: 'Minted — device gas failed',
+              body: `The NFT is yours. Registering this device still failed: ${gasErr}`,
+            });
+          } else {
+            await showResult({
+              title: 'Minted',
+              body: passkey && lastPaidC
+                ? 'Payment confirmed, the NFT is on this address, and this passkey can pay gas.'
+                : 'Payment confirmed. The NFT is on this address.',
+            });
+          }
           await loadUserTokens();
           setMintStep('tokens');
         }
@@ -1895,6 +2790,10 @@
 
     async function sendNativeMint(recipient) {
       const viaKeplr = session?.source === 'extension' || unlockHow === 'keplr';
+      if (!viaKeplr) {
+        await refreshNativeGate();
+        if (nativeBlocked) throw new Error($('rail-gate-note')?.textContent || 'Not enough THIOL on this device account. Pay with Zcash.');
+      }
       if (!session?.signer) {
         throw new Error(viaKeplr ? 'Connect Keplr to pay on Terp' : 'Unlock this device first');
       }
@@ -1907,11 +2806,11 @@
       const shown = railLabelFromPrices(dreggPrices, 'native');
       const ok = await askConsent(viaKeplr ? {
         title: 'Keplr will ask to mint',
-        body: `Keplr will mint ${qty} on the hopalong collection for ${shown}. Keplr is the signer — no passkey and no smart-account authenticator. Nothing is signed until you approve in Keplr.`,
-        yes: 'Open Keplr',
+        body: `Keplr will mint ${qty} on Permissionless Fractals for ${shown}. Keplr is the signer — no passkey and no smart-account authenticator. Nothing is signed until you approve in Keplr.`,
+        yes: 'Continue',
       } : {
         title: 'This device will mint',
-        body: `This device will mint ${qty} on the hopalong collection for ${shown}. Not the minter. Nothing is signed until you approve.`,
+        body: `This device will mint ${qty} on Permissionless Fractals for ${shown}. Nothing is signed until you approve.`,
         yes: 'Mint',
       });
       if (!ok) {
@@ -1927,8 +2826,9 @@
         bogo: false,
         funds: [{ denom, amount: String(amt) }],
       });
-      setStatus('Minted on Terp.', 'ok');
-      showToast(result?.transactionHash || 'Mint submitted', 'success');
+      const hash = landedMint(result);
+      setStatus('Mint is in a Terp transaction.', 'ok');
+      showToast(hash, 'success');
       await loadUserTokens();
       setMintStep('tokens');
     }
@@ -1936,7 +2836,7 @@
     async function lockAndWatch() {
       const recipient = session.address;
       const targets = await loadCheckout(recipient);
-      if (!targets) throw new Error('Pay desk is down');
+      if (!targets) throw new Error('Pay desk did not return a checkout. Refresh and try again.');
       if (!LIVE_RAILS.includes(payRail)) {
         throw new Error('ETH, Base, and Bitcoin are parked');
       }
@@ -1964,7 +2864,7 @@
         throw new Error('This checkout is locked to another dest');
       }
       const targets = checkoutTargets || await loadCheckout(recipient);
-      if (!targets) throw new Error('Pay desk is down');
+      if (!targets) throw new Error('Pay desk did not return a checkout. Refresh and try again.');
       const memoHex = targets.memo_hex;
       if (!memoHex) throw new Error('This checkout is missing its one-time commitment');
       // parked: eth / base / btc — no live house watchers (no MetaMask / BIP21).
@@ -1979,8 +2879,8 @@
         const ok = await askConsent({
           title: mobile ? 'Save QR for Zodl?' : 'Save ZIP-321 QR?',
           body: mobile
-            ? 'Zodl does not open from a zcash: link here. We’ll save this ZIP-321 QR as a picture and open it. In Zodl, import that image. Or scan the QR / open Vizor. Nothing is signed until you approve in the wallet.'
-            : 'We’ll save the ZIP-321 QR as a PNG and open that picture. Import it in Zodl, or scan the QR with Vizor. Nothing is signed until you approve in the wallet.',
+            ? 'Zodl does not open from a zcash: link here. We’ll save this ZIP-321 QR as a picture and open it. In Zodl, import that image. Nothing is signed until you approve it in the wallet.'
+            : 'We’ll save the ZIP-321 QR as a PNG and open that picture. Import it in Zodl. Nothing is signed until you approve it in the wallet.',
           yes: 'Save QR',
         });
         if (!ok) {
@@ -1991,21 +2891,36 @@
       }
     }
 
+    function zecUriGap(targets) {
+      if (!targets) return 'Pay desk did not return a checkout.';
+      if (targets.ok === false) return targets.error || 'Pay desk refused this checkout.';
+      if (!targets.zec_ua) return 'Desk did not issue a Zcash address for this checkout.';
+      if (!targets.zec_uri) return 'Desk issued an address but no ZIP-321 request.';
+      return 'ZIP-321 request is missing.';
+    }
     function zip321FromDesk() {
       return $('pay-qr-wrap')?.dataset.zip321 || zecPayUri(checkoutTargets) || '';
     }
+    function requireZip321() {
+      const uri = zip321FromDesk();
+      if (uri) return uri;
+      const why = zecUriGap(checkoutTargets);
+      setStatus(why, 'err');
+      showToast(why, 'error');
+      return '';
+    }
     $('btn-open-zodl')?.addEventListener('click', () => {
-      if (!zip321FromDesk()) return;
+      if (!requireZip321()) return;
       saveQrForZodl($('pay-qr'), 'pay');
     });
     $('pay-qr')?.addEventListener('click', () => {
-      if (!zip321FromDesk()) return;
+      if (!requireZip321()) return;
       saveQrForZodl($('pay-qr'), 'pay');
     });
-    $('btn-open-vizor')?.addEventListener('click', () => {
-      const uri = zip321FromDesk();
+    $('btn-open-zafu')?.addEventListener('click', () => {
+      const uri = requireZip321();
       if (!uri) return;
-      void openVizorWithUri(uri);
+      void openZafuWithUri(uri);
     });
     $('btn-cancel')?.addEventListener('click', () => { void cancelCheckout(); });
     $('btn-mint').addEventListener('click', async () => {
@@ -2014,7 +2929,7 @@
       }
       if (mintStep === 'unlock') {
         if (!holderReady()) {
-          showToast(unlockHow === 'keplr' ? 'Connect Keplr first' : 'Register or unlock a passkey first', 'error');
+          showToast(unlockHow === 'zafu' ? 'Connect Zafu first' : unlockHow === 'keplr' ? 'Connect Keplr first' : 'Register or unlock a passkey first', 'error');
           $('btn-wallet')?.click();
           return;
         }
@@ -2045,6 +2960,10 @@
         if (mintStep === 'mint') {
           setStatus('Locking this checkout…');
           await lockAndWatch();
+          return;
+        }
+        if (mintStep === 'watch' && (lastPhase === 'Deposited' || lastPhase === 'Entitled')) {
+          await mintAfterZec(recipient, true);
           return;
         }
         if (mintStep === 'watch') {
@@ -2085,6 +3004,7 @@
       onQtyEdited();
     });
 
+    setInterval(() => { if (typeof loadContractConfig === 'function') void loadContractConfig(); }, 30000);
     async function loadContractConfig() {
       const contractAddr = contractConfig?.contractAddr;
       if (!contractAddr) {
@@ -2101,8 +3021,16 @@
       try {
         // cw721_svg has no `config` query — that 500 from api.terp.network
         // omits CORS headers and looks like a policy block in the console.
-        const countData = await querySmart(REST, contractAddr, { num_tokens: {} });
-        $('stat-minted').textContent = String(countData.count ?? countData.tokens?.length ?? '—');
+        const [countData, infoData] = await Promise.all([
+          querySmart(REST, contractAddr, { num_tokens: {} }),
+          querySmart(REST, contractAddr, { get_collection_info_and_extension: {} }).catch(() => null),
+        ]);
+        const minted = Number(countData.count ?? countData.tokens?.length ?? NaN);
+        const x = infoData?.extension || {};
+        const total = Number(x.total || 0);
+        const fmtN = (v) => Number(v).toLocaleString('en-US');
+        $('stat-minted').textContent = Number.isFinite(minted) ? (total ? `${fmtN(minted)} of ${fmtN(total)}` : fmtN(minted)) : '—';
+        paintTier(minted, (x.price_tiers || []).map((t) => ({ until: Number(t.until_count), price: t.price })));
       } catch (err) {
         console.warn('collection query', err);
         $('stat-minted').textContent = 'offline';
@@ -2110,43 +3038,721 @@
       updatePrice();
     }
 
-    async function loadUserTokens() {
-      const grid = $('collection-grid');
-      grid.innerHTML = '';
-      const contractAddr = contractConfig?.contractAddr;
-      ownedCount = 0;
-      if (!session?.address || !contractAddr || !isValidBech32Address(session.address)) {
-        updatePrice();
+    // Current and next price tier, from the collection's own tier table and minted count.
+    function paintTier(minted, tiers) {
+      const el = $('tier-line');
+      if (!el) return;
+      if (!el) return;
+      const i = Number.isFinite(minted) ? tiers.findIndex((t) => minted < t.until) : -1;
+      if (i < 0) return; // keep the published tier table already in the page
+      const coin = (c) => `${(Number(c.amount) / 10 ** DECIMALS).toLocaleString('en-US')} THIOL`;
+      const now = tiers[i]; const next = tiers[i + 1];
+      el.replaceChildren();
+      const b = document.createElement('b'); b.textContent = `${coin(now.price)} on chain through #${now.until.toLocaleString('en-US')}`;
+      el.append(b, next ? `, then ${coin(next.price)} through #${next.until.toLocaleString('en-US')}` : ', last tier');
+      el.hidden = false;
+    }
+
+    let ownedPic = '';
+    let ownedId = null;
+    function paintOwnedTrust(show) {
+      const slot = $('owned-trust');
+      if (!slot) return;
+      slot.replaceChildren();
+      if (!show || !svgFilter || !CONTRACT_ADDRESS) return;
+      slot.appendChild(svgFilter.createTrustToggle(CONTRACT_ADDRESS, {
+        onChange: () => showOwnedSvg(ownedPic, ownedId),
+      }));
+    }
+
+    function showOwnedSvg(pic, tokenId) {
+      const box = $('owned-preview');
+      if (!box) return;
+      ownedPic = pic || '';
+      ownedId = tokenId;
+      box.innerHTML = '';
+      if (!pic) {
+        box.classList.remove('on');
+        paintOwnedTrust(false);
         return;
       }
-      try {
-        const ids = await queryOwnerTokens(REST, contractAddr, session.address);
-        ownedCount = ids.length;
-        ids.forEach((id) => {
-          const s = document.createElement('span');
-          s.className = 'tok';
-          s.textContent = `#${id}`;
-          s.addEventListener('click', () => selectOnChainToken(id));
-          grid.appendChild(s);
-        });
-        updatePrice();
-      } catch (err) {
-        console.warn('tokens', err);
+      // On-chain SVG markup goes through the shared filter (keeps animation,
+      // drops scripts, handlers and outside links). data: URIs, or markup when
+      // the filter could not load, stay in an <img>, which runs no scripts.
+      const inline = !pic.trim().startsWith('data:') && pic.includes('<svg') && !!svgFilter;
+      if (inline) {
+        box.innerHTML = svgFilter.sanitizeSvg(pic, { trusted: svgFilter.isSvgTrusted(CONTRACT_ADDRESS) });
+      } else {
+        const img = document.createElement('img');
+        img.alt = tokenId ? `#${tokenId}` : 'minted piece';
+        img.src = pic.startsWith('data:') ? pic : `data:image/svg+xml;utf8,${encodeURIComponent(pic)}`;
+        box.appendChild(img);
+      }
+      box.classList.add('on');
+      const st = $('collection-stage'); if (st) st.classList.remove('on');
+      paintOwnedTrust(inline);
+    }
+
+    function hideOwnedSvg() {
+      const box = $('owned-preview');
+      if (!box) return;
+      box.classList.remove('on');
+      box.innerHTML = '';
+      paintOwnedTrust(false);
+      if (mintStep === 'tokens') {
+        const st = $('collection-stage');
+        if (st) st.classList.add('on');
       }
     }
 
-    async function selectOnChainToken(tokenId) {
-      if (!CONTRACT_ADDRESS) return;
+    const COLLECTION_PAGE = 24;
+    let collectionFilter = 'owned'; // 'owned' | 'all'
+    let collectionPage = 0;
+    let collectionIds = []; // current filtered id list
+    let collectionTotalMinted = null;
+    let marketplaceAddr = null; // from config.marketplace.contract when set
+    let hopalongArt = null;
+    let hopalongLive = null;
+    let tokLive = null;
+    let activeTokId = null;
+
+    function setCollectionStage(on) {
+      const stage = $('collection-stage');
+      const canvas = $('fractal-preview');
+      document.body.classList.toggle('collection-on', !!on);
+      if (stage) {
+        stage.hidden = !on;
+        stage.classList.toggle('on', !!on);
+      }
+      if (canvas) canvas.classList.toggle('dimmed', !!on);
+      if (!on) closeTokModal();
+    }
+
+    function paintStageEmpty(msg) {
+      const grid = $('collection-stage-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      const p = document.createElement('p');
+      p.className = 'stage-empty';
+      p.textContent = msg;
+      grid.appendChild(p);
+    }
+
+    function paintStageLoading() {
+      const grid = $('collection-stage-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      const p = document.createElement('p');
+      p.className = 'stage-loading';
+      p.textContent = 'Loading…';
+      grid.appendChild(p);
+    }
+
+    function setCollectionFilter(mode) {
+      collectionFilter = mode === 'all' ? 'all' : 'owned';
+      collectionPage = 0;
+      $('filter-owned')?.classList.toggle('on', collectionFilter === 'owned');
+      $('filter-all')?.classList.toggle('on', collectionFilter === 'all');
+      $('filter-owned')?.setAttribute('aria-pressed', collectionFilter === 'owned' ? 'true' : 'false');
+      $('filter-all')?.setAttribute('aria-pressed', collectionFilter === 'all' ? 'true' : 'false');
+      void loadUserTokens();
+    }
+
+    async function loadMarketplaceConfig() {
+      marketplaceAddr = null;
+      try {
+        const r = await fetch('/svg/config/mainnet.json', { cache: 'no-store' });
+        if (!r.ok) return;
+        const cfg = await r.json();
+        const m = cfg.marketplace || cfg.market;
+        const candidate = (m && typeof m.contract === 'string' && m.contract.startsWith('terp1'))
+          ? m.contract
+          : null;
+        if (!candidate) return;
+        // Predicted instantiate2 address may be pre-wired; only go live once contract_info exists.
+        const lcd = (typeof REST === 'string' && REST) ? REST.replace(/\/$/, '') : '';
+        const infoUrl = `${lcd}/cosmwasm/wasm/v1/contract/${candidate}`;
+        try {
+          const ir = await fetch(infoUrl, { cache: 'no-store' });
+          if (!ir.ok) {
+            console.info('marketplace predicted but not deployed yet', candidate, ir.status);
+            return;
+          }
+          const info = await ir.json();
+          if (!info || !info.contract_info) {
+            console.info('marketplace not deployed yet', candidate);
+            return;
+          }
+          marketplaceAddr = candidate;
+        } catch (e) {
+          console.info('marketplace existence check failed (showing not deployed)', candidate, e);
+        }
+      } catch { /* optional */ }
+    }
+    async function fetchAllTokenIds(contractAddr, max = 500) {
+      const ids = [];
+      let after = null;
+      const page = 50;
+      if (!querySmart) return ids;
+      while (ids.length < max) {
+        let batch = [];
+        if (marketplaceMod?.queryAllTokenPage) {
+          batch = await marketplaceMod.queryAllTokenPage(querySmart, REST, contractAddr, {
+            startAfter: after,
+            limit: page,
+          });
+        } else {
+          const msg = after
+            ? { all_tokens: { start_after: String(after), limit: page } }
+            : { all_tokens: { limit: page } };
+          try {
+            const data = await querySmart(REST, contractAddr, msg);
+            batch = (data.tokens || data.ids || []).map(String);
+          } catch {
+            batch = [];
+          }
+        }
+        if (!batch.length) break;
+        ids.push(...batch);
+        if (batch.length < page) break;
+        after = batch[batch.length - 1];
+      }
+      return ids;
+    }
+
+    async function loadUserTokens() {
+      const grid = $('collection-grid');
+      const stageGrid = $('collection-stage-grid');
+      const meta = $('collection-stage-meta');
+      const pageRow = $('collection-page-row');
+      if (grid) grid.innerHTML = '';
+      if (stageGrid) paintStageLoading();
+      const contractAddr = contractConfig?.contractAddr || CONTRACT_ADDRESS;
+      ownedCount = 0;
+      collectionIds = [];
+
+      // Dock stays quiet on empty — stage owns the status copy (avoids duplicate "connect a wallet").
+      if (!session?.address && collectionFilter === 'owned') {
+        paintStageEmpty('Connect a wallet to see pieces you own, or switch to All.');
+        if (meta) meta.textContent = '';
+        if (pageRow) pageRow.hidden = true;
+        updatePrice();
+        return;
+      }
+      if (!contractAddr) {
+        paintStageEmpty('Collection is not ready yet.');
+        if (pageRow) pageRow.hidden = true;
+        updatePrice();
+        return;
+      }
+
+      try {
+        await loadMarketplaceConfig();
+        let ownedIds = [];
+        if (session?.address && isValidBech32Address(session.address) && queryOwnerTokens) {
+          ownedIds = await queryOwnerTokens(REST, contractAddr, session.address);
+        }
+        ownedCount = ownedIds.length;
+
+        if (collectionFilter === 'owned') {
+          collectionIds = ownedIds.slice();
+          if (!collectionIds.length) {
+            paintStageEmpty(session?.address
+              ? 'Nothing on this address yet.'
+              : 'Connect a wallet to see pieces you own.');
+          }
+        } else {
+          collectionIds = await fetchAllTokenIds(contractAddr);
+          void loadContractConfig(); // keep the Minted count in step with the grid
+          if (!collectionIds.length && ownedIds.length) collectionIds = ownedIds.slice();
+          if (!collectionIds.length) paintStageEmpty('No tokens minted yet.');
+        }
+
+        if (meta) {
+          const parts = [];
+          if (collectionFilter === 'owned') parts.push(ownedCount ? `${ownedCount} owned` : '0 owned');
+          else parts.push(`${collectionIds.length} shown`);
+          if (marketplaceAddr) parts.push('market live');
+          meta.textContent = parts.join(' · ');
+        }
+
+        // Dock compact list: owned only (picker)
+        if (grid && ownedIds.length) {
+          ownedIds.forEach((id) => {
+            const s = document.createElement('button');
+            s.type = 'button';
+            s.className = 'tok';
+            s.dataset.id = String(id);
+            s.innerHTML = `<b>#${id}</b>`;
+            s.addEventListener('click', () => openTokModal(id));
+            grid.appendChild(s);
+            void injectTokSvg(s, id);
+          });
+        }
+
+        paintCollectionPage();
+        updatePrice();
+      } catch (err) {
+        console.warn('tokens', err);
+        paintStageEmpty('Could not load this collection right now.');
+        if (pageRow) pageRow.hidden = true;
+      }
+    }
+
+    function paintCollectionPage() {
+      const stageGrid = $('collection-stage-grid');
+      const pageRow = $('collection-page-row');
+      const pageMeta = $('collection-page-meta');
+      const prev = $('collection-prev');
+      const next = $('collection-next');
+      if (!stageGrid) return;
+      if (!collectionIds.length) {
+        if (pageRow) pageRow.hidden = true;
+        return;
+      }
+      const pages = Math.max(1, Math.ceil(collectionIds.length / COLLECTION_PAGE));
+      if (collectionPage >= pages) collectionPage = pages - 1;
+      if (collectionPage < 0) collectionPage = 0;
+      const start = collectionPage * COLLECTION_PAGE;
+      const slice = collectionIds.slice(start, start + COLLECTION_PAGE);
+      stageGrid.innerHTML = '';
+      const ownedSet = new Set();
+      // ownedCount ids are the first path; re-query from dock buttons if needed
+      document.querySelectorAll('#collection-grid .tok').forEach((el) => ownedSet.add(el.dataset.id));
+      if (session?.address && collectionFilter === 'owned') {
+        slice.forEach((id) => ownedSet.add(String(id)));
+      }
+      slice.forEach((id) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'stage-tok';
+        card.dataset.id = String(id);
+        const mine = ownedSet.has(String(id)) || (collectionFilter === 'owned' && !!session?.address);
+        card.innerHTML = `<div class="art" aria-hidden="true"></div><b>#${id}</b>${mine ? '<span class="own-pill">Owned</span>' : ''}`;
+        card.addEventListener('click', () => openTokModal(id));
+        stageGrid.appendChild(card);
+        void injectStageSvg(card, id);
+      });
+      if (pageRow) {
+        pageRow.hidden = collectionIds.length <= COLLECTION_PAGE;
+        if (pageMeta) pageMeta.textContent = `Page ${collectionPage + 1} of ${pages}`;
+        if (prev) prev.disabled = collectionPage <= 0;
+        if (next) next.disabled = collectionPage >= pages - 1;
+      }
+    }
+
+    function placeSanitizedSvg(host, pic, tokenId) {
+      if (!host || !pic) return;
+      const inline = !pic.trim().startsWith('data:') && pic.includes('<svg') && !!svgFilter;
+      host.innerHTML = '';
+      if (inline) {
+        host.innerHTML = svgFilter.sanitizeSvg(pic, { trusted: svgFilter.isSvgTrusted(CONTRACT_ADDRESS) });
+      } else {
+        const img = document.createElement('img');
+        img.alt = tokenId ? `#${tokenId}` : 'minted piece';
+        img.src = pic.startsWith('data:') ? pic : `data:image/svg+xml;utf8,${encodeURIComponent(pic)}`;
+        host.appendChild(img);
+      }
+    }
+
+
+    /** On-chain SVG for a cw721-svg token (extension query; top-level svg_token_uri is not in the schema). */
+    async function fetchTokenSvg(tokenId) {
+      if (!querySmart || !CONTRACT_ADDRESS) return '';
       try {
         const uri = await querySmart(REST, CONTRACT_ADDRESS, {
-          svg_token_uri: { token_id: String(tokenId) },
+          extension: { msg: { svg_token_uri: { token_id: String(tokenId) } } },
+        });
+        const pic = (svgFromNft && svgFromNft(null, uri)) || (typeof uri?.svg === 'string' ? uri.svg : '') || '';
+        if (typeof pic === 'string' && (pic.startsWith('data:image') || pic.includes('<svg'))) return pic;
+      } catch (e) {
+        console.info('svg_token_uri', tokenId, e);
+      }
+      try {
+        const info = await querySmart(REST, CONTRACT_ADDRESS, {
+          nft_info: { token_id: String(tokenId) },
+        });
+        const pic = (svgFromNft && svgFromNft(info, null)) || info?.token_uri || '';
+        if (typeof pic === 'string' && (pic.startsWith('data:image') || pic.includes('<svg'))) return pic;
+      } catch { /* optional */ }
+      return '';
+    }
+
+    async function injectTokSvg(el, tokenId) {
+      if (!querySmart || !CONTRACT_ADDRESS) return;
+      try {
+        const pic = await fetchTokenSvg(tokenId);
+        if (!pic) return;
+        const host = document.createElement('div');
+        host.className = 'tok-art';
+        placeSanitizedSvg(host, pic, tokenId);
+        el.insertBefore(host, el.firstChild.nextSibling);
+      } catch { /* preview optional */ }
+    }
+
+    async function injectStageSvg(card, tokenId) {
+      if (!querySmart || !CONTRACT_ADDRESS) return;
+      const art = card.querySelector('.art');
+      if (!art) return;
+      try {
+        const pic = await fetchTokenSvg(tokenId);
+        if (pic) placeSanitizedSvg(art, pic, tokenId);
+      } catch { /* preview optional */ }
+    }
+
+    function paintTokVariants(coords) {
+      const wrap = $('tok-variants');
+      if (!wrap || !hopalongLive) return;
+      const vs = hopalongLive.variantsFromParams(coords);
+      wrap.innerHTML = '';
+      wrap.hidden = false;
+      const readout = document.createElement('div');
+      readout.className = 'vz';
+      const pick = (i) => {
+        const v = vs[i];
+        const w = tokLive?.setView(v) || v;
+        wrap.querySelectorAll('.form-tab').forEach((b, j) => b.classList.toggle('on', j === i));
+        const n = (x) => +Number(x || 0).toFixed(3);
+        readout.textContent = v.mode === 'full'
+          ? `Full · fitted to the orbit · centre ${n(w.cx)}, ${n(w.cy)} · width ${n(w.range)}`
+          : `Constrained · base_range window · centre 0, 0 · width ${n(w.range)}`;
+      };
+      vs.forEach((v, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'form-tab';
+        b.textContent = v.name;
+        b.addEventListener('click', () => pick(i));
+        wrap.appendChild(b);
+      });
+      const replay = document.createElement('button');
+      replay.type = 'button';
+      replay.className = 'form-tab';
+      replay.textContent = 'Replay';
+      replay.addEventListener('click', () => tokLive?.replay());
+      wrap.appendChild(replay);
+      wrap.appendChild(readout);
+      pick(0);
+    }
+
+    function closeTokModal() {
+      const scrim = $('tok-scrim');
+      if (!scrim) return;
+      scrim.classList.remove('on');
+      scrim.setAttribute('aria-hidden', 'true');
+      activeTokId = null;
+      tokLive?.destroy?.(); tokLive = null;
+      const vw = $('tok-variants'); if (vw) { vw.hidden = true; vw.innerHTML = ''; }
+      const art = $('tok-art');
+      if (art) art.innerHTML = '';
+      const body = $('tok-mkt-body');
+      if (body) body.innerHTML = '';
+    }
+
+    async function openTokModal(tokenId) {
+      activeTokId = String(tokenId);
+      const scrim = $('tok-scrim');
+      const title = $('tok-title');
+      const meta = $('tok-meta');
+      const art = $('tok-art');
+      const note = $('tok-mkt-note');
+      const body = $('tok-mkt-body');
+      if (!scrim || !CONTRACT_ADDRESS) return;
+      if (title) title.textContent = `#${tokenId}`;
+      if (meta) meta.textContent = 'Loading…';
+      if (art) art.innerHTML = '';
+      if (body) body.innerHTML = '';
+      scrim.classList.add('on');
+      scrim.setAttribute('aria-hidden', 'false');
+
+      let owner = null;
+      try {
+        if (marketplaceMod?.queryOwnerOf) {
+          owner = await marketplaceMod.queryOwnerOf(querySmart, REST, CONTRACT_ADDRESS, tokenId);
+        } else {
+          const o = await querySmart(REST, CONTRACT_ADDRESS, { owner_of: { token_id: String(tokenId) } });
+          owner = o?.owner || null;
+        }
+      } catch { /* ignore */ }
+
+      let pic = '';
+      try {
+        pic = await fetchTokenSvg(tokenId);
+      } catch { /* ignore */ }
+
+      const me = session?.address || null;
+      const isOwner = !!(me && owner && me === owner);
+      const short = marketplaceMod?.shortAddr || ((a) => a ? `${a.slice(0, 8)}…` : '—');
+      let coords = null;
+      try {
+        const info = await querySmart(REST, CONTRACT_ADDRESS, { nft_info: { token_id: String(tokenId) } });
+        coords = hopalongArt?.paramsFromNftExtension?.(info?.extension || info) || null;
+      } catch { /* optional */ }
+
+      if (art && coords && hopalongLive?.mountHopalong) {
+        try {
+          art.innerHTML = '';
+          const cv = document.createElement('canvas');
+          cv.setAttribute('aria-label', 'Live hopalong render of token ' + tokenId);
+          art.appendChild(cv);
+          tokLive?.destroy?.();
+          tokLive = hopalongLive.mountHopalong(cv, coords);
+          paintTokVariants(coords);
+        } catch (e) {
+          console.warn('hopalong live', e);
+          if (pic) placeSanitizedSvg(art, pic, tokenId);
+        }
+      } else if (art && pic) {
+        placeSanitizedSvg(art, pic, tokenId);
+      }
+
+      if (meta) {
+        const esc = (v) => String(v ?? '—').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const cell = (k, v, title) => `<div class="md-cell"><span class="md-k">${k}</span><span class="md-v"${title ? ` title="${esc(title)}"` : ''}>${v}</span></div>`;
+        const ident = cell('Token', `#${esc(tokenId)}`)
+          + cell('Owner', owner ? `${esc(short(owner))}${isOwner ? ' · you' : ''}` : '—', owner || '');
+        const keys = ['a', 'b', 'c', 'd', 's', 'f', 'g', 'h', 'base_range'];
+        const attrs = coords ? keys.map((k) => cell(k, esc(coords.raw?.[k] ?? coords[k]))).join('') : '';
+        meta.innerHTML = `<div class="md-group"><div class="md-h">Token</div><div class="md-grid md-2">${ident}</div></div>`
+          + (attrs ? `<div class="md-group"><div class="md-h">Coordinates</div><div class="md-grid">${attrs}</div></div>` : '');
+      }
+
+      if (!marketplaceAddr) {
+        if (note) {
+          note.hidden = false;
+          note.textContent = 'Marketplace is not reachable right now.';
+        }
+        return;
+      }
+      if (note) note.hidden = true;
+      await paintMarketplacePanel({ tokenId, owner, me, isOwner });
+    }
+
+    function denomSegHtml(id) {
+      const all = marketplaceMod?.DENOMS || [];
+      const ds = all.filter((d) => d.denom === mktDenom).length ? all.filter((d) => d.denom === mktDenom) : [marketplaceMod.denomMeta(mktDenom)];
+      const first = ds[0]?.denom || '';
+      return `<span class="denom-seg" role="radiogroup" aria-label="Denom" data-for="${id}">${ds.map((d, i) => `<button type="button" class="form-tab${i === 0 ? ' on' : ''}" role="radio" aria-checked="${i === 0}" data-denom="${d.denom}" title="${d.hint || ''} · ${d.decimals} decimals">${d.label}</button>`).join('')}<input type="hidden" id="${id}" value="${first}"></span>`;
+    }
+    document.addEventListener('click', (ev) => {
+      const b = ev.target?.closest?.('.denom-seg .form-tab');
+      if (!b) return;
+      const seg = b.closest('.denom-seg');
+      seg.querySelectorAll('.form-tab').forEach((x) => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-checked', String(on)); });
+      const inp = seg.querySelector('input[type=hidden]');
+      if (inp) inp.value = b.dataset.denom;
+    });
+    document.addEventListener('input', (ev) => {
+      const el = ev.target;
+      if (!el || !/^mkt-(list|offer|coffer)-amt$/.test(el.id || '')) return;
+      const m = String(el.value).replace(/[^0-9.]/g, '').match(/^(\d*)(\.?)(\d{0,6})/);
+      const v = m ? m[1] + m[2] + m[3] : '';
+      if (v !== el.value) el.value = v;
+    });
+
+    let mktDenom = 'uthiol';
+    function mktCoinText(c) { return marketplaceMod.formatPrice(c); }
+    function mktDry() {
+      try { return new URLSearchParams(location.search).get('mktdry') === '1' || window.__MKT_DRY_RUN === true; } catch { return false; }
+    }
+    // One place that signs marketplace txs: Keplr or the device account, Comet38 client (smart-account-tx).
+    async function runMarketTx(label, instructions, consentBody) {
+      if (!marketplaceAddr || !marketplaceMod) return marketplaceNotReady();
+      if (!session?.address) return showToast('Connect a wallet first', 'error');
+      for (const i of instructions) {
+        const chk = i.contract === marketplaceAddr ? marketplaceMod.validateMsgShape(i.msg) : { ok: true };
+        if (!chk.ok) return showToast(chk.error, 'error');
+      }
+      console.info('[market] ' + label, JSON.parse(JSON.stringify(instructions)));
+      if (mktDry()) { showToast(`${label}: prepared (dry run, nothing signed)`, 'info'); return; }
+      if (!session?.signer) return showToast('This wallet cannot sign here. Connect Keplr or unlock this device.', 'error');
+      const ok = await askConsent({ title: label, body: consentBody + ' Nothing is signed until you approve.', yes: 'Continue' });
+      if (!ok) return;
+      try {
+        const sat = await import('/lib/smart-account-tx.js?v=20261108a');
+        const r = await sat.executeContractMsgs({ chain, wallet: session.signer, address: session.address, instructions });
+        const hash = r?.transactionHash || '';
+        showToast(`${label} done${hash ? ' · ' + hash.slice(0, 10) + '…' : ''}`, 'success');
+        if (activeTokId != null) void openTokModal(activeTokId);
+      } catch (e) {
+        console.error('[market] ' + label, e);
+        showToast(String(e?.message || e).slice(0, 220), 'error');
+      }
+    }
+    function mktSection(title) {
+      const h = document.createElement('div');
+      h.className = 'md-h';
+      h.style.marginTop = '0.5rem';
+      h.textContent = title;
+      return h;
+    }
+    function mktList(items, render) {
+      const ul = document.createElement('ul');
+      ul.className = 'offer-list';
+      items.forEach((it) => ul.appendChild(render(it)));
+      return ul;
+    }
+    function mktEmpty(text) { const p = document.createElement('p'); p.className = 'mkt-note'; p.textContent = text; return p; }
+    function mktBtn(text, primary, onClick) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = primary ? 'btn btn-primary' : 'btn btn-ghost';
+      b.style.cssText = 'flex:0 0 auto;padding:0.28rem 0.5rem;font-size:var(--fs-xs);';
+      b.textContent = text;
+      b.addEventListener('click', onClick);
+      return b;
+    }
+    function mktForm(idPrefix, placeholder, btnText, onSubmit) {
+      const form = document.createElement('div');
+      form.className = 'mkt-row';
+      form.innerHTML = `<input type="text" id="${idPrefix}-amt" inputmode="decimal" placeholder="${placeholder}" aria-label="${placeholder}" maxlength="24">${denomSegHtml(idPrefix + '-denom')}`;
+      form.appendChild(mktBtn(btnText, true, () => onSubmit(form)));
+      return form;
+    }
+    function readAmount(prefix) {
+      const den = $(prefix + '-denom')?.value || mktDenom;
+      const meta = marketplaceMod.denomMeta(den);
+      return { denom: den, amount: marketplaceMod.toBaseAmount($(prefix + '-amt')?.value, meta.decimals) };
+    }
+
+    async function paintMarketplacePanel({ tokenId, owner, me, isOwner }) {
+      const body = $('tok-mkt-body');
+      if (!body || !marketplaceMod) return;
+      body.innerHTML = '';
+      const C = CONTRACT_ADDRESS;
+      mktDenom = await marketplaceMod.queryTradeDenom(querySmart, REST, marketplaceAddr, C);
+      const [ask, bids, cbids] = await Promise.all([
+        marketplaceMod.queryAsk(querySmart, REST, marketplaceAddr, C, tokenId),
+        marketplaceMod.queryBids(querySmart, REST, marketplaceAddr, C, tokenId, mktDenom),
+        marketplaceMod.queryCollectionBids(querySmart, REST, marketplaceAddr, C, mktDenom),
+      ]);
+      const mine = (a) => !!(me && a === me);
+
+      // Listing
+      body.appendChild(mktSection('Listing'));
+      if (ask) {
+        const row = document.createElement('div');
+        row.className = 'mkt-note';
+        row.textContent = `Listed for ${mktCoinText(ask.terms?.price)} · seller ${marketplaceMod.shortAddr(ask.creator)}`;
+        body.appendChild(row);
+        const acts = document.createElement('div');
+        acts.className = 'mkt-row';
+        if (me && !mine(ask.creator)) acts.appendChild(mktBtn(`Buy for ${mktCoinText(ask.terms?.price)}`, true, () => marketplaceBuy(ask)));
+        if (mine(ask.creator)) acts.appendChild(mktBtn('Cancel listing', false, () => marketplaceCancel(ask)));
+        if (acts.childNodes.length) body.appendChild(acts);
+      } else if (isOwner) {
+        body.appendChild(mktForm('mkt-list', 'Price', 'List for sale', () => marketplaceList(tokenId)));
+      } else {
+        body.appendChild(mktEmpty('Not listed.'));
+      }
+
+      // Offers on this token
+      body.appendChild(mktSection('Offers on this token'));
+      if (bids.length) {
+        body.appendChild(mktList(bids, (b) => {
+          const li = document.createElement('li');
+          li.innerHTML = `<span><b>${mktCoinText(b.terms?.price)}</b> · ${marketplaceMod.shortAddr(b.creator)}</span>`;
+          if (isOwner) li.appendChild(mktBtn('Accept', true, () => marketplaceAcceptBid(b, tokenId)));
+          if (mine(b.creator)) li.appendChild(mktBtn('Withdraw', false, () => marketplaceRemoveBid(b)));
+          return li;
+        }));
+      } else body.appendChild(mktEmpty('No offers on this token.'));
+      if (me && !isOwner) body.appendChild(mktForm('mkt-offer', 'Offer', 'Make offer', () => marketplaceOffer(tokenId)));
+
+      // Collection offers (any token)
+      body.appendChild(mktSection('Collection offers'));
+      if (cbids.length) {
+        body.appendChild(mktList(cbids, (b) => {
+          const li = document.createElement('li');
+          li.innerHTML = `<span><b>${mktCoinText(b.terms?.price)}</b> · any piece · ${marketplaceMod.shortAddr(b.creator)}</span>`;
+          if (isOwner) li.appendChild(mktBtn('Sell this piece', true, () => marketplaceAcceptCollectionBid(b, tokenId)));
+          if (mine(b.creator)) li.appendChild(mktBtn('Withdraw', false, () => marketplaceRemoveCollectionBid(b)));
+          return li;
+        }));
+      } else body.appendChild(mktEmpty('No collection offers.'));
+      if (me) body.appendChild(mktForm('mkt-coffer', 'Offer for any piece', 'Offer on collection', () => marketplaceCollectionOffer()));
+
+      if (!me) body.appendChild(mktEmpty('Connect a wallet to list, buy, or make an offer.'));
+    }
+
+    function marketplaceNotReady() {
+      showToast('Marketplace is not reachable right now. Try again shortly.', 'error');
+    }
+
+    async function marketplaceList(tokenId) {
+      try {
+        const p = readAmount('mkt-list');
+        // send_nft escrows the piece in the marketplace with a SetAsk hook (one message, no separate approve).
+        const msg = marketplaceMod.sendNftSetAskMsg({ marketplace: marketplaceAddr, collection: CONTRACT_ADDRESS, tokenId, amount: p.amount, denom: p.denom });
+        await runMarketTx('List for sale', [{ contract: CONTRACT_ADDRESS, msg }],
+          `Piece #${tokenId} moves into the marketplace and is listed for ${mktCoinText(p)}. Cancel any time to get it back.`);
+      } catch (e) { showToast(e.message || String(e), 'error'); }
+    }
+    async function marketplaceOffer(tokenId) {
+      try {
+        const p = readAmount('mkt-offer');
+        const msg = marketplaceMod.setBidMsg({ collection: CONTRACT_ADDRESS, tokenId, amount: p.amount, denom: p.denom });
+        await runMarketTx('Make offer', [{ contract: marketplaceAddr, msg, funds: [p] }],
+          `You escrow ${mktCoinText(p)} as an offer on #${tokenId}. Withdraw any time before it is accepted.`);
+      } catch (e) { showToast(e.message || String(e), 'error'); }
+    }
+    async function marketplaceCollectionOffer() {
+      try {
+        const p = readAmount('mkt-coffer');
+        const msg = marketplaceMod.setCollectionBidMsg({ collection: CONTRACT_ADDRESS, amount: p.amount, denom: p.denom });
+        await runMarketTx('Offer on collection', [{ contract: marketplaceAddr, msg, funds: [p] }],
+          `You escrow ${mktCoinText(p)} for any Permissionless Fractal. Any holder can accept it.`);
+      } catch (e) { showToast(e.message || String(e), 'error'); }
+    }
+    async function marketplaceBuy(ask) {
+      const price = ask.terms?.price;
+      const msg = marketplaceMod.acceptAskMsg({ id: ask.id, amount: price.amount, denom: price.denom });
+      await runMarketTx('Buy', [{ contract: marketplaceAddr, msg, funds: [price] }], `You pay ${mktCoinText(price)} for #${ask.token_id}.`);
+    }
+    async function marketplaceCancel(ask) {
+      await runMarketTx('Cancel listing', [{ contract: marketplaceAddr, msg: marketplaceMod.removeAskMsg(ask.id) }], `#${ask.token_id} comes back to your wallet.`);
+    }
+    async function marketplaceRemoveBid(bid) {
+      await runMarketTx('Withdraw offer', [{ contract: marketplaceAddr, msg: marketplaceMod.removeBidMsg(bid.id) }], `${mktCoinText(bid.terms?.price)} comes back to you.`);
+    }
+    async function marketplaceRemoveCollectionBid(bid) {
+      await runMarketTx('Withdraw collection offer', [{ contract: marketplaceAddr, msg: marketplaceMod.removeCollectionBidMsg(bid.id) }], `${mktCoinText(bid.terms?.price)} comes back to you.`);
+    }
+    // Accepting needs the marketplace approved on the piece (assert_transfer_approval), so approve + accept in one tx.
+    async function marketplaceAcceptBid(bid, tokenId) {
+      const price = bid.terms?.price;
+      await runMarketTx('Accept offer', [
+        { contract: CONTRACT_ADDRESS, msg: marketplaceMod.approveMsg({ spender: marketplaceAddr, tokenId }) },
+        { contract: marketplaceAddr, msg: marketplaceMod.acceptBidMsg({ id: bid.id, amount: price.amount, denom: price.denom }) },
+      ], `You sell #${tokenId} for ${mktCoinText(price)} (less the 4% protocol fee).`);
+    }
+    async function marketplaceAcceptCollectionBid(bid, tokenId) {
+      const price = bid.terms?.price;
+      await runMarketTx('Sell to collection offer', [
+        { contract: CONTRACT_ADDRESS, msg: marketplaceMod.approveMsg({ spender: marketplaceAddr, tokenId }) },
+        { contract: marketplaceAddr, msg: marketplaceMod.acceptCollectionBidMsg({ id: bid.id, tokenId, amount: price.amount, denom: price.denom }) },
+      ], `You sell #${tokenId} for ${mktCoinText(price)} (less the 4% protocol fee).`);
+    }
+
+    async function selectOnChainToken(tokenId) {
+      // Prefer the marketplace token modal; keep legacy full-screen as fallback.
+      if (typeof openTokModal === 'function') return openTokModal(tokenId);
+      if (!CONTRACT_ADDRESS) return;
+      document.querySelectorAll('#collection-grid .tok').forEach((el) => {
+        el.classList.toggle('on', el.dataset.id === String(tokenId));
+      });
+      selectedMintId = String(tokenId);
+      try {
+        const uri = await querySmart(REST, CONTRACT_ADDRESS, {
+          extension: { msg: { svg_token_uri: { token_id: String(tokenId) } } },
         }).catch(() => null);
         const info = await querySmart(REST, CONTRACT_ADDRESS, {
           nft_info: { token_id: String(tokenId) },
         }).catch(() => null);
         setVeil(false);
-        setStatus(`Token #${tokenId}${uri ? ' · svg uri' : ''}`, 'ok');
-        void info;
+        const pic = (svgFromNft && svgFromNft(info, uri)) || '';
+        showOwnedSvg(pic, tokenId);
+        setStatus(`#${tokenId}`, 'ok');
       } catch (e) {
         setStatus(e.message, 'err');
       }
@@ -2227,10 +3833,10 @@
       $(id)?.addEventListener('input', pushUserCoords);
     });
 
-    $('mint-lede').textContent =
-      'Pay with Zcash (ZIP-321 — save the QR for Zodl, open Vizor, or scan) or on Terp. ETH, Base, and Bitcoin are parked.';
+    $('mint-lede') && ($('mint-lede').textContent = '');
     highlightRail('zec');
     setMintStep('play');
+
     updatePrice();
     window.__PM_MODULE_READY__ = true;
     void ensureZecWallets();
@@ -2268,6 +3874,17 @@
       }
       paintPasskeys();
       if (!restoreWatchState()) setMintStep('play');
+    try {
+      const bootStep = new URLSearchParams(location.search).get("step");
+      if (bootStep && ["play","unlock","mint","watch","tokens"].includes(bootStep)) {
+        setMintStep(bootStep);
+      }
+      const bootFilter = new URLSearchParams(location.search).get("filter");
+      if (bootStep === "tokens" && bootFilter && typeof setCollectionFilter === "function") {
+        setTimeout(() => setCollectionFilter(bootFilter === "all" ? "all" : "owned"), 0);
+      }
+    } catch (_) {}
+
       updatePrice();
     })();
 </script>
@@ -2473,5 +4090,36 @@
     requestAnimationFrame(draw);
   })();
 </script>
+
+  <script>
+    (function () {
+      const dock = document.getElementById('dock');
+      const handle = dock && dock.querySelector('.dock-top');
+      if (!dock || !handle) return;
+      let drag = null;
+      handle.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        const r = dock.getBoundingClientRect();
+        drag = { dx: e.clientX - r.left, dy: e.clientY - r.top, pid: e.pointerId };
+        handle.setPointerCapture(e.pointerId);
+        handle.style.cursor = 'grabbing';
+      });
+      handle.addEventListener('pointermove', (e) => {
+        if (!drag || e.pointerId !== drag.pid) return;
+        const w = dock.offsetWidth;
+        const h = dock.offsetHeight;
+        const x = Math.max(8, Math.min(window.innerWidth - w - 8, e.clientX - drag.dx));
+        const y = Math.max(8, Math.min(window.innerHeight - Math.min(h, 120) - 8, e.clientY - drag.dy));
+        dock.style.left = x + 'px';
+        dock.style.top = y + 'px';
+        dock.style.right = 'auto';
+        dock.style.bottom = 'auto';
+        dock.style.transform = 'none';
+      });
+      const end = () => { drag = null; handle.style.cursor = 'grab'; };
+      handle.addEventListener('pointerup', end);
+      handle.addEventListener('pointercancel', end);
+    })();
+  </script>
 </body>
 </html>
