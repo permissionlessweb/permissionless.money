@@ -95,8 +95,15 @@ async function build() {
   // SVG collections under /svg/ (marain-orb, latent-benders, archive): built from ../svg-collections
   // (or SVG_SRC) by scripts/build-svg.mjs with the mainnet config. Contract slots stay empty until a reviewed
   // deploy; the pages render read-only while they are. See ~/grok-bot/svg/collections/preflight/PREFLIGHT.md.
-  const svgSrc = process.env.SVG_SRC || path.join(here, '..', 'svg-collections');
-  if (fs.existsSync(svgSrc)) {
+  // permissionless.money/svg is canonical for /svg (2026-11-08). It is copied as-is into dist/svg.
+  // The old ../svg-collections build runs only when SVG_SRC is set explicitly.
+  const localSvg = path.join(here, 'svg');
+  if (!process.env.SVG_SRC && fs.existsSync(localSvg)) {
+    fs.rmSync(path.join(outdir, 'svg'), { recursive: true, force: true });
+    fs.cpSync(localSvg, path.join(outdir, 'svg'), { recursive: true, filter: (p) => !/\.bak(-|$)|\/\._|\.DS_Store$/.test(p) });
+  }
+  const svgSrc = process.env.SVG_SRC;
+  if (svgSrc && fs.existsSync(svgSrc)) {
     const r = spawnSync(process.execPath, [path.join(here, 'scripts', 'build-svg.mjs')], { stdio: 'inherit' });
     if (r.status !== 0) throw new Error('svg collections build failed');
   }
