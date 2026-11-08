@@ -15,6 +15,9 @@ const port = Number(process.env.PORT || 8001);
 
 const CLEAN = {
   '/': '/pages/index.html',
+  '/mint': '/pages/mint.html',
+  '/how': '/pages/how.html',
+  '/ops': '/pages/ops.html',
   '/zk': '/pages/zk.html',
   '/zk-digest': '/pages/zk.html', // retired draft → live desk
   '/loyalty': '/pages/loyalty.html',

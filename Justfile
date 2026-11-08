@@ -9,6 +9,10 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 serve:
     node scripts/dev-server.mjs
 
+# HTTP contracts for mint + ops (no Java). Optional DREGG_ORIGIN / DREGG_ADMIN_TOKEN.
+e2e-desk:
+    node scripts/e2e-desk-http.mjs
+
 # ── WASM ───────────────────────────────────────────────────────────
 
 # build passkey-wasm crate → pkg/ (requires wasm-pack)
@@ -42,6 +46,14 @@ test: wasm-test js-test
 build:
     mkdir -p dist
     node build.js
+
+# SVG collections (Marain orb, Latent Benders, Yi Jing) → dist/svg, mainnet config
+build-svg:
+    node scripts/build-svg.mjs --mode prod --out dist/svg
+
+# upload dist/svg to the static bucket (dry run unless --go, e.g. just publish-svg --go; needs MC_ALIAS with write access)
+publish-svg *ARGS:
+    scripts/publish-svg.sh {{ARGS}}
 
 # full build including all WASM crates
 build-all: wasm-build oline-wasm-build svg-wasm-build build

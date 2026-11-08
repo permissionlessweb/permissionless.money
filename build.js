@@ -21,7 +21,7 @@ async function build() {
   await fs.mkdirSync(outdir, { recursive: true });
 
   // Minify HTML
-  for (const file of ['pages/index.html', 'pages/mint.html']) {
+  for (const file of ['pages/index.html', 'pages/mint.html', 'pages/ops.html']) {
     const content = await fs.readFileSync(file, 'utf8');
     const minified = await minify(content, {
       collapseWhitespace: true,
@@ -90,6 +90,15 @@ async function build() {
   // Locale catalogs for client i18n (see docs/i18n.md).
   if (fs.existsSync('locales')) {
     fs.cpSync('locales', path.join(outdir, 'locales'), { recursive: true, force: true });
+  }
+
+  // SVG collections under /svg/ (marain-orb, latent-benders, archive): built from ../svg-collections
+  // (or SVG_SRC) by scripts/build-svg.mjs with the mainnet config. Contract slots stay empty until a reviewed
+  // deploy; the pages render read-only while they are. See ~/grok-bot/svg/collections/preflight/PREFLIGHT.md.
+  const svgSrc = process.env.SVG_SRC || path.join(here, '..', 'svg-collections');
+  if (fs.existsSync(svgSrc)) {
+    const r = spawnSync(process.execPath, [path.join(here, 'scripts', 'build-svg.mjs')], { stdio: 'inherit' });
+    if (r.status !== 0) throw new Error('svg collections build failed');
   }
 
   console.log('Build complete');

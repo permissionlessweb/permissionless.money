@@ -51,17 +51,17 @@
 
         :root {
             --bg: #08090d;
-            --surface: rgba(33, 34, 44, 0.7);
-            --surface-solid: #21222c;
-            --border: #44475a;
-            --border-subtle: rgba(255, 255, 255, 0.06);
-            --text: #f8f8f2;
-            --text-muted: #6272a4;
-            --text-dim: #44475a;
-            --accent: #bd93f9;
-            --accent-teal: #b1ebeb;
-            --accent-green: #50fa7b;
-            --accent-orange: #ffb86c;
+            --surface: #0c0e12;
+            --surface-solid: #0c0e12;
+            --border: rgba(255, 255, 255, 0.1);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --text: #ecece8;
+            --text-muted: #8a8a82;
+            --text-dim: #5c5c56;
+            --accent: #c8ecec;
+            --accent-teal: #c8ecec;
+            --accent-green: #9dba9a;
+            --accent-orange: #c4a574;
         }
 
         body {
@@ -95,18 +95,17 @@
             align-items: center;
             justify-content: space-between;
             padding: 0.75rem 1.5rem;
-            background: rgba(8, 9, 13, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(189, 147, 249, 0.08);
+            background: #07080b;
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .header-brand {
             color: var(--accent-teal);
-            font-weight: 600;
-            font-size: 0.95rem;
+            font-weight: 500;
+            font-size: 0.8125rem;
             text-decoration: none;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.08em;
+            text-transform: lowercase;
         }
 
         .header-nav {
@@ -146,7 +145,7 @@
             font-weight: 600;
             color: var(--accent-teal);
             margin-bottom: 0.4rem;
-            text-shadow: 0 0 30px rgba(189, 147, 249, 0.3);
+            text-shadow: none;
             line-height: 1.1;
             display: flex;
             flex-direction: column;
@@ -302,7 +301,7 @@
             font-family: 'JetBrains Mono', monospace;
             background: rgba(33, 34, 44, 0.9);
             padding: 1rem 1.5rem;
-            border-radius: 6px;
+            border-radius: 0;
             border: 1px solid var(--border);
             display: inline-flex;
             gap: 1.5rem;
@@ -379,8 +378,8 @@
             height: auto;
             margin: 0 auto 1rem;
             background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 0 12px #fff;
+            border-radius: 0;
+            box-shadow: 0 0 0 8px #fff;
             image-rendering: pixelated;
         }
         .donate-uri {
@@ -429,10 +428,9 @@
             padding: 0.5rem;
             background: rgba(10, 10, 15, 0.95);
             border: 1px solid rgba(177, 235, 235, 0.2);
-            border-radius: 12px;
+            border-radius: 0;
             min-width: 160px;
-            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(20px);
+            box-shadow: none;
         }
 
         #fab-menu .fab-label {
@@ -446,7 +444,7 @@
         #fab-menu a {
             display: block;
             padding: 0.5rem 0.75rem;
-            border-radius: 6px;
+            border-radius: 0;
             color: #d2d3d8;
             font-size: 0.8rem;
             font-weight: 400;
@@ -593,7 +591,7 @@
         <p class="hero-tagline">Building Systems That Respect And Cherish Users</p>
         <p class="hero-description"></p>
         <div class="hero-cta">
-            <a href="/mint" class="btn btn-primary">Mint</a>
+            <a href="/svg/" class="btn btn-primary">Mint</a>
         </div>
     </section>
 
